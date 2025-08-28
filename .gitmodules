@@ -1,3 +1,6 @@
 [submodule "homeworks/solutions"]
 	path = homeworks/solutions
 	url = git@github.com:takakv/ics0026-hw-solutions.git
+[submodule "exams"]
+	path = exams
+	url = git@github.com:takakv/ics0036-exams.git
