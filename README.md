@@ -1,4 +1,4 @@
-# ICS0026 Cryptography
+# ICS0036 Cryptography
 
 Introduction to cryptography for the Cyber Security Engineering bachelor's programme students at Tallinn University of Technology.
 
