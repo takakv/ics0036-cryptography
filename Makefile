@@ -8,7 +8,13 @@ images:
 		--variable base=https://enos.itcollege.ee/~takraa/ics0026img/ \
 		--expand-url '{{base}}/{}'
 
-# TODO: figure out how to use wildacrd rules while keeping phonies
+handout: slides/all
+	cp slides/**/*_handout.pdf slides/
+
+# TODO: figure out how to use wildcard rules while keeping phonies
+
+.PHONY: slides/all
+slides/all: slides/00 slides/01 slides/02 slides/03 slides/04 slides/05 slides/07 slides/08 slides/09 slides/10 slides/11 slides/12 slides/13 slides/14 slides/15
 
 .PHONY: slides/00
 slides/00:
@@ -86,6 +92,6 @@ slides/14:
 	latexmk -lualatex -cd -c slides/14/14_presentation.tex
 
 .PHONY: slides/15
-slides/13:
+slides/15:
 	latexmk -lualatex -cd -c slides/15/15_handout.tex
 	latexmk -lualatex -cd -c slides/15/15_presentation.tex
