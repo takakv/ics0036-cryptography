@@ -1,0 +1,63 @@
+\documentclass{practice}
+
+\usepackage{crysymb}
+
+\title{12}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{task}{Analysing a ZKP}
+  \textit{Setting.}
+  Let $N$ be a large integer the factorisation of which is not known\footnotemark{} to the verifier. 
+  Consider the following zero-knowledge protocol with $1/2$-soundness to prove whether an element is a quadratic residue (QR) in $\ZZ^*_N$.
+
+  \footnotetext{Note that if $N$ is prime or if its factorisation is known, it is easy to determine whether an element is a QR.}
+  \begin{itemize}
+    \item Input of $P, V$: $N, a\in\ZZ^*_N$.
+    \item Input of $P$: $b\in\ZZ_N$ such that $b^2 = a$.
+    \item P picks a random $d \getsu \ZZ^*_N$, computes $c \gets d^2$, and sends $c$ to $V$.
+    \item V selects $i \getsu \{0,1\}$ and sends $i$ to $P$.
+    \item If $i=0$, $P$ sets $z \gets d$, otherwise he sets $z \gets b \cdot d$. $P$ sends $z$ to $V$.
+    \item If $i=0$, $V$ checks whether $z^2 \iseq c$, otherwise he checks whether $z^2 \iseq a \cdot c$.
+  \end{itemize}
+
+  \textit{Task.}
+  For each of the following faulty variations, determine which ZKP property does not hold.
+  \begin{enumerate}
+    \item Protocol 1:
+    \begin{itemize}
+      \item Input of $P, V$: $N, a\in\ZZ^*_N$.
+      \item Input of $P$: $b\in\ZZ_N$ such that $b^2 = a$.
+      \item P picks a random $d \getsu \ZZ^*_N$, computes $c \gets d^2$, and sends $c$ to $V$.
+      \item V selects $i \getsu \{0,1\}$ and sends $i$ to $P$.
+      \item If $i=0$, $P$ sets $z \gets d$, otherwise he sets $\mathbf{z \gets b + d}$. $P$ sends $z$ to $V$.
+      \item If $i=0$, $V$ checks whether $z^2 \iseq c$, otherwise he checks whether $z^2 \iseq a \cdot c$.
+    \end{itemize}
+
+    \item Protocol 2
+    \begin{itemize}
+      \item Input of $P, V$: $N, a\in\ZZ^*_N$, \textbf{current date}.
+      \item Input of $P$: $b\in\ZZ_N$ such that $b^2 = a$.
+      \item P picks a random $d \getsu \ZZ^*_N$, computes $c \gets d^2$, and sends $c$ to $V$.
+      \item \textbf{If the current day is even, $V$ selects $i = 0$, $i = 1$ otherwise, and sends $i$ to $P$.} 
+      \item If $i=0$, $P$ sets $z \gets d$, otherwise he sets $z \gets b \cdot d$. $P$ sends $z$ to $V$.
+      \item If $i=0$, $V$ checks whether $z^2 \iseq c$, otherwise he checks whether $z^2 \iseq a \cdot c$.
+    \end{itemize}
+
+    \newpage
+
+    \item Protocol 3
+    \begin{itemize}
+      \item Input of $P, V$: $N, a\in\ZZ^*_N$.
+      \item Input of $P$: $b\in\ZZ_N$ such that $b^2 = a$.
+      \item P picks a random $d \getsu \ZZ^*_N$, computes $c \gets d^2$, and sends $c$ to $V$.
+      \item V selects $i \getsu \{0,1\}$ and sends $i$ to $P$.
+      \item \textbf{$P$ sets $z_1 \gets d, z_2 \gets b \cdot d$. $P$ sends $z_1, z_2$ to $V$}.
+      \item If $i=0$, $V$ checks whether $\mathbf{z_1^2 \iseq c}$, otherwise he checks whether $\mathbf{z_2^2 \iseq a \cdot c}$.
+    \end{itemize}
+  \end{enumerate}
+\end{task}
+
+\end{document}

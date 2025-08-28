@@ -1,0 +1,52 @@
+\documentclass{practice}
+
+\usepackage{crysymb}
+
+\title{14}
+\date{\DTMdisplaydate{2024}{12}{05}{4}}
+
+\begin{document}
+\maketitle
+
+\begin{task}{Shamir}
+  Please read through the Shamir PDF that I uploaded to Moodle.
+
+  I unfortunately do not have the time to prepare a template for practical tasks with it.
+\end{task}
+
+\begin{task}{RSA vote verification}
+  \textit{Background.}
+  The IVXV voting system used for Estonian i-voting since 2017 uses the ElGamal cryptosystem for encrypting votes.
+  The homomorphic nature of ElGamal enables two important mechanisms:
+  \begin{enumerate}
+    \item Zero-knowledge proofs of correct decryption,
+    \item Re-encryption mixnet.
+  \end{enumerate}
+  Prior to IVXV, RSA-OAEP was used as the election cryptosystem.
+  Because RSA-OAEP does not have homomorphic properties, these two mechanisms were not possible.
+
+  The verification application was introduced in 2013, when RSA-OAEP was still used.
+  We saw some weeks ago that due to the properties of the ElGamal cryptosystem, knowing the encryption randomness would allow to decrypt a particular ciphertext.
+  No such property exists for RSA-OAEP, where the data being encrypted is the message combined with the randomness.
+  Still, somehow, when given the encryption randomness, the verification application was able to display to the voter the contents of the encrypted ballot.
+
+  \textit{Setting.}
+  In the file \texttt{rsa\_vote.py} is some data which simulates an election cryptosystem.
+  The election public key and the list of candidates are provided in the file.
+  The voting application encryption function is also provided in the file.
+
+  The file includes a ciphertext and the random value used in the encryption process.
+  You can assume that you have somehow obtained these values by placing a trojan on my smartphone which I used to verify my vote.
+
+  \textit{Task.}
+  Determine who my favourite \enquote{Haikyū!!} character is by making use of the leaked verification information.
+  Submit the character name on Moodle along with a few lines of explanation how you obtained it.
+  No need to upload your code.
+
+  \begin{tcolorbox}[title=NB!]
+    In practice, the verification application verifies many things, including the signature on the ciphertext and the vote qualifying elements.
+    However, it is the user's responsibility to alert the organisers if the verification application displays a choice other than the intended one, or if it warns that some check has failed.
+  \end{tcolorbox}
+\end{task}
+
+\end{document}
