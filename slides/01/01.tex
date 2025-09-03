@@ -1,7 +1,7 @@
 % Needed for strikethrough with \st
 \usepackage{soul}
 
-\title{ICS0026 Cryptography}
+\title{ICS0036 Cryptography}
 \subtitle{Introduction to cryptography}
 \date{\today}
 \author{Taaniel Kraavi}
@@ -20,7 +20,7 @@
   \frametitle{What's in a name?}
 
   \pause
-  \begin{itemize}[<+->]
+  \begin{itemize}[<+(1)->]
     \item Historically: the art of codes
     \item Cornerstone of computer and information security
     \item Replace a hard problem with mathematics
@@ -32,7 +32,7 @@
   \frametitle{CIA and cryptography}
 
   \pause
-  \begin{itemize}[<+(1)->]
+  \begin{itemize}
     \item Confidentiality
     \item Integrity
     \item \st{Availability}
@@ -167,19 +167,19 @@
   A cryptosystem is a triple of algorithms $(\GEN,\ENC,\DEC)$ where
   \begin{itemize}[<+(1)->]
     \item $\GEN$ is a key generation algorithm
-    \item $\ENC$ is an encryption algorithm: $c\gets\ENC(m)$
-    \item $\DEC$ is a decryption algorithm: $m\gets\DEC(c)$
+    \item $\ENC$ is an encryption algorithm: $c\gets\ENC_{\textit{key}}(m)$
+    \item $\DEC$ is a decryption algorithm: $m\gets\DEC_{\textit{key}}(c)$
   \end{itemize}
 
   \vspace*{1em}
 
   \pause
-  The output of the encryption $c\gets\ENC(m)$ is called the \emph{ciphertext}.
+  The output of the encryption $c\gets\ENC_{\textit{key}}(m)$ is called the \emph{ciphertext}.
 
   \vspace*{1em}
 
   \pause
-  The cryptosystem is functional if $\DEC(\ENC(m))=m$.
+  The cryptosystem is functional if $\DEC_{\textit{key}}(\ENC_{\textit{key}}(m))=m$.
 \end{frame}
 
 \begin{frame}[c]
@@ -218,7 +218,7 @@
     \item Substitution ciphers (monoalphabetic)
     \begin{itemize}
       \item shift cipher
-      \item substitution cipher
+      \item simple substitution cipher
     \end{itemize}
     \pause
     \item Substitution ciphers (polyalphabetic)
@@ -228,7 +228,8 @@
     \pause
     \item Transposition ciphers
     \begin{itemize}
-      \item permutation cipher
+      \item simple permutation cipher
+      \item scytale
     \end{itemize}
   \end{itemize}
 \end{frame}

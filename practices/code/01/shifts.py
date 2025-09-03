@@ -48,14 +48,7 @@ def shift_decrypt(ct: str, key: int) -> str:
     :param key: the shift
     :return: the decrypted message
     """
-    validate_string(ct)
-    pt: str = ""
-    # For decryption, we first also need the position in the alphabet.
-    # Finally, we convert the result back to the ASCII table position.
-    for c in ct:
-        pt += chr(ord('a') + ((ord(c) - ord('a') - key) % 26))
-
-    return pt
+    return shift_encrypt(ct, -key)
 
 
 def shiftb_encrypt(pt: bytes, key: int) -> bytes:
@@ -86,11 +79,7 @@ def shiftb_decrypt(ct: bytes, key: int) -> bytes:
     :param key: the shift
     :return: the decrypted bytes
     """
-    pt: list[int] = []
-    for b in ct:
-        pt.append((b - key) % 256)
-
-    return bytes(pt)
+    return shiftb_encrypt(ct, -key)
 
 
 def freq(message: str, msg_type: str):
@@ -117,6 +106,8 @@ def main():
     pt = shift_decrypt(ct, key)
     print(f"PT: {pt}")
 
+    assert pt == message
+
     freq(pt, "plaintext")
 
     # We now let the computer handle the encoding/decoding instead of manually
@@ -129,6 +120,8 @@ def main():
 
     pt = shiftb_decrypt(ct, key)
     print(f"BPT: {pt.decode('utf-8')}")
+
+    assert pt == message
 
 
 if __name__ == "__main__":
