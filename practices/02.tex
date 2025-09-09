@@ -3,7 +3,7 @@
 \usepackage{tikz}
 \usetikzlibrary{calc,decorations.pathmorphing,shapes,positioning,patterns}
 
-\usepackage{listings}
+\tcbuselibrary{listings}
 \lstset{
 basicstyle=\small\ttfamily,
 columns=flexible,
@@ -207,28 +207,28 @@ breaklines=true
 \end{task}
 
 \begin{task}{Beware of the keystream}
-  \textit{Preface.}
-  In the chosen plaintext attack (CPA), an attacker can query the challenger for the decryption of plaintexts of their choice.
-  The more restrictions there are on the attacker's queries (e.g. can only query once), the harder the attack becomes.
-  The challenger acts as, or has access to an encryption oracle, meaning that the challenger can encrypt messages.
+  % \textit{Preface.}
+  % In the chosen plaintext attack (CPA), an attacker can query the challenger for the encryption of plaintexts of their choice.
+  % The more restrictions there are on the attacker's queries (e.g. can only query once), the harder the attack becomes.
+  % The challenger acts as, or has access to an encryption oracle, meaning that the challenger can encrypt messages.
 
-  The attacker's goal is to decrypt the challenge ciphertext, and if possible, optionally recover the key.
+  % The attacker's goal is to decrypt the challenge ciphertext, and if possible, optionally recover the key.
 
-  \textit{Setting.}
+  % \textit{Setting.}
   The file \texttt{oracle.py} contains a \enquote{lax} ChaCha20 encryption oracle.
-  Lax here denotes that the attacker is allowed to submit the plaintext and the IV.
-  A stricter challenger would randomly select the IV instead.
-
-  You need to install the \texttt{pycryptodome}\footnotemark{} package for the oracle to work.
-  \footnotetext{\url{https://pypi.org/project/pycryptodome/}}%
+  Lax here denotes that the attacker is allowed to submit the plaintext and the nonce.
+  A stricter oracle would randomly select the nonce instead.
 
   \textit{Task.}
   Given the challenge ciphertext
   \begin{Verbatim}
 oIwGebbH+vjzxmy2pDNI94UIkKEZAk2cscdLXnXTDIHCcLbF9A==
   \end{Verbatim}
-  encrypted with the nonce \texttt{QPa4aiOwRA0=}, conduct a CPA against the encryption oracle and decrypt the ciphertext.
+  encrypted with the nonce \texttt{QPa4aiOwRA0=}, recover the original message (plaintext).
   Note that the secret key is hardcoded into the oracle, but you are not allowed to use it here.
+
+  You need to install the \texttt{pycryptodome}\footnotemark{} package for the oracle to work.
+  \footnotetext{\url{https://pypi.org/project/pycryptodome/}}%
 \end{task}
 
 \begin{task}{Misuse of a secure cipher}
