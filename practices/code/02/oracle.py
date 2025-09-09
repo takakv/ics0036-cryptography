@@ -1,7 +1,4 @@
 import base64
-import json
-from base64 import b64encode
-from wsgiref.util import request_uri
 
 from Crypto.Cipher import ChaCha20
 from Crypto.Random import get_random_bytes
