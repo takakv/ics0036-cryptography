@@ -1,10 +1,11 @@
 \graphicspath{ {../../images/} }
 \usetikzlibrary{external}
+\usepackage{pifont}
 
 % Needed for the distinguishing game
 \usepackage{crygame}
 
-\title{ICS0026 Cryptography}
+\title{ICS0036 Cryptography}
 \subtitle{Randomness, OTP, and stream ciphers}
 \date{\today}
 \author{Taaniel Kraavi}
@@ -45,6 +46,16 @@
 \end{frame}
 
 \begin{frame}
+  \frametitle{XKCD 221}
+
+  \begin{figure}
+    \centering
+    \includegraphics[height=80px]{xkcd221.png}
+    \caption{\url{https://xkcd.com/221/}}
+  \end{figure}
+\end{frame}
+
+\begin{frame}
   \frametitle{Randomness}
 
   % Mention double pendulums, Cloudflare lava lamps
@@ -69,37 +80,112 @@
 \end{frame}
 
 \begin{frame}
-  \frametitle{RNG}
+  \frametitle{Randomness in cryptography}
 
-  \begin{itemize}[<+->]
-    \item Random number generators
-    \item RNG boogaloo:
-    \begin{itemize}
-      \item hardware, true \& quantum RNG: HRNG, TRNG, QRNG
-      \item NRBG: non-deterministic random bit generator
-    \end{itemize}
-    \item HRNG requires a physical source of entropy
-    \begin{itemize}
-      \item Integrated (opaque)
-      \item External (more choice)
-    \end{itemize}
-    \item How do computers fill the entropy pool?
-    \begin{itemize}
-      \item Hardware sources, interrupt signals, user behaviour, \dots
-      \item Beware of boot: low entropy
-      \item Quantity of entropy?
-      \item To block or not to block?
-    \end{itemize}
-    \item Do we always need a TRNG?
+  High quality randomness is crucial in cryptography:
+  \begin{itemize}[<+(1)->]
+    \item secret values (e.g. secrecy of keys)
+    \item uniqueness (e.g. single use values/tokens (nonces))
   \end{itemize}
 \end{frame}
 
 \begin{frame}
+  \frametitle{RNG}
+
+  RNG: random number generator
+  \begin{itemize}[<+(1)->]
+    \item The term is often used loosely
+    \item More precise terminology:
+    \begin{itemize}
+      \item hardware, true \& quantum RNG: HRNG, TRNG, QRNG
+      \item NRBG: non-deterministic random bit generator
+    \end{itemize}
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  In cryptography, we consider TRNGs.
+\end{frame}
+
+\begin{frame}
+  \frametitle{TRNG}
+
+  \pause
+  A TRNG requires a physical source of \emph{entropy}.
+  \begin{itemize}[<+(1)->]
+    \item Entropy (in computing): amount of unpredictable randomness
+    \item Therefore, entropy must be collected
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  Entropy sources:
+  \begin{itemize}[<+(1)->]
+    \item Integrated (opaque)
+    \item External (more choice)
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Entropy pool}
+
+  \pause
+  How do computers fill the entropy pool?
+  \begin{itemize}[<+(1)->]
+    \item Entropy is collected and (typically) accumulated in a pool
+    \item Hardware sources, interrupt signals, user behaviour, \dots
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  Quality/quantity of entropy:
+  \begin{itemize}[<+(1)->]
+    \item Beware of boot: low entropy
+    \item Amount of entropy / collection throughput?
+    \item To block or not to block?
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  Do we always need a TRNG?
+\end{frame}
+
+% \begin{frame}
+%   \frametitle{RNG}
+
+%   \begin{itemize}[<+->]
+%     \item Random number generators
+%     \item RNG boogaloo:
+%     \begin{itemize}
+%       \item hardware, true \& quantum RNG: HRNG, TRNG, QRNG
+%       \item NRBG: non-deterministic random bit generator
+%     \end{itemize}
+%     \item HRNG requires a physical source of entropy
+%     \begin{itemize}
+%       \item Integrated (opaque)
+%       \item External (more choice)
+%     \end{itemize}
+%     \item How do computers fill the entropy pool?
+%     \begin{itemize}
+%       \item Hardware sources, interrupt signals, user behaviour, \dots
+%       \item Beware of boot: low entropy
+%       \item Quantity of entropy?
+%       \item To block or not to block?
+%     \end{itemize}
+%     \item Do we always need a TRNG?
+%   \end{itemize}
+% \end{frame}
+
+\begin{frame}
   \frametitle{PRNG}
 
-  \begin{itemize}[<+->]
-    \item Pseudo-random number generator
-    \item PRNG boogaloo:
+  PRNG: pseudo-random number generator
+  \begin{itemize}[<+(1)->]
+    \item More precise terminology:
     \begin{itemize}
       \item CSPRNG: cryptographically secure PRNG
       \item DRBG: deterministic random bit generator
@@ -111,6 +197,16 @@
   \vspace*{1em}
 
   \pause
+  Best practice: CSPRNG seeded (and reseeded) by a TRNG.
+  \begin{itemize}[<+(1)->]
+    \item Suitable for most (cryptographic) uses.
+    \item A CSPRNG does not protect against a poor seed.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Resources}
+
   Some recommendations/standards:
   \begin{itemize}
     \item \href{https://csrc.nist.gov/projects/random-bit-generation}{NIST on random bit generation}
@@ -129,7 +225,7 @@
 
   We want a black box with:
   \begin{itemize}[<+(1)->]
-    \item confusion
+    \item \enquote{confusion}
     \item diffusion (avalanche effect)
   \end{itemize}
 
@@ -189,57 +285,58 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}{PRNG security}
+\begin{frame}{PRNG security (informal)}
   \pause
-  The output of a CSPRNG should be \emph{indistinguishable} from the output of a TRNG by a \emph{computationally bounded} adversary.
-
-  \vspace*{1em}
-  \pause
-  The \emph{adversary} (or \emph{distinguisher}) should distinguish between the two worlds/games:
+  The output of a CSPRNG should be \emph{indistinguishable} from true randomness to a \emph{computationally bounded} adversary.
+  \begin{enumerate}[<+(1)->]
+    \item The challenger selects one of the two algorithms:
     \begin{align*}
       &\begin{game}{\GAME_0}
-        &r\gets\mathsf{TRNG}\\
+        &r\getsu\{0,1\}^\ell\\
         &\RETURN r
       \end{game}
       &\begin{game}{\GAME_1}
-        &s\gets\mathsf{TRNG}\\
-        &r\gets\mathsf{CSPRNG}(s)\\
+        &s\getsu\{0,1\}^k\\
+        &r\gets\mathsf{CSPRNG}(s, \ell)\\
         &\RETURN r
       \end{game}
     \end{align*}
+    \item The adversary queries the challenger for the $\ell$-bit output $r$.
+    \item The adversary announces which algorithm they think is used.
+  \end{enumerate}
 
-    \vspace*{1em}
-
-    \pause
-    If it cannot guess with better success than $\frac{1}{2}$ then the CSPRNG is \enquote{secure}.
+  \pause
+  If the adversary is correct only about half the time, we consider the CSPRNG to be \enquote{secure}.
 \end{frame}
 
 \begin{frame}
   \frametitle{Trusting randomness}
 
+  \pause
+  Mixing entropy sources
   \begin{itemize}[<+(1)->]
-    \item Mix entropy sources
-    \begin{itemize}
-      \item Integrated \& external (speed boost)
-      \item Client \& server-side
-      \item Combine with timestamp (helps with bad randomness)
-      \item All these have gotchas!
-    \end{itemize}
-    \item DYOR:
-    \begin{itemize}
-      \item Is it open source?
-      \item Certified?
-      \item Reputable vendor?
-      \item Track record?
-    \end{itemize}
+    \item Integrated \& external (speed boost)
+    \item Client \& server-side
+    % Explain that this is sometimes bad.
+    % \item Combine with timestamp (helps with bad randomness)
+    \item Mixing has gotchas!
   \end{itemize}
 
-  \vspace*{1em}
+  \vspace*{0.5em}
+
+  \pause
+  DYOR:
+  \begin{itemize}[<+(1)->]
+    \item Is it open source?
+    \item Certified?
+    \item Reputable vendor?
+    \item Track record?
+  \end{itemize}
+
+  \vspace*{0.5em}
 
   \pause
   Randomness combined with anything\textsuperscript{*} is random.
-
-  \vspace*{0.5em}
   {\scriptsize \textsuperscript{*}without information loss}
 \end{frame}
 
@@ -247,60 +344,87 @@
   \frametitle{XOR}
 
   \pause
-  \begin{itemize}[<+->]
-    \item XOR ($\oplus$): exclusive OR
-    \vspace*{1em}
-    \begin{displaymath}
-      \begin{array}{|c c|c|}
+  XOR ($\oplus$): exclusive OR
+  \pause
+  \begin{displaymath}
+    \begin{array}{|c|c|c|}
       a & b & a \oplus b\\
       \hline
       0 & 0 & 0\\
       0 & 1 & 1\\
       1 & 0 & 1\\
       1 & 1 & 0\\
-      \end{array}
-    \end{displaymath}
-    \vspace*{1em}
-    \item reversible without information loss
-    \item associative: $a \oplus (b \oplus c) = (a \oplus b) \oplus c$
-    \item commutative: $a \oplus b = b \oplus a$
-    \item self-inverse: $a \oplus a = 0$
-    \item identity element: $a \oplus 0 = a$
-  \end{itemize}
+    \end{array}
+  \end{displaymath}
+
+  \pause
+  Reversible\textsuperscript{*} without information loss:
+  \begin{columns}[T]
+    \begin{column}{.5\textwidth}
+      \begin{itemize}[<+(1)->]
+        \item associative: $a \oplus (b \oplus c) = (a \oplus b) \oplus c$
+        \item commutative: $a \oplus b = b \oplus a$
+      \end{itemize}
+    \end{column}
+    \begin{column}{.5\textwidth}
+      \begin{itemize}[<+(1)->]
+        \item self-inverse: $a \oplus a = 0$
+        \item identity element: $a \oplus 0 = a$
+      \end{itemize}
+    \end{column}
+  \end{columns}
+
+  \vspace*{1em}
+
+  {\scriptsize \textsuperscript{*} knowing the output and an input}
 \end{frame}
 
 \begin{frame}
   \frametitle{One-time pad (OTP)}
 
-  \begin{itemize}[<+->]
-    \item Symmetric, deterministic cryptosystem
-    \begin{itemize}
-      \item Same key for encryption and decryption
-      \item One ciphertext for each message
-      \item $\ENC_k(m) = m \oplus k = c$
-      \item $\DEC_k(c) = c \oplus k = m$
-    \end{itemize}
-    \vspace*{1em}
-    \item Key $k$ of length $\lambda$ bits
-    \begin{itemize}
-      \item Must be \enquote{perfectly} random (uniformly random)
-      \item $k\getsu\{0,1\}^\lambda$
-      \item $\lambda \ge \lvert m\rvert$ i.e. key as long as message 
-      \item key must only be used once
-    \end{itemize}
-    \vspace*{1em}
-    \item \textbf{Information theoretically secure}, i.e. perfect secrecy
-    \begin{itemize}
-      \item All decryptions are valid $\iff$ the intended message cannot be identified
-      \item Brute force alone is useless even for an unbounded adversary (infinite resources)
-    \end{itemize}
+  Symmetric, deterministic cryptosystem
+  \begin{columns}[T]
+    \begin{column}{0.55\textwidth}
+      \pause
+      \begin{itemize}
+        \item Same key for encryption and decryption
+        \item One ciphertext for each message
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.378\textwidth}
+      \pause
+      \begin{itemize}
+        \item $\ENC_k(m) = m \oplus k = c$
+        \item $\DEC_k(c) = c \oplus k = m$
+      \end{itemize}
+    \end{column}
+  \end{columns}
+
+  \vspace*{1em}
+
+  \pause
+  The $\lambda$-bit key $k$ must:
+  \begin{itemize}[<+(1)->]
+    \item $k \getsu \{0,1\}^\lambda$, i.e. be sampled uniformly at random (\enquote{perfectly} random)
+    \item $\lambda \ge \lvert m\rvert$, i.e. be (at least) as long as the message 
+    \item be used only once
   \end{itemize}
 \end{frame}
 
 \begin{frame}
   \frametitle{One-time pad (OTP)}
+  The OTP is \textbf{information theoretically secure}, i.e. it has \emph{perfect secrecy}.
+  \begin{itemize}[<+(1)->]
+    \item No bit of information is leaked
+    \item All decryptions are valid $\iff$ the intended message cannot be identified
+    \item Brute force alone is useless even for an \emph{unbounded} adversary
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
   \begin{center}
-    {\color{red} Catastrophic failure if the 3 conditions are not respected!}
+    {\color{red} Catastrophic failure if any of the 3 conditions is not respected!}
   \end{center}
 \end{frame}
 
@@ -308,22 +432,27 @@
   \frametitle{OTP limitations}
 
   \pause
-  \begin{itemize}[<+->]
-    \item Size issues:
-    \begin{itemize}
-      \item Key as long as message
-      \item How do we design and store the codebook?
-    \end{itemize}
-    \item Practicality issues: 
-    \begin{itemize}
-      \item New key for every message
-      \item How do we synchronise keys?
-      \item How to exchange the codebook?
-    \end{itemize}
-    \item Security issues:
-    \begin{itemize}
-      \item Malleable i.e. can be meaningfully altered
-    \end{itemize}
+  Size issues:
+  \pause
+  \begin{itemize}
+    \item Key as long as the message
+    \item How do we design and store the codebook?
+  \end{itemize}
+
+  \pause
+  Practicality issues:
+  \pause
+  \begin{itemize}
+    \item New key for every message
+    \item How do we synchronise keys and exchange the codebook?
+  \end{itemize}
+
+  \pause
+  Security issues:
+  \pause
+  \begin{itemize}
+    \item No authenticity/integrity
+    \item \emph{Malleable}, i.e. can be meaningfully altered
   \end{itemize}
 \end{frame}
 
@@ -409,109 +538,108 @@
 \end{frame}
 
 \begin{frame}
-  \frametitle{IND-OT-CPA}
+  \frametitle{Semantic security (informal)}
 
-  \begin{itemize}[<+->]
-    \item Cryptographers speak of \emph{semantic security}
-    \item Semantic security is difficult to work with
-    \item IND-CPA $\implies$ IND-SEM
-    \item We aim for \emph{indistinguishability} instead
-    \pause
-    \begin{align*}
-      &\begin{game}{\GAME_0^{\AD}}
-        &k\gets\GEN\\
-        &(m_0, m_1)\gets\AD\\
-        &\IF \lvert m_0\rvert \neq \lvert m_1\rvert\  \RETURN 0\\
-        &\RETURN \ENC_k(m_0)
-      \end{game}
-      &\begin{game}{\GAME_1^{\AD}}
-        &k\gets\GEN\\
-        &(m_0, m_1)\gets\AD\\
-        &\IF \lvert m_0\rvert \neq \lvert m_1\rvert\  \RETURN 0\\
-        &\RETURN \ENC_k(m_1)
-      \end{game}
-    \end{align*}
-  \end{itemize}
-
-  \pause
-  The \emph{advantage} of the $t$-time (poly time) adversary should be \emph{negligible}:
-  \pause
-  \[
-    \mathsf{Adv}_{\AD}^{\mathsf{IND\text{-}OT\text{-}CPA}} = 
-    \Bigl\lvert
-      \Pr{\bigl[\GAME_0 = 1\bigr]} - \Pr{\bigl[\GAME_1 = 1\bigr]}
-    \Bigr\rvert \le \varepsilon
-  \]
-  \pause
-  The scheme is then $(t,\varepsilon)$-IND-OT-CPA secure.
-
-\end{frame}
-
-\begin{frame}{Stream ciphers}
-  \pause
-  \begin{itemize}[<+->]
-    \item Follows from the OTP
-    \item Symmetric cipher
-    \item Combine message with PRNG stream: the \emph{keystream}
-    \item Typically bit-by-bit using XOR
-    \item The key is the PRNG \emph{seed}
+  Cryptographers speak of \emph{semantic security}.
+  \begin{itemize}[<+(1)->]
+    \item Knowing a ciphertext is no more useful than only knowing its length
+    \item Computational equivalent to perfect secrecy
   \end{itemize}
 
   \vspace*{1em}
 
   \pause
-  For security:
+  Semantic security is difficult to work with.
+  \begin{itemize}[<+(1)->]
+    \item We aim for CPA-\emph{indistinguishability} instead
+    \item IND-CPA $\implies$ IND-SEM
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{IND-CPA (informal)}
+
+  The scheme has IND-CPA if a computationally bounded adversary cannot distinguish which of two messages was encrypted.
+  \begin{enumerate}[<+(1)->]
+    \item The adversary prepares and sends two messages $m_0, m_1$ of equal size to the challenger.
+    \item The challenger randomly selects either $m_0$ or $m_1$, encrypts it, and sends the ciphertext to the adversary.
+    \item The adversary announces which message they think was encrypted.
+  \end{enumerate}
+
   \pause
-  \begin{itemize}[<+->]
-    \item Generate a high quality seed
-    \item Use a reputable CSPRNG
-    \item Do not re-use a keystream
-    \item Do not re-use a key
-    \item Use a message authentication mechanism (for integrity)
-  \end{itemize}
+  If the adversary is correct only about half the time, we consider the cryptosystem to have IND-CPA.
 \end{frame}
 
-\begin{frame}{Stream ciphers}
-  \begin{itemize}[<+->]
-    \item How to decrypt?
-    \begin{itemize}
-      \item Recipient re-generates the keystream from the seed
-    \end{itemize}
-    \item How to send multiple messages?
-    \begin{itemize}
-      \item Goal: keep the key, but use a new stream
-      \item Use an \emph{initialisation vector} (IV) sometimes called \emph{nonce}
-      \item Update the IV after every encryption
-      \item Initialise the PRNG with key and IV (complex \enquote{mixing})
-      \item Send the IV to the recipient
-    \end{itemize}
-    \item IVs are not supposed to be secret: only the key should be secret
-    \item Not all stream ciphers use an IV
+\begin{frame}{Stream ciphers (conceptually)}
+  Follows from the OTP:
+  \begin{itemize}[<+(1)->]
+    \item Symmetric cipher
+    \item The key is the \emph{seed} of a PRNG
+    \item XORs the message with the PRNG stream: the \emph{keystream}
   \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  How to decrypt?
+  \begin{itemize}[<+(1)->]
+    \item Recipient re-generates the keystream from the seed (key)
+    \item Recipient XORs the ciphertext with the keystream
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  What happens when you encrypt multiple messages with the same key?
 \end{frame}
 
-\begin{frame}{Stream ciphers}
+\begin{frame}{Stream cipher nonce}
+  Goal: keep the key, but use a unique keystream per encryption
+
+  \pause
+  For each encryption:
+  \begin{enumerate}[<+(1)->]
+    \item Generate a \emph{nonce} (unique value)
+    \item Initialise the cipher with the key and fresh nonce
+    \item Send the (nonce, ciphertext) pair to the recipient
+  \end{enumerate}
+
+  \pause
+  The nonce:
+  \begin{itemize}[<+(1)->]
+    \item Is \emph{not} secret
+    \item Must be freshly selected for each encryption
+    \item Must \emph{not} be reused under the same key
+    \begin{itemize}
+      \item Easiest way: use a \enquote{long enough} nonce to statistically avoid this
+    \end{itemize}
+  \end{itemize}
+
+  %\pause
+  %Do not use any stream cipher with no \enquote{built-in} nonce support!
+\end{frame}
+
+\begin{frame}{What to use?}
   Some well-known ciphers include
   \pause
   \begin{itemize}[<+->]
-    \item RC4: belongs in a museum, weak!
-    \item A5/1: used for GSM, weak!
-    \item E0: used for Bluetooth, weak!
-    \item Ascon \& ACORN: relatively new, interesting for constrained envs
-    \item ChaCha20: used by many \texttt{arc4random} PRNGs, popular
+    \item[\ding{55}] RC4: belongs in a museum, weak!
+    \item[\ding{55}] A5/1: used for GSM, weak!
+    \item[\ding{55}] E0: used for Bluetooth, weak!
+    \item[\ding{51}] Ascon \& ACORN: relatively new, interesting for constrained envs
+    \item[\ding{51}] ChaCha20: used by many \texttt{arc4random} PRNGs, popular
   \end{itemize}
 
-  \vspace*{1em}
+  \vspace*{0.5em}
 
   \pause
-  Note: NIST does not standardise stream ciphers. Not entirely sure why.
+  Block ciphers can be turned into stream ciphers through \emph{modes of operation}.
+  \begin{itemize}[<+(1)->]
+    \item e.g. AES-CTR
+    \item Needed for NIST-compliance, as they have not standardised any stream cipher
+  \end{itemize}
 
-  \vspace*{1em}
-
-  \pause
-  Some block ciphers can be turned into stream ciphers through \emph{modes of operation} e.g. AES-CTR.
-
-  \vspace*{1em}
+  \vspace*{0.5em}
 
   \pause
   To also provide authenticity: ChaCha20-Poly1305, AES-GCM.
