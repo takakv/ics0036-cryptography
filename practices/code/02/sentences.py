@@ -28,13 +28,13 @@ def solve():
                    "AD0392AD5BE7F5486065D957AADC8F671E8816FA25DF3E",
                    "B9198AA90FE1E11A757DD40EE9DA8E351A9C07A921D722",
                    "BA198EFD5FFAF359757CD24BAADC8F67179E01ED6A8873"]
-    keys = [bytes.fromhex(k) for k in key_strings]
 
     ciphertext = "EE71EBDD2F88923A0115B12E8AB5FC477FFF73894AB25B"
     ct_bytes = bytes.fromhex(ciphertext)
 
-    for k in keys:
-        print(xor(ct_bytes, k).decode())
+    for k in key_strings:
+        key = bytes.fromhex(k)
+        print(xor(ct_bytes, key).decode())
 
 
 if __name__ == "__main__":
