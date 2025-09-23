@@ -1,7 +1,8 @@
 \graphicspath{ {../../images/} }
 \usetikzlibrary{external}
+\usepackage{pifont}
 
-\title{ICS0026 Cryptography}
+\title{ICS0036 Cryptography}
 \subtitle{Block ciphers \& AES}
 \date{\today}
 \author{Taaniel Kraavi}
@@ -99,7 +100,7 @@
 \end{frame}
 
 \begin{frame}{Modes of operation}
-  Different \emph{modes of operation} are used to extend operations to data larger than a block.
+  \emph{Modes of operation} are used to extend operations to data larger than a block.
 
   \pause
   Examples:
@@ -291,9 +292,8 @@
 
   \begin{itemize}[<+(1)->]
     \item Operates as a stream cipher
-    \item The \emph{nonce} is like the IV: never reuse it for the same key
-    \item Counter combined using an \emph{invertible} operation, e.g. $\oplus$, $||$
-    \item Prefer $||$ due to counter pitfalls! (e.g. non-random nonces)
+    \item Counter combined using an \emph{invertible} operation, e.g. $\oplus$, $+$, $||$
+    \item $||$ preferred due to counter pitfalls (e.g. with non-random nonces)
   \end{itemize}
 \end{frame}
 
@@ -337,19 +337,20 @@
 \begin{frame}
   \frametitle{Galois/Counter (GCM) mode}
 
-  You do not need to understand this!
+  You do not need to know/remember this!
   \begin{center}
     \url{https://csrc.nist.rip/groups/ST/toolkit/BCM/documents/proposedmodes/gcm/gcm-spec.pdf\#page=8}
   \end{center}
   \pause
-  Only what it does (not how) and why it is useful.
+  However, you should understand what it does (not how) and why it is useful.
 \end{frame}
 
 \begin{frame}{Dangers of GCM}
   In GCM-mode, nonce reuse enables the \emph{forbidden attack}:
   \begin{itemize}[<+(1)->]
     \item practical attack (real-world applicable)
-    \item enables message forgery (breaks authenticity)
+    \item enables authentication key recovery
+    \item $\implies$ message forgery (breaks authenticity)
   \end{itemize}
 
   \pause
@@ -401,9 +402,10 @@
   \pause
   Block size:
   \begin{itemize}
-    \item The number of bits in a block, i.e. message/ciphertext length
+    \item The number of bits in a block
     \pause
-    \item Typical values are: 64 (bad), 128, 192, 256 bits
+    \item Typically 128, with demand for 256 bits
+    \item Historically 64 bits (bad due to increased collision risks)
   \end{itemize}
 
   \pause
@@ -412,6 +414,7 @@
     \item Usually tied to the \enquote{strength} of the cipher
     \pause
     \item Typical values are: 128, 192, 256 bits
+    \item 128 bits is the strict minimum!
   \end{itemize}
 
   \pause
@@ -446,12 +449,12 @@
   Some well-known ciphers include
   \pause
   \begin{itemize}[<+->]
-    \item DES (Data Encryption Standard): belongs in a museum, weak!
-    \item 3DES: deprecated
-    \item Twofish: successor to the insecure Blowfish
-    \item RC5 (\& RC6): used to be patented
-    \item Camellia, Serpent, ARIA, \dots
-    \item AES (Advanced Encryption Standard): sometimes called the \enquote{gold standard}
+    \item[\ding{55}] DES (Data Encryption Standard): belongs in a museum, weak!
+    \item[\ding{55}] 3DES: deprecated
+    \item[\ding{51}] Twofish: successor to the insecure Blowfish
+    \item[\ding{51}] RC6: used to be patented, successor to RC5
+    \item[\ding{51}] Camellia, Serpent, ARIA, \dots
+    \item[\ding{51}]AES (Advanced Encryption Standard): sometimes called the \enquote{gold standard}
   \end{itemize}
 
   \vspace*{1em}
@@ -460,7 +463,7 @@
   Block ciphers seem (and are) more \enquote{popular}.
   \begin{itemize}[<+(1)->]
     \item historical reasons, e.g. perception (RC4) \& standardisation
-    \item \enquote{better} to implement in hardware (less so these days)
+    \item security analysis is \enquote{easier}
     \item versatility
   \end{itemize}
 \end{frame}
@@ -478,6 +481,7 @@
   Practical info:
   \begin{itemize}[<+->]
     \item Block size: 128 bits
+    \item \href{https://csrc.nist.gov/pubs/sp/800/197/iprd}{NIST SP 800-197}: work on 256-bit block AES (in progress)
     \item Key sizes: 128, 192, 256 bits
   \end{itemize}
 \end{frame}
@@ -486,7 +490,7 @@
   No current practical attack can break AES confidentiality (when correctly used and implemented).
 
   \begin{itemize}[<+(1)->]
-    \item Best current key recovery attack: $2^{126.0}$ operations
+    \item Best current key recovery attack: $2^{126.0}$ operations (\href{https://doi.org/10.1007\%2F978-3-319-19962-7_3}{Tao \& Wu, 2015})
     \item Security can be weakened by the mode of operation
     \item Lots of problematic implementations (side channel attacks)
     \item Various breaks if not enough \emph{rounds} are performed
@@ -495,20 +499,33 @@
   \end{itemize}
 
   \pause
-  Pick the implementation and parameters carefully!
+  Pick the implementation carefully!
 \end{frame}
 
-\begin{frame}{Block ciphers vs stream ciphers}
+\begin{frame}{Recap}
   Block ciphers:
   \begin{itemize}[<+(1)->]
     \item Well suited for static/fixed data, e.g. stored files, passwords, \dots
-    \item Often used for \enquote{regular} communication, e.g. messaging apps (WhatsApp, Signal)
+    \item Often used for \enquote{regular} communication
+    \begin{itemize}
+      \item e.g. messaging apps (Signal \& WhatsApp, Telegram\textsuperscript{*})
+    \end{itemize}
     \item Can work as stream ciphers
     \item Typically better studied
-    \item Hardware acceleration (AES)
   \end{itemize}
 
+  \vspace*{1em}
+
   \pause
+  Prefer AES whenever possible
+  \begin{itemize}
+    \item Use with an authentication mechanism (AES-GCM or separate MAC)
+    \item Key sizes: 128, 196, 256 bits, with AES-256 being quantum-safe
+    \item Often hardware accelerated
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Recap}
   Stream ciphers:
   \begin{itemize}[<+(1)->]
     \item Well suited for data streams, e.g. real-time communication, internet traffic
@@ -516,16 +533,23 @@
     \item Redundancy for block-cipher breaks (for pure stream ciphers)
   \end{itemize}
 
+  \vspace*{1em}
+
   \pause
-  Neither (typically) provides data authentication by default!
+  Use ChaCha20 if you need a \enquote{pure} stream cipher
+  \begin{itemize}[<+(1)->]
+    \item Use with an authentication mechanism: ChaCha20-Poly1305
+    \item 256-bit key, 96-bit nonce (192-bit nonce for XChaCha20-Poly1305)
+    \item Quantum safe
+  \end{itemize}
 \end{frame}
 
 \begin{frame}{ChaCha20 vs AES}
   \pause
   Not going to tell you $>$:)
   \begin{itemize}[<+(1)->]
-    \item You are generally fine regardless of which you pick.
-    \item For web-servers, you should support both!
+    \item Both are generally good options
+    \item For web-servers, you should support both (TLS 1.3)
   \end{itemize}
 
   \pause
@@ -539,7 +563,8 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Built using block ciphers}
+\begin{frame}{Block cipher versatility}
+  Built using block ciphers:
   \begin{itemize}[<+(1)->]
     \item Stream ciphers
     \item CSPRNGs
@@ -550,7 +575,7 @@
 \end{frame}
 
 \begin{frame}{Disk encryption}
-  Specific modes of operation exist, e.g. XTS (XTS-AES is standardised).
+  Specific modes of operation exist, e.g. XTS (AES-XTS is standardised).
 
   \pause
   How to do it with CBC?
@@ -574,18 +599,14 @@
 \end{frame}
 
 \begin{frame}{Keys and passwords}
-  \begin{block}{Note}
-    We will cover hash functions \& key derivation again in a later lecture.
-  \end{block}
+  \pause
+  A human-generated password typically has low \emph{entropy}, i.e. not random enough.
 
   \pause
-  A human-generated password typically has low \emph{entropy}, i.e. it is not random enough.
-
-  \pause
-  Key derivation functions
+  Key derivation functions (more on week 6):
   \begin{itemize}[<+(1)->]
     \item Derive secret keys from a secret value
-    \item \enquote{Stretches} (and strengthens) secrets
+    \item \enquote{Stretch} (and strengthen) secrets
     \item Hash-function or block-cipher based (typically)
     \item Attack resistant: slow down attacks
   \end{itemize}
