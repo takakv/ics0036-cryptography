@@ -1,7 +1,9 @@
 \graphicspath{ {../../images/} }
 \usetikzlibrary{external}
 
-\title{ICS0026 Cryptography}
+\usepackage{fancyvrb}
+
+\title{ICS0036 Cryptography}
 \subtitle{Public-key cryptography \& RSA}
 \date{\today}
 \author{Taaniel Kraavi}
@@ -19,9 +21,9 @@
 \begin{frame}{Public-key cryptosystem}
   A \emph{public-key encryption scheme} is a triple of algorithms:
   \begin{itemize}[<+(1)->]
-    \pause\item $\GEN$ is a randomised \emph{key generation algorithm}: $(\PK,\SK)\gets\GEN$
-    \pause\item $\ENC$ is a (possibly randomised) \emph{encryption algorithm}: $c\gets\ENC_\PK(m)$
-    \pause\item $\DEC$ is a \emph{decryption algorithm}: $m\gets\DEC_\SK(c)$.
+    \item $\GEN$ is a randomised \emph{key generation algorithm}: $(\PK,\SK)\gets\GEN$
+    \item $\ENC$ is a (possibly randomised) \emph{encryption algorithm}: $c\gets\ENC_\PK(m)$
+    \item $\DEC$ is a \emph{decryption algorithm}: $m\gets\DEC_\SK(c)$.
   \end{itemize}
 
   \pause
@@ -75,9 +77,28 @@
   The public key $\PK$ should be known to everyone.
 \end{frame}
 
-\begin{frame}{Security of PK systems}
+\begin{frame}{Observations}
+  Letterbox system:
   \begin{itemize}[<+(1)->]
-    \item \enquote{Provable} rather than heuristic/best-effort
+    \item Anyone can encrypt messages with the public key
+    \item Only the intended recipient can decrypt the messages
+    \item CPA setting becomes trivial
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  {Key exchange} is no longer a confidentiality problem
+  \begin{itemize}[<+(1)->]
+    \item The authenticity problem remains\dots
+    \item \dots but is also partially solved via PK systems
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Security of PK systems}
+  Mathematical \enquote{guarantees}:
+  \begin{itemize}[<+(1)->]
+    \item $\neq$ provably secure
     \item Relies on the \emph{hardness} of problems (mathematical and/or computational)
     \begin{itemize}
       \item Integer factorisation
@@ -85,30 +106,30 @@
       \item Lattice problems
     \end{itemize}
     \item Public key derived from secret key: mathematical link
-    \item Anyone can encrypt with the public key
-    \begin{itemize}
-      \item No need for \emph{encryption oracles}
-      \item CPA setting becomes trivial
-      \item \emph{Key exchange} no longer a security problem\textsuperscript{*}
-    \end{itemize}
     \item Easy to overlook timing side-channels in implementations!
   \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  These principles are useful for more than just confidentiality.
 \end{frame}
 
 \begin{frame}{Modular arithmetic}
-  \begin{itemize}[<+->]
-    \item \enquote{Secures} most of classical public-key cryptography
+  Modular arithmetic underpins most classical public-key constructions
+  \begin{itemize}[<+(1)->]
+    \item \enquote{Clock arithmetic}: wrap-around behaviour
+    \item Used to define hard problems:
     \begin{itemize}
-      \item Integer factorisation
-      \item Discrete logarithm problem (DLP)
+      \item Combined with integer factorisation (e.g. the RSA problem)
+      \item Part of algebraic structures (e.g. DLP-hard groups)
     \end{itemize}
-    \item Intractability of some operations given numbers large enough
-    \begin{itemize}
-      \item Intractable for classical computers
-      \item Solvable (eventually) by quantum computers (Shor's algorithm)
-      \item 48-bit factorisation claimed by Yan et al. (Dec. 2022)
-    \end{itemize}
-    \item \enquote{Clock arithmetic}
+    \item Hard problems: intractable for sufficiently large numbers
+    % \begin{itemize}
+    %   \item Intractable for classical computers
+    %   \item Solvable (eventually) by quantum computers (Shor's algorithm)
+    %   \item 48-bit factorisation claimed by Yan et al. (Dec. 2022)
+    % \end{itemize}
   \end{itemize}
 \end{frame}
 
@@ -200,7 +221,7 @@
   \end{block}
 
   \pause
-  Testing for primality is efficient (polynomial time)
+  Testing for primality is efficient (polynomial-time)
   \pause
   \begin{itemize}
     \item For large numbers, tests are typically probabilistic
@@ -209,9 +230,10 @@
   \pause
   Efficient factorisation is unsolved on classical computers
   \begin{itemize}[<+(1)->]
-    \item No polynomial time algorithm
-    \item Shor's algorithm for quantum computers
-    \item Special purpose algorithms exist
+    \item No known polynomial-time algorithm
+    \item Known best general purpose algorithm: GNFS
+    \item Special purpose algorithms exist (e.g. Pollard's rho)
+    \item Shor's algorithm exists for quantum computers (not yet practical)
   \end{itemize}
 \end{frame}
 
@@ -223,7 +245,7 @@
   
   \begin{itemize}[<+(1)->]
     \item RSA Factoring Challenge (1991)
-    \item RSA numbers: published semiprimes
+    \item \href{https://en.wikipedia.org/wiki/RSA_numbers}{RSA numbers}: published semiprimes
     \item Discontinued in 2007
   \end{itemize}
 
@@ -269,10 +291,15 @@
   \begin{itemize}
     \item $c^d \equiv \bigl(m^e\bigr)^d \equiv m \pmod{n}$
   \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  $m < n$ to avoid information loss!
 \end{frame}
 
 \begin{frame}{Modular exponentiation}
-  Naive exponentiation $m^e \bmod n$ is wasteful.
+  Naive exponentiation $m^e \bmod n$ is expensive and wasteful.
 
   \pause
   Modular exponentiation is a technique to improve this computation.
@@ -286,7 +313,7 @@
   Fast modular exponentiation
   \begin{itemize}[<+(1)->]
     \item Exponentiation by squaring
-    \item Nice intro on this \href{https://web.archive.org/web/20240303145251/https://dev-notes.eu/2019/12/Fast-Modular-Exponentiation/}{blog}
+    \item Nice intro on this \href{https://dev-notes.eu/2019/12/Fast-Modular-Exponentiation/}{\textit{blog}}
   \end{itemize}
 
   \pause
@@ -331,9 +358,9 @@
   \pause
   OAEP --- Optimal Asymmetric Encryption Padding
   \begin{itemize}[<+(1)->]
-    \item Provides randomness (probabilistic encryption)
+    \item \enquote{Provides} randomness (probabilistic encryption)
     \item Prevents partial decryption
-    \item IND-CCA1 (non-adaptive)
+    \item IND-CCA1 (non-adaptive, \enquote{lunchtime} attack)
     \item Not IND-CCA2 (adaptive)
   \end{itemize}
 \end{frame}
@@ -344,20 +371,20 @@
   \pause
   Some shaky explanations:
   \begin{itemize}[<+(1)->]
-    \item Brute force is \enquote{easier}
     \item Not all keys in the bit-space are valid
     \item Mathematical problems with various algorithms to attempt to solve them
     \item Relationship between public and secret key
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Security level}
+\begin{frame}{Security level (classical adversaries!)}
   Estimates defined in \href{https://csrc.nist.gov/pubs/sp/800/57/pt1/r5/final}{NIST SP 800-57 REV. 5}
 
   \pause
   \begin{center}
-  \begin{tabular}{|c|c|c|}
+  \begin{tabular}{@{}ccc@{}}
     Security Strength & Symmetric & RSA\\
+    \toprule
     128 & AES-128 & $k = 3072$\\
     192 & AES-192 & $k = 7680$\\
     256 & AES-256 & $k = 15360$
@@ -365,16 +392,13 @@
   \end{center}
 
   \pause
-  The table assumes classical adversaries!
-
-  \pause
   Other recommendations:
   \begin{itemize}
-    \item ANSSI: \href{https://cyber.gouv.fr/le-referentiel-general-de-securite-version-20-les-documents}{RGS v2.0 annex B1}
     \item BSI: \href{https://www.bsi.bund.de/EN/Themen/Unternehmen-und-Organisationen/Standards-und-Zertifizierung/Technische-Richtlinien/TR-nach-Thema-sortiert/tr02102/tr02102_node.html}{TR-02102-1}
-    \item NCSC (NL): \href{https://english.ncsc.nl/publications/publications/2021/january/19/it-security-guidelines-for-transport-layer-security-2.1}{IT Security Guidelines for
+    \item ANSSI: \href{https://cyber.gouv.fr/le-referentiel-general-de-securite-version-20-les-documents}{RGS v2.0 annex B1}
+    \item NCSC (NL): \href{https://english.ncsc.nl/publications/publications/2025/06/26/security-guidelines-for-transport-layer-security-2025-05}{IT Security Guidelines for
     Transport Layer Security (TLS)\textsuperscript{*}}
-    \item \url{https://www.keylength.com/en/compare/}
+    \item {\scriptsize\url{https://www.keylength.com/en/compare/}} (convenient but outdated)
   \end{itemize}
 \end{frame}
 
@@ -383,7 +407,7 @@
 
   \pause
   Hybrid cryptosystem:
-  \begin{itemize}[<+(1)->]
+  \begin{itemize}
     \item \emph{key encapsulation mechanism} (KEM)
     \item \emph{data encapsulation scheme}
   \end{itemize}
@@ -393,11 +417,31 @@
   \begin{itemize}[<+(1)->]
     \item Not simply PK encryption: there are changes
     \item Key derivation functions (KDF) often used
-    \item Example: RSA-KEM (\href{https://datatracker.ietf.org/doc/html/rfc5990}{RFC 5990})
+    \item PQ-safe: ML-KEM (\href{https://csrc.nist.gov/pubs/fips/203/final}{FIPS 203})
   \end{itemize}
 
   \pause
-  We will talk about key exchange algorithms next week.
+  We will talk more about key exchange algorithms next week.
+\end{frame}
+
+\begin{frame}{KEMs}
+  A \emph{key encapsulation mechanism} is a triple of algorithms:
+  \begin{itemize}[<+(1)->]
+    \item $\GEN$ is a randomised \emph{key generation algorithm}: $(\PK,\SK)\gets\GEN(\cdot)$
+    \item $\Encaps$ is a randomised \emph{encapsulation algorithm}: $(k, c)\gets\Encaps(\PK)$
+    \item $\Decaps$ is a \emph{decapsulation algorithm}: $k\gets\Decaps(\SK, c)$.
+  \end{itemize}
+
+  \pause
+  Terminology:
+  \begin{itemize}[<+(1)->]
+    \item $\SK$ is the secret encapsulation key, $\PK$ is its public counterpart
+    \item $k$ is the shared secret key (symmetric key)
+    \item $c$ is the encapsulated secret, also called the \emph{encapsulation}
+  \end{itemize}
+
+  \pause
+  The scheme is \emph{functional} if $\Decaps_\SK(c) = k$ for $(k,c) \gets \Encaps(\PK)$.
 \end{frame}
 
 \begin{frame}{Signature scheme pitfall}
@@ -410,8 +454,8 @@
     \item Under no circumstance shall you do this!
     \item Generally it does not even work (formatting issues)
     \item Different security requirements
-    \item Use separate signing keys
-    \item Subtleties that you do not even know exist!
+    \item Key separation principle: use separate keys for different purposes
+    \item Subtleties existthat you do not even know exist!
   \end{itemize}
 
   \pause
@@ -421,9 +465,9 @@
 \begin{frame}{ASN.1}
   Abstract Syntax Notation One
   \begin{itemize}[<+(1)->]
-    \item Many encoding rules
-    \item Distinguished Encoding Rules (DER)
-    \item DER often used in cryptography: unequivocal
+    \item Many serialisation formats (encoding rules)
+    \item \enquote{DER} used in cryptography: unequivocal
+    \item \href{https://letsencrypt.org/docs/a-warm-welcome-to-asn1-and-der/}{\textit{A Warm Welcome to ASN.1 and DER}} by Let's Encrypt
   \end{itemize}
 
   \pause
@@ -433,6 +477,27 @@
     \item \url{https://lapo.it/asn1js/}
     \item \texttt{dumpasn1} (CLI)
   \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{PEM}
+  PEM-format is often used to store cryptographic keys and certificates.
+  \pause
+  \begin{itemize}
+    \item Base-64 encoded DER data with a header and footer
+    \item Header of type \texttt{-----BEGIN ***-----}
+    \item Footer of type \texttt{-----END ***-----}
+  \end{itemize}
+
+  \pause
+  E.g.
+  \begin{Verbatim}[fontsize=\scriptsize]
+-----BEGIN PRIVATE KEY-----
+MIIEugIBADANBgkqhkiG9w0BAQEFAASCBKQwggSgAgEAAoIBAQCia55HYo4DjM6H
+sVVls62L4hrbVOOB6KoGO+tMJ3qLSyB697JEDW7aRBkTaLL6viVD0fuysaZMD+qN
+...
+DYsJXzMRkVGNJ/ayDyc=
+-----END PRIVATE KEY-----
+  \end{Verbatim}
 \end{frame}
 
 \end{document}
