@@ -18,6 +18,7 @@ Week 2: Randomness, OTP & stream ciphers:
 Week 4: Public key cryptography:
 
 - [Estonian ID card flaw (ROCA)](https://cybersec.ee/2017/10/18/rsa-2048-bit-keys-in-estonian-id-cards-issued-after-october-2014-are-factorizable/)
+- [Introduction to ASN.1 DER](https://letsencrypt.org/docs/a-warm-welcome-to-asn1-and-der/)
 
 Week 5: DLP, DH, ECC
 
