@@ -20,6 +20,10 @@ def main():
         data = f.read()
         server_pk = ECC.import_key(data)
 
+    with open("eph.pem", "rt") as f:
+        data = f.read()
+        server_ephemeral = ECC.import_key(data)
+
     user_static = ECC.generate(curve="p384")
     user_ephemeral = ECC.generate(curve="p384")
 
@@ -29,6 +33,7 @@ def main():
     session_key = key_agreement(static_priv=user_static,
                                 static_pub=server_pk,
                                 eph_priv=user_ephemeral,
+                                eph_pub=server_ephemeral,
                                 kdf=kdf)
 
     message = "It's dangerous to go alone! Take this. 🗡️".encode("utf-8")
