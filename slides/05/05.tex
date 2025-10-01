@@ -4,7 +4,7 @@
 % Needed for ECC graph
 \usepackage{pgfplots}
 
-\title{ICS0026 Cryptography}
+\title{ICS0036 Cryptography}
 \subtitle{DL, DH \& ECC}
 \date{\today}
 \author{Taaniel Kraavi}
@@ -18,13 +18,13 @@
 \begin{frame}
   \titlepage
 \end{frame}
-
+ 
 \begin{frame}{Sets}
-  A \emph{set} is a collection of mathematical objects.
+  A \emph{set} is a collection of distinct (mathematical) objects.
   \begin{itemize}[<+(1)->]
-    \item No duplicate elements
     \item $x\in S$: element $x$ is a member of $S$ (belongs to)
     \item $x\notin S$: element $x$ is not a member of $S$ (does not belong to)
+    \item $n = \lvert S\rvert$: $S$ has $n$ elements (cardinality, size)
   \end{itemize}
 
   \pause
@@ -89,11 +89,11 @@
     \]
     \item Identity element: there is an element $e\in \GG$ s.t. for all $a\in \GG$,
     \[
-      a \circ e = e \circ a = a
+      a \circ e = a = e \circ a
     \]
     \item Inverse element: for each $a\in \GG$ there must exist $b\in \GG$ s.t.,
     \[
-      a \circ b = b \circ a = e
+      a \circ b = e = b \circ a
     \]
   \end{enumerate}
   \vspace*{-1em}
@@ -103,11 +103,22 @@
 
 \begin{frame}{Examples and bamboozles}
   Questions:
-  \begin{itemize}[<+(1)->]
-    \item Is $(\NN, +)$ a group?
-    \item Is $(\ZZ, +)$ a group?
-    \item Is $(\RR^*, \cdot)$ a group?
-  \end{itemize}
+  \begin{columns}[T]
+    \begin{column}{0.4\textwidth}
+        \begin{itemize}[<+(1)->]
+        \item Is $(\NN, +)$ a group?
+        \item Is $(\ZZ, +)$ a group?
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.4\textwidth}
+      \begin{itemize}[<+(1)->]
+        \item Is $(\ZZ^*, +)$ a group?
+        \item Is $(\RR^*, \cdot)$ a group?
+      \end{itemize}
+    \end{column}
+  \end{columns}
+
+  \vspace*{1em}
 
   \pause
   What we know as division on $\RR^*$ is simply the multiplicative inverse:
@@ -116,10 +127,12 @@
   \]
 
   \pause
-  Division seemingly makes no sense in $\ZZ_n^*$ hence we define multiplicative inverses through
+  In $\ZZ_p^*$ we define multiplicative inverses through:
   \[
-    a\cdot a^{-1} \equiv 1 \pmod{n}.
+    a\cdot a^{-1} \equiv 1 \pmod{p}.
   \]
+  \pause
+  The inverse $a^{-1}$ only exists if $\gcd(a,p) = 1$, i.e. when $a$ and $p$ are \emph{coprime}.
 \end{frame}
 
 \begin{frame}{Additive and multiplicative notation}
@@ -136,23 +149,22 @@
   \end{center}
 
   \pause
-  E.g. in $\ZZ_n^*$:
+  E.g. in the multiplicative group $\ZZ_p^*$ with $p$ prime:
 
   \begin{tabular}{r l}
-    \pause $ab$     & $(a \cdot b) \bmod{n}$\\
-    \pause $a+b$    & $(a + b) \bmod{n}$\\
-    \pause $a^b$    & $a^b \bmod{n}$\\
-    \pause $a^{-1}$ & $b$ s.t. $ab \equiv 1 \pmod{n}$
+    \pause $ab$     & $(a \cdot b) \bmod{p}$\\
+    \pause $a^b$    & $a^b \bmod{p}$\\
+    \pause $a^{-1}$ & $b$ s.t. $ab \equiv 1 \pmod{p}$
   \end{tabular}
 \end{frame}
 
 \begin{frame}{Cyclic groups}
   \pause
-  Let $\GG$ be a group, and let $g$ be an element of $\GG$.
+  Let $\GG$ be a  group, and let $g$ be an element of $\GG$.
 
-  $g$ is a \emph{generator} of $\GG$ denoted $\langle g\rangle$ if:
+  $g$ is a \emph{generator} of $\GG$, denoted $\langle g\rangle$,  if:
   \[
-    \GG = \{g^n:n\in\ZZ\} = \{\dots, g^{-1}, 1, g, g^2, g^3, \dots\}
+    \GG = \{g^q:q\in\ZZ\} = \{\dots, g^{-1}, 1, g, g^2, g^3, \dots\}
   \]
 
   \pause
@@ -180,43 +192,59 @@
   A \emph{safe} prime is a prime $p$ such that $p = 2q + 1$ with $q$ prime.
   \begin{itemize}[<+(1)->]
     \item Highly important in cryptography
-    \item Resilient to some special-purpose algorithms
     \item $\ZZ_p^*$ has $p-1$ elements
-    \item $\ZZ_p^*$ has a subgroup of $q$ elements (subgroup of prime order)
+    \item $\ZZ_p^*$ has a unique subgroup of $q$ elements (subgroup of prime order)
+    \item $\ZZ_p^*$ has no \enquote{useful} small subgroups
     \item Security for the discrete logarithm problem (DLP)
   \end{itemize}
+
+  \vspace*{1em}
+  \pause
+  The \emph{order} of a group, denoted $\lvert\GG\rvert$, is the number of elements in the group.
 \end{frame}
 
 \begin{frame}{Discrete logarithm problem (DLP)}
+  Setting:
   \begin{itemize}[<+(1)->]
     \item Let $p$ be a (large) safe prime such that $p = 2q + 1$ with $q$ prime.
     \item Fix a generator $g$ and define $\GG = \langle g \rangle = \{g^i :0 \le i < q\}$.
-    \begin{itemize}
-      \item E.g. subgroup of quadratic residues
-    \end{itemize}
-    \item Solving the following discrete logarithm is then considered \emph{intractable}:
-    \[
-      \forall y\in\GG: \log(y) = x \iff g^x \equiv y \pmod{p}\ .
-    \]
   \end{itemize}
 
+  \vspace*{1em}
+
   \pause
-  No longer intractable when quantum computers enter the market.
+  The following is then considered \emph{intractable}:
+  \[
+    \text{Find $x$ s.t. } g^x \equiv y \pmod{p}\ ,
+  \]
+  where $g, y, p$ are known.
+
+  \pause
+  No longer intractable when quantum computers enter the market!
 \end{frame}
 
 \begin{frame}{DLP security}
-  The DLP exists in other groups:
-  \begin{itemize}[<+(1)->]
-    \item Abstraction to multiplicative groups
+  The DLP exists in every finite cyclic group:
+  \pause
+  \begin{itemize}
     \item Not guaranteed to be hard in a \enquote{generic} group.
     \item Always research whether the DLP is intractable in a chosen group!
   \end{itemize}
 
-  \pause
-  \enquote{Standard} primes for non-EC groups defined in \href{https://datatracker.ietf.org/doc/html/rfc3526}{RFC 3526}.
+  \vspace*{1em}
 
   \pause
-  Some DLP \enquote{records}: \url{https://en.wikipedia.org/wiki/Discrete_logarithm_records}
+  Two common group \enquote{types}:
+  \begin{itemize}[<+(1)->]
+    \item Group of quadratic residues modulo a safe prime
+    \begin{itemize}
+      \item \enquote{Standard} primes defined in \href{https://datatracker.ietf.org/doc/html/rfc3526}{RFC 3526} ($\ge3072$ bits recommended)
+    \end{itemize}
+    \item \enquote{Cryptographic} elliptic curve groups (slide \ref{slide:curve-ex})
+  \end{itemize}
+
+  \pause
+  {\scriptsize\url{https://en.wikipedia.org/wiki/Discrete_logarithm_records}}
 \end{frame}
 
 \begin{frame}{Weak DLP group}
@@ -233,8 +261,8 @@
   Diffie-Hellman key exchange (DHKE) was the first known key-agreement protocol:
   \begin{itemize}[<+(1)->]
     \item Finite field DH is the \enquote{simplest}: \href{https://datatracker.ietf.org/doc/html/rfc7919}{RFC 7919} (DLP security)
-    \item \enquote{Standard} groups in \href{https://datatracker.ietf.org/doc/html/rfc3526}{RFC 3526}.
-    \item Different variants exists, e.g. ECDH on elliptic curves
+    \item \enquote{Standard} groups in \href{https://datatracker.ietf.org/doc/html/rfc3526}{RFC 3526}
+    \item Different variants exist, e.g. ECDH on elliptic curves
     \item Basis for more complex schemes
     \item \href{https://csrc.nist.gov/pubs/sp/800/56/a/r3/final}{NIST SP 800-56A Rev. 3}
   \end{itemize}
@@ -275,9 +303,9 @@
       \node (gx) at (eve.west) [xshift=-10px, yshift=10px] {$g^x$};
       \node (gy) at (eve.east) [xshift=10px, yshift=10px] {$g^y$};
 
-      \node[anchor=east] (m) at (-0.5, 0.25) {$x\gets\ZZ_q$};
+      \node[anchor=east] (m) at (-0.5, 0.25) {$x\getsu\ZZ_q$};
       \node[anchor=east] (enc) at (-0.5, -0.25) {$g^{xy}\gets\bigl(g^y\bigr)^x$};
-      \node[anchor=west] (m) at (8.8, 0.25) {$y\gets\ZZ_q$};
+      \node[anchor=west] (m) at (8.8, 0.25) {$y\getsu\ZZ_q$};
       \node[anchor=west] (enc) at (8.8, -0.25) {$g^{xy}\gets\bigl(g^x\bigr)^y$};
 
       \node (enc) at (eve.south) [yshift=-10px] {$g^{xy}$?};
@@ -299,25 +327,27 @@
     \item By default, DHKE is anonymous (no authentication)
     \item Secure against sniffing/eavesdropping, but not against MITM
     \item Easy to pick a weak group (cool \href{https://weakdh.org/imperfect-forward-secrecy-ccs15.pdf}{\textit{article}})
-    \item Susceptible to precomputation attacks: predefined groups/primes
+    \item Susceptible\textsuperscript{*} to precomputation attacks: predefined groups/primes
   \end{itemize}
 \end{frame}
 
 \begin{frame}{Perfect forward secrecy (PFS)}
+  \emph{Ephemeral} Diffie-Hellman (DHE, ECDHE):
   \begin{itemize}[<+->]
-    \item Use \emph{ephemeral} keys: ephemeral Diffie-Hellman (DHE) or ECDH
-    \item Generate short-term \emph{session} keys (vs. using long-term \emph{static} keys)
-    \item New ephemeral key for each session/transaction
-    \item Prevents decryption of past and future sessions if the session key is compromised
-    \item Prevents decryption of past sessions if the long-term key is compromised
-    \begin{itemize}
-      \item Long-term key still used for setting up the DHE/ECDH
-    \end{itemize}
-    \item See also \emph{\href{https://en.wikipedia.org/wiki/Double_Ratchet_Algorithm}{double ratchet}}
+    \item Server's long-term key used only for authentication / channel setup
+    \item One-time \emph{session} keys generated for each session/transaction
+    \item Prevents decryption of past sessions if  long-term key is compromised
+    \item Prevents decryption of other sessions if session key is compromised
   \end{itemize}
 
   \pause
   No absolute protection against future cryptanalysis.
+  \begin{itemize}
+    \item PFS offers protection only as long as the algorithm remains unbroken.
+  \end{itemize}
+
+  \pause
+  See also: \emph{\href{https://en.wikipedia.org/wiki/Double_Ratchet_Algorithm}{double ratchet}} for post-compromise confidentiality (e.g. Signal)
 \end{frame}
 
 \iffalse
@@ -392,21 +422,22 @@
 \end{frame}
 
 \begin{frame}{ElGamal's usefulness}
+  Nifty properties:
   \begin{itemize}[<+(1)->]
-    \item Semantically secure (IND-CPA) in a proper group
+    \item IND-CPA by construction (in a proper group)
     \item ElGamal signature scheme exists
-    \item Convenient for threshold cryptography
+    \item Can be done on elliptic curves for better performance
     \item Multiplicatively homomorphic
+    \item Convenient for threshold cryptography
     \item \enquote{Lifted} ElGamal has additive properties (e-voting)
-    \item Elliptic curve version exists
   \end{itemize}
 
   \pause
-  Way too many variations: \url{https://ibm.github.io/system-security-research-updates/2021/07/20/insecurity-elgamal-pt1}
+  Way too many variations: {\scriptsize\url{https://ibm.github.io/system-security-research-updates/2021/07/20/insecurity-elgamal-pt1}}
 \end{frame}
 
 \begin{frame}{Homomorphic encryption}
-  Perform meaningful operations on the ciphertexts without the secret key.
+  Perform meaningful operations on a ciphertext without the secret key.
 
   \vspace*{1em}
 
@@ -434,13 +465,16 @@
     \item $\ENC_\PK(m_1; r_1) \cdot \ENC_\PK(m_2; r_2) = \ENC_\PK(m_1m_2; r_1 + r_2)$
   \end{itemize}
 
+  \vspace*{1em}
+
   \pause
   Re-randomisation:
   \begin{itemize}
     \item $\ENC_\PK(m_1; r_1) \cdot \ENC_\PK(1; r_2) = \ENC_\PK(m_1; r_1 + r_2)$
   \end{itemize}
+\end{frame}
 
-  \pause
+\begin{frame}{\enquote{Lifted} ElGamal}
   Additive in the exponent:
   \begin{itemize}[<+(1)->]
     \item Encrypt $g^m$ instead of $m$: $\ENC^*_\PK(m; r) = \bigl(g^r, g^m \cdot \PK^r\bigr)$
@@ -537,7 +571,7 @@
   Complex structure
   \begin{itemize}[<+(1)->]
     \item Higher bar of expertise
-    \item Supporting encryption is sus
+    \item Supporting PK-encryption is sus (data encoding \enquote{problem})
     \item Questionable parameter generation: are there backdoors?
     \item Different side-channel concerns
     \item Patents, patents, and patents
@@ -555,21 +589,22 @@
   \pause
   Some links:
   \begin{itemize}
-    \item \url{https://blog.cryptographyengineering.com/2015/01/14/hopefully-last-post-ill-ever-write-on/}
-    \item \url{https://www.schneier.com/blog/archives/2007/11/the_strange_sto.html}
-    \item \url{https://youtu.be/nybVFJVXbww?si=_fn6J-TD7HnvfPtA}
+    \item {\scriptsize\url{https://blog.cryptographyengineering.com/2015/01/14/hopefully-last-post-ill-ever-write-on/}}
+    \item {\scriptsize\url{https://www.schneier.com/blog/archives/2007/11/the_strange_sto.html}}
+    \item {\scriptsize\url{https://youtu.be/nybVFJVXbww?si=_fn6J-TD7HnvfPtA}}
   \end{itemize}
 \end{frame}
 
 \begin{frame}{Well-known curves}
+  \label{slide:curve-ex}
   Some popular curves include:
   \begin{itemize}[<+(1)->]
     \item \textbf{Curve25519} (D. J. Bernstein): good default choice
     \begin{itemize}
       \item Ed25519 EdDSA signatures
-      \item X25519 DH over curve25519
+      \item X25519 DH over Curve25519
     \end{itemize}
-    \item \textbf{P-256}, P-384, P-521 (NIST): FIPS-approved
+    \item P-256, \textbf{P-384}, P-521 (NIST): FIPS-approved
     \begin{itemize}
       \item secp256r1, secp384r1, secp521r1 
     \end{itemize}
@@ -582,10 +617,12 @@
 \begin{frame}{Resources}
   Some resources:
   \begin{itemize}[<+(1)->]
-    \item NIST-approved curves: \href{https://csrc.nist.gov/pubs/sp/800/186/final}{\textit{NIST SP 800-186}}.
-    \item Bernstein's \href{https://safecurves.cr.yp.to}{\emph{SafeCurves}} guide (arguably biased and a bit outdated).
+    \item NIST-approved curves for key establishment: \href{https://csrc.nist.gov/pubs/sp/800/186/final}{\textit{NIST SP 800-186}}
+    \item NIST-approved curves for digital signatures: \href{https://csrc.nist.gov/pubs/fips/186-5/final}{\textit{FIPS 186-5 (DSS)}}
+    \item Bernstein's \href{https://safecurves.cr.yp.to}{\emph{SafeCurves}} guide (arguably biased and a bit outdated)
     \item \href{https://www.keylength.com/en/}{\textit{keylength.com}}
     \item \href{https://cryptobook.nakov.com/asymmetric-key-ciphers/elliptic-curve-cryptography-ecc}{\textit{Nakov's ECC for developers}} (a high-level explanation for devs)
+    \item Jan Jancar's \href{https://neuromancer.sk/std/}{\textit{Standard curve database}}
   \end{itemize}
 
   \pause
