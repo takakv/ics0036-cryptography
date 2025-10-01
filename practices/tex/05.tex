@@ -29,8 +29,17 @@ breaklines=true
   During last week's practice we learnt about the following three OpenSSL tools:
   \begin{itemize}
     \item \href{https://docs.openssl.org/master/man1/openssl-genpkey/}{\texttt{genpkey}}: utility for generating a private key (RSA, EC) or parameters (DH, DSA, EC)
+    \begin{itemize}
+      \item Alternatively: \href{https://docs.openssl.org/master/man1/openssl-genrsa/}{\texttt{genrsa}}, \href{https://docs.openssl.org/master/man1/openssl-dhparam/}{\texttt{dhparam}}, \href{https://docs.openssl.org/master/man1/openssl-ecparam/}{\texttt{ecparam}}
+    \end{itemize}
     \item \href{https://docs.openssl.org/master/man1/openssl-pkey/}{\texttt{pkey}}: utility for processing keys, e.g. change their format (PEM, DER) or passphrase
+    \begin{itemize}
+      \item Alternatively: \href{https://docs.openssl.org/master/man1/openssl-rsa/}{\texttt{rsa}}, \href{https://docs.openssl.org/master/man1/openssl-ec}{\texttt{ec}}
+    \end{itemize}
     \item \href{https://docs.openssl.org/master/man1/openssl-pkeyutl/}{\texttt{pkeyutl}}: utility for actual operations with keys (e.g. encryption or signing)
+    \begin{itemize}
+      \item \href{https://docs.openssl.org/master/man1/openssl-rsautl/}{\texttt{rsautl}} is deprecated, do not use it
+    \end{itemize}
   \end{itemize}
 
   To generate parameters instead of a private key with the \texttt{genpkey} utility, you must use the \texttt{-genparam} option.
@@ -110,14 +119,16 @@ openssl genpkey -genparam -algorithm dh \
   \textit{Task.}
   For this task do the following:
   \begin{enumerate}
-    \item Acquire the server's (Discord bot's) long-term P-384 EC public key.
+    \item Acquire the server's (Discord bot's) long-term P-384 EC public key and ephemeral key.
     \item Generate your own long-term P-384 public and ephemeral key.
-    \item Derive the shared secret with \href{https://pycryptodome.readthedocs.io/en/latest/src/hash/shake128.html#shake128}{\texttt{SHAKE128}} as the KDF to generate a \enquote{partial} ephemeral session key.
+    \begin{itemize}
+      \item NB! In practice, the client does not need to have a static key for DHE: the server signs its ephemeral key and the static key is not used for key derivation.
+      Here we generate it to practice key management.
+    \end{itemize}
+    \item Derive the shared secret with \href{https://pycryptodome.readthedocs.io/en/latest/src/hash/shake128.html#shake128}{\texttt{SHAKE128}} as the KDF to generate an ephemeral session key.
     
-    Note that I call the session key partial here.
-    Good practice is that both the server and the client contribute to the ephemeral session key.
-    In this case, only you contribute an ephemeral component while the server only provides a static key.
-    The reason for that is to make calling the Discord bot simpler.
+    To get PFS, both the server and the client must contribute to the ephemeral session key.
+    Otherwise it becomes static-ephemeral DH, which does not provide PFS.
 
     Some more info on static-ephemeral DH \href{https://crypto.stackexchange.com/a/61760}{\emph{here}}.
 
