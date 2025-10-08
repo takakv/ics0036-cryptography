@@ -10,7 +10,7 @@
 % Needed for argon2id hash to fit
 \setmonofont{cmuntt}
 
-\title{ICS0026 Cryptography}
+\title{ICS0036 Cryptography}
 \subtitle{Hash functions, KDFs \& MACs}
 \date{\today}
 \author{Taaniel Kraavi}
@@ -27,10 +27,10 @@
 
 \begin{frame}{Hash functions}
   \pause
-  A map from arbitrary sized data to fixed-size values\textsuperscript{*}.
+  A map from arbitrary sized data to fixed-size values.
   \begin{itemize}[<+(1)->]
     \item $h:\{0,1\}^* \to \{0,1\}^n$
-    \item \textsuperscript{*}Some functions provide variable-length output
+    \item Extendable-output functions (XOF): arbitrary-length output
     \item Values are called \emph{hashes} or \emph{digests}
     \item Deterministic
   \end{itemize}
@@ -85,11 +85,35 @@
     \item Collision resistance (infeasible to find any)
     \item (First) preimage resistance (one-wayness)
     \item Second preimage resistance
-    \item Uniform output distribution
   \end{itemize}
 
+  \vspace*{1em}
+
   \pause
-  Moreover, it must exhibit a good avalanche effect.
+  A CHF should exhibit the following properties:
+  \begin{itemize}[<+(1)->]
+    \item Uniform output distribution
+    \item Avalanche effect
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Avalanche effect}
+  An ideal cryptographic hash function behaves like a random function.
+  \begin{itemize}[<+(1)->]
+    \item Changing just a single input re-randomises the output
+    \item Flip $50\%$ bits (on average)
+    \item Used to instantiate the \emph{random oracle model} (ROM) (does not hold in practice)
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  Example:
+  \begin{itemize}
+    \item {\small\texttt{md5sum(0x80) = 8d39dd7eef115ea6975446ef4082951f}}
+    \item {\small\texttt{md5sum(0x81) = cd25041f9f36811b04ab3015805fe816}}
+    \pause\item $83/128$ bits changed
+  \end{itemize}
 \end{frame}
 
 \begin{frame}{Different resistances}
@@ -134,6 +158,7 @@
 \begin{frame}{Different resistances}
   Collision resistance $\implies$ second preimage resistance.
   \begin{itemize}[<+(1)->]
+    \item If you cannot find any collision, you cannot find a specific one
     \item 2\textsuperscript{nd} preimage resistance:
     \begin{itemize}
       \item harder problem
@@ -151,6 +176,23 @@
     \item Attacks due to constructions may exist
     \item Length extension attack
   \end{itemize}
+\end{frame}
+
+\begin{frame}{CHFs and integrity}
+  CHFs enable integrity verification:
+  \begin{itemize}[<+(1)->]
+    \item 2\textsuperscript{nd} PIR: cannot change data without changing the hash
+    \item Hash the data and compare it to a provided hash
+    \begin{itemize}
+      \item If the hashes are equal, data has not been changed
+    \end{itemize}
+    \item Danger: an attacker may replace the hash
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  CHFs have many more uses, some of which we will see later.
 \end{frame}
 
 \begin{frame}{Similar hashes}
@@ -197,25 +239,7 @@
   For critical applications, always check hashes programmatically!
 \end{frame}
 
-\begin{frame}{Avalanche effect}
-  An ideal cryptographic hash function should behave like a random function.
-  \begin{itemize}[<+(1)->]
-    \item Changing just a single input should re-randomise the output
-    \item Flip $50\%$ bits (on average)
-    \item Random oracle model (ROM) (does not hold in practice)
-  \end{itemize}
-
-  \vspace*{1em}
-
-  \pause
-  Example:
-  \begin{itemize}
-    \item {\small\texttt{md5sum(0x80) = 8d39dd7eef115ea6975446ef4082951f}}
-    \item {\small\texttt{md5sum(0x81) = cd25041f9f36811b04ab3015805fe816}}
-    \pause\item $83/128$ bits changed
-  \end{itemize}
-\end{frame}
-
+\iffalse
 \begin{frame}{CHF use cases}
   CHFs are a fundamental primitive in cryptography:
   \begin{columns}
@@ -257,6 +281,7 @@
   \pause
   Many more use cases exist (also non-infosec related).
 \end{frame}
+\fi
 
 \begin{frame}{What CHFs are not}
   CHFs are not suitable for encryption:
@@ -299,12 +324,12 @@
   \begin{itemize}[<+(1)->]
     \item SHA-2 family
     \begin{itemize}
-      \item SHA-224, SHA-256, SHA-384, SHA-512, SHA-512/224, SHA-512/256
+      \item (SHA-224), SHA-256, SHA-384, SHA-512, SHA-512/224, SHA-512/256
       \item Be mindful of length-extension attacks
     \end{itemize}
     \item SHA-3 family (Keccak)
     \begin{itemize}
-      \item SHA3-224, SHA3-256, SHA3-384, SHA3-512
+      \item (SHA3-224), SHA3-256, SHA3-384, SHA3-512
       \item SHAKE128, SHAKE256 (variable length output)
     \end{itemize}
     \item BLAKE functions
@@ -316,7 +341,7 @@
 \end{frame}
 
 \begin{frame}{Length extension attacks}
-  Given $H(m_1)$ and $\lvert m_1\rvert$, an adversary might compute $H(m_1 || m_2)$ for some $m_2$.
+  Given $H(m_1)$ and $\lvert m_1\rvert$, an adversary can compute $H(m_1 || m_2)$ for some $m_2$.
   \begin{itemize}[<+(1)->]
     \item Do not use LE-vulnerable functions for message authentication codes!
     \item Always think whether the attack is a concern!
@@ -341,15 +366,12 @@
 
 \begin{frame}{SHA-2}
   Secure Hash Algorithm 2
-  \begin{itemize}[<+(1)->]
+  \begin{itemize}
     \item Designed by the NSA
     \item Published in 2001
     \item \href{https://csrc.nist.gov/pubs/fips/180-4/upd1/final}{FIPS 180-4 (Secure Hash Standard)}
-    \item Merkle-Damgård construction (like SHA-1 before it)
-    \item Multiple rounds
-    \begin{itemize}
-      \item Attacks exist against fewer rounds
-    \end{itemize}
+    \pause
+    \item Merkle-Damgård construction (beware of length-extensions!) 
   \end{itemize}
 \end{frame}
 
@@ -358,9 +380,11 @@
   \begin{itemize}[<+(1)->]
     \item NIST hash function competition (announced 2007)
     \item Need for an alternative construction (to complement SHS)
-    \item Published in 2016: won by Keccak
-    \item \href{https://csrc.nist.gov/pubs/fips/202/final}{FIPS 202}
+    \item Won by Keccak in 2012
+    \item SHA-3 standardised in 2015 (\href{https://csrc.nist.gov/pubs/fips/202/final}{FIPS 202})
+    \pause
     \item Sponge construction (not vulnerable to LE)
+    \pause
     \item Variable length output variants (SHAKE128 \& SHAKE256)
   \end{itemize}
 \end{frame}
@@ -371,15 +395,6 @@
     \item Link data with the previous element (linked list)
     \item Any modification to chain elements voids the subsequent chain
     \item The most recent element must be monitored
-  \end{itemize}
-
-  \pause
-  Hash trees (Merkle trees):
-  \begin{itemize}[<+(1)->]
-    \item Improvement to the linear nature of the chain
-    \item Link elements in a tree structure (e.g. binary tree)
-    \item Verify trail using intermediate nodes
-    \item The root node must be monitored
   \end{itemize}
 \end{frame}
 
@@ -404,6 +419,16 @@
     \item 2\textsuperscript{nd} node: $x_2 = H(x_1) = H\bigl(H(0)\bigr)$
     \item \dots
     \item i\textsuperscript{th} node: $x_i = H(x_{i-1}) = H\Bigl(H\bigl(\dots H(0)\dots\bigr)\Bigr)$
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Hash-based structures}
+  Hash trees (Merkle trees):
+  \begin{itemize}[<+(1)->]
+    \item Improvement to the linear nature of the chain
+    \item Link elements in a tree structure (e.g. binary tree)
+    \item Verify trail using intermediate nodes
+    \item The root node must be monitored
   \end{itemize}
 \end{frame}
 
@@ -453,47 +478,160 @@
   \end{center}
 
   \pause
-  {\scriptsize\url{https://x.com/Guardtime/status/1836338823896158506} most recent root}
+  {\scriptsize\url{https://x.com/Guardtime/status/1968214633048838434} most recent root}
 \end{frame}
 
-\begin{frame}{KDFs}
-  Key derivation functions:
+\begin{frame}{Message authentication codes (MACs)}
+  Authenticate and verify a message's integrity:
   \begin{itemize}[<+(1)->]
-    \item Derive one or many keys from secret data
-    \begin{itemize}
-      \item obtain keys of a required format
-      \item e.g. hybrid encryption (cryptographic KDF)
-    \end{itemize}
-    \item Stretch and/or strengthen keys from the input data:
-    \begin{itemize}
-      \item user-provided passwords: short and low entropy
-      \item protect passwords (password `hashing')
-      \item increase brute-force resistance
-      \item e.g. securely store passwords in \texttt{/etc/shadow}
-      \item e.g. symmetric key from a password (password-based KDF)
-    \end{itemize}
+    \item authentication \emph{tag} requires a shared secret to compute
+    \item any party with the secret can create valid MACs
+    \item it should be infeasible to compute a valid MAC without the secret
+    \item if the message is tampered with, the tag should not validate
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Naive construction}
+  Naive construction: SHA-256 with a secret key
+  \begin{itemize}[<+(1)->]
+    \item Set the tag $t = \mathsf{SHA\text{-}256}(k||m)$
+    \item Recipient verifies $t$ by recomputing the hash
+    \item Length extension attacks! (and other subtle attacks)
   \end{itemize}
 
   \vspace*{1em}
 
   \pause
-  Use the right KDF for the right task!
-  \begin{itemize}
-    \pause\item Password hashing $\to$ key stretching: do not use CHFs!
+  Do not build your own MACs!
+  \begin{itemize}[<+(1)->]
+    \item Use special-purpose MAC algorithms
+    \item Use parameters suggested by reputable sources
+    \item Not all MACs are hash-based, e.g. CBC-MAC
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Key stretching}
+\begin{frame}{What to use}
+  First, check what the documentation/standard recommends for your use case.
+  \begin{itemize}
+    \item E.g. Poly1305 for ChaCha20
+  \end{itemize}
 
+  \vspace*{1em}
+
+  \pause
+  In a standalone setting, use
+  \begin{itemize}[<+(1)->]
+    \item HMAC: hash-based message authentication code
+    \begin{itemize}
+      \item Commonly used with SHA-2 family hashes
+      \item Usable with any iterative CHF
+      \item \href{https://datatracker.ietf.org/doc/html/rfc2104}{RFC 2104}, \href{https://csrc.nist.gov/pubs/fips/198-1/final}{FIPS 198-1} (migration in progress to \href{https://csrc.nist.gov/pubs/sp/800/224/ipd}{SP 800-224})
+    \end{itemize}
+    \item KMAC: Keccak MAC
+    \begin{itemize}
+      \item \href{https://csrc.nist.gov/pubs/sp/800/185/final}{NIST SP 800-185} (planned \href{https://csrc.nist.gov/news/2025/decision-to-update-fips-202-and-revise-sp-800-185}{\textit{revision}})
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{What to use}
+  For authenticated encryption, stick with the following combos:
+  \begin{itemize}[<+(1)->]
+    \item AES-GCM(-SIV for nonce reuse resistance)
+    \item (X)ChaCha20-Poly1305
+    \item AES-CTR/AES-CBC + HMAC-SHA2XX
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  Encrypt first, then MAC the ciphertext: Encrypt-then-MAC (EtM).
+  \begin{itemize}[<+(1)->]
+    \item Include the nonce/iv in the MAC
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  Never reuse nonces under a same key!
+\end{frame}
+
+\begin{frame}{Using MACs}
+  You should almost always use a MAC in symmetric settings!
+  \begin{itemize}[<+(1)->]
+    \item Encrypt-then-MAC (EtM): authenticates the ciphertext too.
+    \item Do not use the same key for encryption and the MAC.
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  MACs work with symmetric ciphers and in hybrid systems:
+  \begin{itemize}[<+(1)->]
+    \item The public-key `equivalent' is digital signatures
+    \item We will cover signatures next week
+    \item A signature scheme can replace a MAC in \emph{some} contexts.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Key derivation functions (KDF)}
+  1. Derive one or many keys from high-entropy secret data:
+  \begin{itemize}[<+(1)->]
+    \item obtain keys of a required format
+    \item \enquote{Standard} choice: HKDF (\href{https://datatracker.ietf.org/doc/html/rfc5869}{RFC 5869})
+    \item e.g. hybrid encryption (cryptographic KDF, \enquote{fast KDF})
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  2. Stretch and/or strengthen keys from the input data:
+  \begin{itemize}[<+(1)->]
+    \item user-provided passwords: short and low entropy
+    \item increased brute-force resistance needed
+    \item e.g. symmetric key from a password (password-based KDF, \enquote{slow KDF})
+    \item e.g. securely store passwords in \texttt{/etc/shadow}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{NB!}
+  Use the right tool for the right task!
+  \pause
+  \begin{itemize}
+    \item Deriving a symmetric key from a DH secret:
+    \begin{itemize}
+      \item high-entropy key derivation: use HKDF
+      \item The final result is secret and used as a key
+    \end{itemize}
+    \pause
+    \item Deriving keys from passwords:
+    \begin{itemize}
+      \item key stretching: do not use CHFs!
+      \item The final result is secret and used as a key
+    \end{itemize}
+    \pause
+    \item Storing passwords with validation requirements (e.g. social media DB)
+    \begin{itemize}
+      \item colloquially: password \enquote{hashing}
+      \item key stretching: do not use CHFs!
+      \item The final result is public and used for comparison
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Password hashing pt. 1}
   \pause
   Introduce randomness with a \emph{salt}:
   \begin{itemize}[<+(1)->]
     \item similar to a nonce/IV: \emph{always} use but \emph{do not re-use}
     \item use \emph{before} hashing to change the output
     \item store the salt alongside the hash, it is \emph{not secret}
+    \item prevents direct comparison (e.g. different users, same password)
     \item prevents pre-computation attacks (e.g. rainbow tables) for long-enough salts
   \end{itemize}
-  
+\end{frame}
+
+\begin{frame}{Password hashing pt. 2}
   \pause
   Increase execution time/resources needed:
   \begin{itemize}[<+(1)->]
@@ -506,7 +644,6 @@
     \item different use-cases: different parameters (social media login vs. FDE)
     \item use at least the recommended minimum params (KDF-dependent)
   \end{itemize}
-
 \end{frame}
 
 \begin{frame}[fragile]{Salted password validation}
@@ -535,12 +672,12 @@
 \end{frame}
 
 \begin{frame}{Peppering}
-  A pepper is a secret data used to protect passwords:
+  A pepper is a secret used to protect passwords without encryption:
   \begin{itemize}[<+(1)->]
-    \item is shared among all passwords in a database
+    \item shared among all passwords in a database
     \item secret, and not stored with the password
     \begin{itemize}
-      \item store on a HSM or a vault
+      \item store on an HSM or a digital vault
       \item if the DB can be breached, what else can...
     \end{itemize}
     \item trickier to use for questionable benefit
@@ -550,8 +687,9 @@
       \item lose the pepper = credentials are void
     \end{itemize}
   \end{itemize}
+\end{frame}
 
-  \pause
+\begin{frame}{Peppering}
   Peppering can work for your personal passwords:
   \begin{itemize}[<+(1)->]
     \item use for critical passwords in your password manager
@@ -579,90 +717,6 @@
 
   \pause
   Suggested parameters in \href{https://datatracker.ietf.org/doc/html/rfc9106\#name-parameter-choice}{RFC9106} and the OWASP cheat sheet.
-\end{frame}
-
-\begin{frame}{Message authentication codes (MACs)}
-  Authenticate and verify a message's integrity:
-  \begin{itemize}[<+(1)->]
-    \item authentication \emph{tag} requires a shared secret to compute
-    \item any party with the secret can create valid MACs
-    \item it should be infeasible to compute a valid MAC without the secret
-    \item if the message is tampered with, the tag should not validate
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Naive construction}
-  Naive construction: SHA-256 with a secret key
-  \begin{itemize}[<+(1)->]
-    \item Set the tag $t = \mathsf{SHA\text{-}256}(k||m)$
-    \item Recipient verifies $t$ by recomputing the hash
-    \item Length extension attacks! (and other subtle attacks)
-  \end{itemize}
-
-  \vspace*{1em}
-
-  \pause
-  Do not build your own MACs!
-  \begin{itemize}[<+(1)->]
-    \item Use special-purpose MAC algorithms.
-    \item Use parameters suggested by reputable sources
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{What to use}
-  First, check what the documentation/standard recommends for your use case.
-
-  \vspace*{1em}
-
-  \pause
-  In a standalone setting, use
-  \begin{itemize}[<+(1)->]
-    \item HMAC (\href{https://csrc.nist.gov/pubs/fips/198-1/final}{FIPS 198-1}): hash-based message authentication code
-    \item KMAC (\href{https://csrc.nist.gov/pubs/sp/800/185/final}{NIST SP 800-185}): Keccak MAC
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{What to use}
-  For authenticated encryption, stick with the following combos:
-  \begin{enumerate}[<+(1)->]
-    \item XChaCha20-Poly1305
-    \item AES-GCM-SIV (nonce reuse resistance)
-    \item ChaCha20-Poly1305
-    \item AES-GCM
-    \item AES-CTR/AES-CBC + HMAC-SHA2 (only if none of the above is possible)
-  \end{enumerate}
-
-  \vspace*{1em}
-
-  \pause
-  Encrypt first, then MAC the ciphertext: Encrypt-then-MAC (EtM).
-  \begin{itemize}[<+(1)->]
-    \item Include the nonce/iv in the MAC
-  \end{itemize}
-
-  \vspace*{1em}
-
-  \pause
-  Never reuse nonces under a same key!
-\end{frame}
-
-\begin{frame}{Using MACs}
-  You should almost always use a MAC in symmetric settings!
-  \begin{itemize}[<+(1)->]
-    \item Not needed if solid authentication is integrated into the scheme.
-    \item Encrypt-then-MAC (EtM): authenticates the ciphertext too.
-    \item Do not use the same key for encryption and the MAC.
-  \end{itemize}
-
-  \vspace*{1em}
-
-  \pause
-  MACs work with symmetric ciphers and in hybrid systems:
-  \begin{itemize}[<+(1)->]
-    \item The public-key `equivalent' is digital signatures
-    \item We will cover signatures next week
-    \item A signature scheme can replace a MAC in \emph{some} contexts.
-  \end{itemize}
 \end{frame}
 
 \end{document}
