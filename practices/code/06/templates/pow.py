@@ -29,7 +29,7 @@ def bruteforce(seed: bytes, difficulty: int = 0) -> tuple[int, bytes]:
 
 def main():
     difficulty = 25
-    seed = b"ICS0026"
+    seed = b"ICS0036"
 
     start = datetime.datetime.now()
     nonce, res = bruteforce(seed, difficulty)
