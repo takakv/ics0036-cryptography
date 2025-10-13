@@ -1,7 +1,7 @@
 \graphicspath{ {../../images/} }
 \usetikzlibrary{external}
 
-\title{ICS0026 Cryptography}
+\title{ICS0036 Cryptography}
 \subtitle{Digital signatures \& PKI}
 \date{\today}
 \author{Taaniel Kraavi}
@@ -19,9 +19,10 @@
 \begin{frame}{Authenticity of data}
   Authenticity:
   \begin{itemize}[<+(1)->]
-    \item Asserts data integrity: not modified in transit
-    \item Authenticates the data source: sent by someone we know\textsuperscript{*}
+    \item Integrity protection: data modification can be detected
+    \item Source authenticity: data sender can be identified
     \item Does not guarantee authorisation!
+    \item Does not guarantee the correctness of the content!
   \end{itemize}
 
   \pause
@@ -29,9 +30,11 @@
   \begin{itemize}[<+(1)->]
     \item Message authentication codes (MAC)
     \item Issuing \& verification with the same key
-    \item Secret knowledge or possession
-    \item Key exchange problem
-    \item \emph{Repudiation} problem
+    \begin{itemize}
+      \item Secret knowledge or possession
+      \item Key exchange problem
+      \item \emph{Repudiation} problem
+    \end{itemize}
   \end{itemize}
 \end{frame}
 
@@ -44,16 +47,15 @@
       \item a secret \emph{signing key} known to the signer
     \end{itemize}
     \item publicly verifiable: signatures are \emph{transferable}
-    \item identification becomes possible\textsuperscript{*}
+    \item identification becomes possible
     \begin{itemize}
-      \item keys are personal
-      \item verification for a specific signer
-      \item signatures are \emph{non-interactive} identification schemes\textsuperscript{*}
+      \item keys are personal $\implies$ personal link
+      \item identification is \emph{non-interactive} (NB! replay attacks)
     \end{itemize}
     \item \emph{non-repudiation}: you cannot deny your signature
-    \item how to tie identity with information?
+    \item how \enquote{informative} is the identity?
     \begin{itemize}
-      \item legal identification vs tracing
+      \item e.g. legal identification vs entity tracing
     \end{itemize}
   \end{itemize}
 \end{frame}
@@ -72,7 +74,7 @@
     \item $\SK$ is the private/secret key also called the \emph{signing key}
     \item $\PK$ is the public key also called the \emph{verification key}
     \item $b$ is the verification result (bit): $1$ meaning valid, $0$ meaning invalid
-    \item $\sigma$ is a valid \emph{signature} on $m$ if $b = 1$
+    \item $\sigma$ is a valid \emph{signature} on $m$ by $\SK$ if $b = 1$
   \end{itemize}
 
   \pause
@@ -117,7 +119,7 @@
     \item \emph{Key only attack.}
     The adversary has access only to the public key $\PK$.
     \item \emph{Chosen-message attack.}
-    Besides having $\PK$, the adversary can query a list of valid signatures $(m_1, \sigma_1), \dots, (m_n, \sigma_n)$.
+    The adversary can adaptively request signatures on messages of its choice.
   \end{itemize}
 
   \pause
@@ -133,20 +135,20 @@
   A \emph{secure} scheme is secure against the \emph{one-more signature attack}:
   \begin{itemize}[<+(1)->]
     \item chosen-message attack + existential forgery
-    \item existentially unforgeable under an adaptive chosen-message attack
+    \item existential unforgeability under chosen-message attack (EUF-CMA)
   \end{itemize}
 \end{frame}
 
 \begin{frame}{How to sign?}
   Hints:
-  \begin{itemize}[<+(1)->]
+  \begin{itemize} 
     \item Messages can be large
     \item PK systems do not operate on arbitrary size data
     \item Different messages: different signatures
   \end{itemize}
 
   \pause
-  Common approach:
+  Hash-and-sign paradigm:
   \begin{itemize}[<+(1)->]
     \item cryptographic hash: message representative
     \item hash and sign the hash (hash used in the algorithm)
@@ -180,8 +182,7 @@
 \begin{frame}{RSA-PSS parameters}
   RSA-PSS uses a mask generation function (MGF) for the padding
   \begin{itemize}[<+(1)->]
-    \item Similar to a cryptographic hash function
-    \item Variable length output
+    \item Essentially an XOF (extendable-output function)
     \item Specifically MGF1: iterative hashing with counter
     \item MGF1 also used in RSA-OAEP
   \end{itemize}
@@ -203,18 +204,19 @@
     \item no message to hide
   \end{itemize}
 
+  \vspace*{1em}
+
   \pause
-  Nonces protect the key in many constructions:
+  Ephemeral randomness protects the key in many constructions:
   \begin{itemize}[<+(1)->]
-    \item nonce leak might allow secret recovery
-    \item nonce reuse might allow secret recovery
-    \item conclusion: nonces must be unique and hard to find
-    \item (secrecy over nondeterminism)
+    \item a leak might allow secret recovery
+    \item reuse might allow secret recovery
   \end{itemize}
 
   \pause
   Poor randomness is catastrophic in many schemes!
   \begin{itemize}[<+(1)->]
+    \item (EC)DSA, Schnorr signatures
     \item Good randomness helps with uniqueness and secrecy
   \end{itemize}
 \end{frame}
@@ -231,8 +233,8 @@
   Pros of randomness:
   \begin{itemize}[<+(1)->]
     \item Typically less reliance on the security of primitives
-    \item Easier to prove secure
-    \item `More robust' against partial breakage
+    \item \enquote{Easier} to prove security
+    \item \enquote{More robust} against partial breakage
   \end{itemize}
 
   \pause
@@ -246,9 +248,9 @@
   \pause
   Digital Signature Algorithm (DSA):
   \begin{itemize}[<+(1)->]
-    \item DL-based (variant of Schnorr \& ElGamal)
+    \item Hardness of the DLP
+    \item Inspired by Schnorr signatures (historical patent reasons)
     \item Part of DSS versions 1--4, removed in version 5 (2023)
-    \item ECDSA: Elliptic Curve DSA
     \item \href{https://datatracker.ietf.org/doc/html/rfc6979}{\texttt{RFC 6979}}: deterministic DSA \& ECDSA
   \end{itemize}
 
@@ -256,9 +258,9 @@
   Sony 2013 PS3 attack:
   \begin{itemize}
     \item ECDSA software signing-key recovered
-    \item Caused by nonce-reuse (Sony implementation issue)
+    \item Caused by randomness reuse (Sony implementation issue)
   \end{itemize}
-
+ 
   \pause
   Do not use DSA! Do not default to ECDSA.
 \end{frame}
@@ -268,11 +270,11 @@
   \begin{itemize}[<+(1)->]
     \item Not to be confused with DSA \& ECDSA: different algorithm entirely
     \item Designed by \alert{Bernstein} et al.
+    \item Deterministic
     \item Based on twisted Edwards Curves (a model of ECs)
     \item High performance
     \item Designed with side-channel safety in mind
     \item Ed25519 (Curve25519 with SHA512) \& Ed448 (Curve448 with SHAKE256)
-    \item Deterministically chosen nonce
   \end{itemize}
 
   \pause
@@ -291,7 +293,7 @@
       \item Forbidden to use it for non-signing purposes (e.g. key establishment)
       \item Deterministic \& nondeterministic variants
     \end{itemize}
-    \item Deterministic EdDSA is allowed
+    \item EdDSA is allowed
     \begin{itemize}
       \item Both Ed25519 and Ed448 variants
       \item Variants differ a bit from the RFC
@@ -325,7 +327,7 @@
 \end{frame}
 
 \begin{frame}{PQ signatures}
-  Post-quantum safe signature schemes chosen by NIST:
+  Quantum-safe signature schemes chosen by NIST:
   \begin{itemize}[<+(1)->]
     \item CRYSTALS-Dilithium (lattices)
     \item Falcon (lattices)
@@ -335,7 +337,7 @@
   \vspace*{0.5em}
 
   \pause
-  `Hybrid mode': combination of PQ and pre-quantum schemes.
+  \enquote{Hybrid mode}: combination of PQ and pre-quantum schemes.
   \begin{itemize}[<+(1)->]
     \item separate signatures vs. composite mode?
   \end{itemize}
@@ -345,7 +347,7 @@
   \pause
   PQ schemes are not yet widely used
   \begin{itemize}
-    \item long keys and signatures
+    \item long keys and/or signatures
     \item slower than classical counterparts
   \end{itemize}
 \end{frame}
@@ -364,31 +366,33 @@
   \begin{itemize}[<+(1)->]
     \item Based on one-way functions (not only CHFs)
     \item One key per signature
-    \item Optimisations exist, e.g. with PQ CSPRNGs
-    \item Keys can be combined using structures, e.g. Merkle trees
+    \item Various techniques to obtain (stateful) many-times signatures
+    \begin{itemize}
+      \item e.g. XMSS --- eXtended Merkle Signature Scheme
+    \end{itemize}
   \end{itemize}
 \end{frame}
 
 \begin{frame}{Cool constructions}
   \pause
   Group signatures:
-  \begin{itemize}[<+(1)->]
+  \begin{itemize}
     \item Anonymously sign on behalf of a group
     \item The public cannot learn who this is
-    \item The group `manager' can (unforgeably) trace and de-anonymise a signer
+    \item The group \enquote{manager} can (unforgeably) trace and de-anonymise a signer
     \item Signatures are unlinkable (multiple signatures by the same issuer?)
   \end{itemize}
 
   \pause
   Ring signatures:
-  \begin{itemize}[<+(1)->]
+  \begin{itemize}
     \item Group signatures without a manager/trusted setup
     \item Traceable/linkable variants exist
   \end{itemize}
 
   \pause
   Blind signatures
-  \begin{itemize}[<+(1)->]
+  \begin{itemize}
     \item Sign some data without knowing the exact contents
   \end{itemize}
 \end{frame}
@@ -396,21 +400,21 @@
 \begin{frame}{Cool constructions}
   \pause
   Threshold signatures:
-  \begin{itemize}[<+(1)->]
+  \begin{itemize}
     \item Can only produce a valid signature in a quorum
     \item We will cover threshold cryptography in more depth in some weeks
   \end{itemize}
 
   \pause
   Multisignatures:
-  \begin{itemize}[<+(1)->]
+  \begin{itemize}
     \item Combine multiple signatures into a single succinct signature
     \item All signatories are evident from the multisignature
   \end{itemize}
 
   \pause
   Identity escrow:
-  \begin{itemize}[<+(1)->]
+  \begin{itemize}
     \item Party $A$ gives information to party $B$
     \item This information does not allow $B$ to identify $A$
     \item A 3\textsuperscript{rd} party $C$ can use this info to identify $A$
@@ -448,7 +452,7 @@
   Ideally, the 3\textsuperscript{rd} party is like a digital notary.
   \begin{itemize}[<+(1)->]
     \item You simply trust the notary
-    \item Trust the notary $\to$ trust their approved certificate\textsuperscript{*}
+    \item Trust the notary $\implies$ trust their approved certificate
     \item Verification requirements vary (national eID vs. git commit)
   \end{itemize}
 \end{frame}
@@ -481,17 +485,13 @@
 \end{frame}
 
 \begin{frame}{Root CAs}
-  \begin{block}{Terminology}
-    Think of a CA as a (key, certificate) pair, and not as a company.
-  \end{block}
-
-  \pause
   Root CAs are trust anchors:
   \begin{itemize}[<+(1)->]
     \item Self-sign their certificates: root certificates
     \item Root certificates are bundled with the OS, with browsers
     \item Certify lower level CAs, called \emph{intermediate} CAs
     \begin{itemize}
+      \item Also called subordinate CAs
       \item Intermediate certificates
       \item Typically the intermediate CA is the same company
     \end{itemize}
@@ -506,7 +506,7 @@
   \begin{itemize}[<+(1)->]
     \item Root CAs certify and assign powers to intermediate CAs
     \begin{itemize}
-      \item Intermediate CAs might be able to delegate to even further CAs etc.
+      \item Intermediate CAs might be able to delegate even further
       \item Multi-domain (company) relationships defined in \href{https://datatracker.ietf.org/doc/html/rfc5217}{RFC 5217}
     \end{itemize}
     \item End users are issued \emph{end entity} certificates by a CA
