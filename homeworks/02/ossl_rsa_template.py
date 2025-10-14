@@ -79,7 +79,7 @@ if __name__ == "__main__":
 
     # It is very messy to emulate CLI parameters similarly to those of OpenSSL.
     # If you find edge cases, please let me know.
-    sub = parser.add_subparsers(dest="action", help="the task to perform")
+    sub = parser.add_subparsers(dest="action", help="the task to perform", required=True)
     sp_genpkey = sub.add_parser("genpkey")
     sp_pkey = sub.add_parser("pkey")
     sp_pkeyutl = sub.add_parser("pkeyutl")
@@ -109,7 +109,8 @@ if __name__ == "__main__":
                             action="store_true")
 
     parsed_args = parser.parse_args()
-    if not parsed_args.encrypt and parsed_args.pwd is None:
+    if parsed_args.action == "pkeyutl" and not \
+            parsed_args.encrypt and (parsed_args.pwd is None):
         sp_pkeyutl.error("password is required for decryption")
 
     main(parsed_args)
