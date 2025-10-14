@@ -2,7 +2,7 @@
 
 \title{02}
 \author{Taaniel Kraavi}
-\date{\DTMdate{2024-10-25}}
+\date{\DTMdate{2025-10-25}}
 
 \usepackage{crysymb}
 \usepackage{fancyvrb}
@@ -15,27 +15,36 @@
 
 \begin{itemize}
   \item Include in your report approximately how long the homework took for you.
+  \item I will give you feedback on GitLab and Discord.
+  Check them after receiving your (preliminary) grade.
   \item Read through task descriptions carefully.
-  \item You may request deadline extensions until 22.10.24 23:59 EEST.
-  \item Deadlines are strict: if you do not submit your assignment by the deadline, you fail it.
-  \item To pass the course you must pass all homework assignments.
-  \item Second chances:
+  \item You may request deadline extensions until 22.10.25 23:59 EEST.
+  \item You can submit up to one week after the deadline with a 50\% point penalty.
+  0 afterwards.
+  \item Grace clause:
   \begin{itemize}
-    \item If I review your assignment before the deadline, I will \emph{always} give you a chance to fix it for the deadline (or with a slight extension).
-    Start early!
-    \item If I review your assignment after the deadline, I will give you an extension \emph{only} if you have explained what part of your code does not work, and what you did to attempt to fix it.
-    Ask questions when you are stuck to avoid risking it!
-    \item If I give you an extension, you must still fix your homework by the extended deadline to pass.
-    \item If your code does not work but you are not aware of it or have not explained your issues, you fail the homework (if I review it after the deadline).
+    \item If you submit your assignment by the deadline, you have the opportunity to fix (some) mistakes I point out to gain back up to half of the lost points.
+    \item You cannot get any points back for a task that is entirely missing or broken, e.g. code that does not run at all or does nothing.
+    If your code does not pass the assertions/test script (if available), include that info in your report.
+    Otherwise I will consider your code to be broken, i.e. no grace.
     Test your code!
-    \item If you fail your homework, you can appeal my decision within 3 days of receiving your grade (grade day + 3).
-    Write me an email or message me on Discord.
-    I will then organise an oral defence for you.
+    \item The grace clause does not apply if you requested an extension or missed the original deadline.
   \end{itemize}
   \item You may share hints with each-other, but no answers/code.
-  \item You may ask me questions (I prefer Discord to Moodle/email).
-  If your code does not work and you have not asked me any questions, you will have a hard time arguing that you actually tried solving it!
-  \item If I catch you plagiarising/copying, I will report you to the faculty and fail you for the course.
+  Ask questions in the server if they could be useful for everyone.
+  \item You may---and I encourage you to---ask me questions (preferably during practices).
+  \item You may use AI as help, but not to solve the tasks themselves.
+  \begin{itemize}
+    \item Acceptable: e.g. checking your understanding, asking how to loop in Python
+    \item Not acceptable: e.g. generating any code logic or cryptographic operations
+    \item If you use AI in any form, include in your report what you used it for
+    \item I recommend that you ask in the server/me instead of using AI
+  \end{itemize}
+  \item If I catch you plagiarising, copying, or using AI for theory answers or code logic, I will report you to the faculty and fail you for the course.
+  \begin{itemize}
+    \item If during the midterm/exam you completely fumble stuff that you got points for in homework tasks, you will have to orally explain why it is so.
+    \item If you do not convince me of homework authorship, I will report you for cheating and fail you.
+  \end{itemize}
 \end{itemize}
 
 \newpage
@@ -47,17 +56,40 @@
 \textbf{Additional instructions}
 
 \begin{itemize}
-  \item Submit as a PDF file called \texttt{username-02.pdf} where `username' is your 6 letter student student username (`takraa') for me.
-  \item Submit it on Moodle as a standalone file (not as part of the code ZIP).
+  \item Call the file \texttt{theory.md} and include it in the \texttt{hw2} folder root.
+  \item Store the picture files included in your report in the \texttt{hw2/images} folder.
+  \item \textbf{Please do not use AI for the theoretical part!}
+  Challenge your understanding and search for additional written materials in case the lecture+provided materials are not enough.
+  Critical thinking is a skill: use it or lose it.
 \end{itemize}
 
 \begin{task}{ECIES}
   The Elliptic Curve Integrated Encryption Scheme (ECIES) is a hybrid cryptosystem framework: it combines a \emph{key encapsulation mechanism} (KEM) with a \emph{data encapsulation mechanism} (DEM) that is also \emph{authenticated}.
+  Read through \href{https://cryptobook.nakov.com/asymmetric-key-ciphers/ecies-public-key-encryption}{\textit{this brief overview}} on ECIES and study the diagram.
 
+  Answer the following:
+  \begin{itemize}
+    \item Why is ECIES suitable for non-interactive use cases?
+    You can interpret \enquote{non-interactive} as Alice putting messages in Bob's letterbox rather than telling him the info in a phone call.
+    \item Is ECIES closest to static-static, static-ephemeral, or ephemeral-ephemeral DH?
+    \item Why does ECIES not offer PFS?
+  \end{itemize}
+
+  If you used additional sources, e.g. blog posts or CSE forums, include all used (helpful) links in the submission.
+
+  What is the security level (in bits):
+  \begin{itemize}
+    \item against confidentiality attacks by a classical adversary, when the P-384 curve is used with AES-128?
+    \item against confidentiality attacks by a quantum adversary, when the P-384 curve is used with AES-256?
+  \end{itemize}
+
+  When using AES-GCM as the authenticated DEM, after how many bytes of plaintext should Alice rekey, i.e. derive a new symmetric key from a new ECIES execution?
+  Provide a source and a one/two sentence explanation.
+
+  \iffalse
   As a rough overview, the following can be parametrised:
   \begin{itemize}
     \item the key derivation function (KDF), e.g. KDF2;
-    \item the hash function, e.g. SHA-512;
     \item the scheme for authenticating the encryption, e.g. HMAC-SHA-512;
     \item the symmetric encryption scheme, e.g. AES-256-CBC;
   \end{itemize}
@@ -65,7 +97,9 @@
   Some implementations even allow to change the key-agreement protocol (variations of DH).
   Combinations are also possible.
   For example, when using XChaCha20-Poly1305, a separate message-authentication scheme is no longer needed.
+  \fi
 
+  \iffalse
   Standards and implementations limit the allowed values for each of these parameters, which helps against misuse (e.g. picking weak options) but complicates interoperability.
   For example, no implementation can comply with all ECIES-defining standards.
   Furthermore, not all options and/or combinations provide equivalent security.
@@ -73,6 +107,7 @@
 
   For this task, find three standards where ECIES is defined.
   Then, highlight (preferably in a table) which parameters/algorithms are supported by all three standards (if any).
+  \fi
 \end{task}
 
 \begin{task}{Password switcheroo}
@@ -98,7 +133,7 @@
 \end{task}
 
 \begin{task}{Common attacks against RSA}
-  Do some digging, then name a technique (with a source) for cracking RSA when:
+  Do some digging, then name a technique (with a source) for cracking RSA for each of the following:
   \begin{itemize}
     \item $p$ and $q$ are very close,
     \item the modulus $n$ is re-used with different private keys,
@@ -117,9 +152,9 @@
   \]
   where $r$ is the randomness which makes ElGamal a probabilistic encryption scheme.
 
-  Suppose now that $r$ is leaked meaning that you know the $r$ used during the encryption.
+  Suppose now that $r$ is leaked, meaning that you know the $r$ used during encryption.
   Are you then able to recover $m$ from $c$ without the secret key?
-  If so, how to do it?
+  If yes, how so?
 
   Can you also decrypt other messages (without gaining access to new values of $r$)?
 \end{task}
@@ -134,14 +169,14 @@
 \textbf{Additional instructions}
 
 \begin{itemize}
-  \item I must be able to run your program with Python 3.12 and OpenSSL v3.3.2\footnotemark{}.
+  \item I must be able to run your program with Python 3.13 and OpenSSL v3.5.1\footnotemark{}.
   \footnotetext{You may use older versions of Python and OpenSSL as long as you do not use deprecated functionality.}
   \item Do not import any 3\textsuperscript{rd} party module\footnotemark{} not specified in the template files.
   \footnotetext{You may change \texttt{Crypto} to \texttt{Cryptodome} if needed.}
   You are free to import any built-in module.
   If you feel the need to import some other 3\textsuperscript{rd} party module, please check with me beforehand!
   \item Your program must not have any unhandled errors (print a message and exit with an error code without printing the trace) except for file-based errors, e.g. file read/write errors.
-  \item Submit on Moodle as a ZIP file called \texttt{code.zip}.
+  \item Include the files in the \texttt{hw2} folder, do not commit your Python virtual env.
   \item Your Python files must have the same name as the template files but without the \texttt{template} suffix, e.g. \texttt{interop\_template.py} becomes \texttt{interop.py}.
   \item You may change everything in the template files as long as I can run your program with the CLI arguments specified in the templates.
   \iffalse
@@ -155,11 +190,13 @@
   \end{enumerate}
   you \emph{fail} the homework!
   \fi
-  \item Your ZIP must have the following structure/contents:
+  \item Your repo must contain at least the following files:
   \begin{Verbatim}
-code/
-├── ossl_rsa.py
-└── homomorphic.py
+hw2/
+├── theory.md
+├── homomorphic.py
+├── pow.py
+└── ossl_rsa.py
   \end{Verbatim}
 \begin{Verbatim}
   
@@ -190,6 +227,7 @@ code/
         \item an iteration count of $210000$ (OWASP recommendation).
       \end{itemize}
       \item The key must be encrypted with AES-256 in CBC mode and use the PKCS\#8 format.
+      \item At no point should the private key be written unencrypted to the disk.
     \end{itemize}
 
     \begin{tcolorbox}[title=Note]
@@ -227,15 +265,17 @@ python3 ossl_rsa.py pkeyutl --encrypt \
 
     Example invocation for decryption:
     \begin{Verbatim}
-python3 ossl_rsa.py pkeyutl --decrypt \
+python3 ossl_rsa.py pkeyutl \
     --inkey key.pem --in data.enc --out data.enc \
     --pass secret
     \end{Verbatim}
   \end{itemize}
 
-  Make sure to handle errors by printing an informational message and exiting (\texttt{sys.exit()}) with an error code without printing the exception trace.
+  Make sure to handle errors by printing an informational message and exiting with an error code (\texttt{sys.exit(1)}) without printing the exception trace.
   Your program must not crash if missing parameters are provided, the wrong password is provided, OpenSSL fails, etc.
   Some error handling and hints are part of the template, but not all of it.
+
+  All printed error messages must start with the string \enquote{Handled:}.
 
   You do not however have to (but you may) check for file I/O errors, i.e. you may assume that if you provide a filename, then that filename does exist or can be written to.
 
@@ -320,5 +360,47 @@ python3 homomorphic.py 157928...613543 296738...721947
   Note that the Discord bot uses a different public key than the one provided in the template.
   Please use the template's public key in your submission.
 \end{task}
+
+\newpage
+
+\begin{task}{Proof of work}
+  Homework template file: \texttt{pow\_template.py}
+
+  The template contains the functions \texttt{l0\_bits} and \texttt{bruteforce} that you must implement yourself.
+  Do not edit the \texttt{main} function, except to set the seed to your student username (\enquote{takraa}) for me.
+
+  Include in your submission the printed output from the \texttt{main} function!
+
+  The \texttt{l0\_bits} function should count the number of leading 0 bits in the byte string and return it.
+  Since this is part of the code logic, you may not ask some AI to generate it for you.
+
+  The \texttt{bruteforce} function should iteratively generate 8-byte nonces until the hash value of \texttt{SHA256(SHA256(seed||nonce))}
+  starts with 25 zero-bits (the challenge \enquote{difficulty}). That is, you try for nonces:
+  \begin{enumerate}
+    \item \texttt{0x0000000000000000}
+    \item \texttt{0x0000000000000001}
+    \item \texttt{0x0000000000000002}
+    \item \dots
+  \end{enumerate}
+
+  For example, for the seed \texttt{takraa}, the smallest integer nonce that produces the desired hash is $86197437$.
+  Indeed, the hex value of this integer is \texttt{0x00000000052344bd}, and
+   \begin{Verbatim}
+SHA256(SHA256(b"takraa\x00\x00\x00\x00\x05\x23\x44\xbd"))
+  \end{Verbatim}
+  yields the hash value
+  \begin{Verbatim}
+00000060c45f26ecd9d97c05571088b77ccaed193f5723b7fd526982b5b0eebc
+  \end{Verbatim}
+  the first 25 bits of which are \enquote{0}.
+\end{task}
+
+This is a simple variant of the \href{https://en.wikipedia.org/wiki/Hashcash}{\textit{Hascash}} proof-of-work system, which is used for example in Bitcoin mining.
+You may (but need not) read more about Bitcoin's proof of work \href{https://en.bitcoin.it/wiki/Proof_of_work}{\textit{here}}.
+
+The core idea behind a proof of work (PoW) is to prove that you have expended some amount of computational effort.
+In essence, it is a puzzle that is computationally costly to solve, but the solution of which is easy to verify (similarly to the desired asymmetry in public-key cryptography).
+
+I might ask in the exam what the point of a proof of work is, and what the idea behind Hascash was (how it was meant to reduce email spam).
 
 \end{document}
