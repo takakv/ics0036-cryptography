@@ -47,7 +47,7 @@ def validate_sk_enc(f_sk: str) -> None:
 
     if pem_header != "ENCRYPTED PRIVATE KEY":
         print("[-] Incorrect private key format")
-        return
+        sys.exit(1)
 
     sk_asn1, _ = decoder.decode(sk_der, asn1Spec=EncryptedPrivateKeyInfo())
     algorithm_identifier = sk_asn1.getComponentByName("encryptionAlgorithm")
@@ -56,7 +56,7 @@ def validate_sk_enc(f_sk: str) -> None:
     # Verify that the private key is in the correct encrypted format.
     if algorithm_oid != id_PBES2:
         print("[-] Wrong key encryption format")
-        return
+        sys.exit(1)
 
     # Verify that the private key was encrypted with the correct parameters.
     pbes2_params, _ = decoder.decode(
@@ -69,7 +69,7 @@ def validate_sk_enc(f_sk: str) -> None:
     kdf_oid = kdf.getComponentByName("algorithm")
     if kdf_oid != id_PBKDF2:
         print("[-] Wrong key derivation algorithm for private key password")
-        return
+        sys.exit(1)
 
     # Fetch the PBKDF2 parameters.
     pbkdf2_params, _ = decoder.decode(kdf.getComponentByName("parameters"),
@@ -83,18 +83,19 @@ def validate_sk_enc(f_sk: str) -> None:
             print("[-] PRF is HMAC-SHA256 but should be HMAC-SHA512")
         else:
             print("[-] Wrong PRF algorithm for the encrypted private key")
-        return
+        sys.exit(1)
 
     # PBKDF2 iteration count must be as specified.
     iter_count = pbkdf2_params.getComponentByName("iterationCount")
     if iter_count != ITER_COUNT:
         print("[-] Wrong PBKDF2 iteration count for the encrypted private key:", iter_count)
-        return
+        sys.exit(1)
 
     # Private key must be encrypted with AES-256-CBC.
     enc_algorithm = enc_scheme.getComponentByName("algorithm")
     if enc_algorithm != aes256_CBC_PAD:
         print("[-] Wrong encryption algorithm for the encrypted private key")
+        sys.exit(1)
 
 
 def read_sk(f_sk: str, pwd: str) -> RSA.RsaKey:
@@ -256,7 +257,7 @@ def test():
                 try:
                     validate_sk_enc(f_sk)
                 except pyasn1.error.PyAsn1Error:
-                    print("⚠️ The private key is not in the expected format")
+                    print("[-] The private key is not in the expected format")
                     sys.exit(1)
 
             for b2 in options:
@@ -283,11 +284,11 @@ def test():
                             print("\tct:", is_openssl(b3))
                             print("\tpt:", is_openssl(b4))
     except subprocess.CalledProcessError:
-        print("⚠️ Implementation error likely")
+        print("[-] Implementation error likely")
         sys.exit(1)
 
     if not failed:
-        print("✅ The implementation seems functional")
+        print("The implementation seems functional")
         return
 
     sys.exit(1)
