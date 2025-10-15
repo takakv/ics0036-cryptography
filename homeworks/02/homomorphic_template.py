@@ -27,10 +27,8 @@ class EGPublicKey:
         if gmpy2.legendre(m, self.p) != 1:
             m = self.p - m
 
-        r = secrets.randbelow(self.q)
-        u = gmpy2.powmod(self.g, r, self.p)
-        blind = gmpy2.powmod(self.pub, r, self.p)
-        v = (m * blind) % self.p
+        u = ...
+        v = ...
         return Ciphertext(u, v)
 
 
