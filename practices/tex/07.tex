@@ -26,6 +26,7 @@
   What happens if you try to sign using RSA-PSS with parameters that do not correspond to parameters specified for the key?
 \end{task}
 
+\iffalse
 \begin{task}{RSA implementations}
   \textit{Task.}
   Check out \href{https://nvd.nist.gov/vuln/detail/CVE-2016-1494}{CVE-2016-1494} which is about using the \href{https://www.darkreading.com/cyberattacks-data-breaches/-berserk-bug-uncovered-in-mozilla-nss-crypto-library-impacts-firefox-chrome}{\textit{BERserk}} attack against the \href{https://github.com/sybrenstuvel/python-rsa}{\texttt{rsa}} Python library to forge signatures.
@@ -45,8 +46,7 @@
     In general, do not use pure-python crypto implementations.
   \end{tcolorbox}
 \end{task}
-
-\newpage
+\fi
 
 \begin{task}{Meet your peers}
   \textit{Preface.}
@@ -69,6 +69,8 @@
   Finally, verify their signature on their message.
   Did they give you the correct message/signature?
 \end{task}
+
+\newpage
 
 \begin{task}{SPHINCS\textsuperscript{+}}
   \textit{Preface.}
