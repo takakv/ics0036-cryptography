@@ -96,10 +96,13 @@
 \end{frame}
 
 \begin{frame}{Security of PK systems}
-  Mathematical \enquote{guarantees}:
+  Security based on well-studied mathematical assumptions.
   \begin{itemize}[<+(1)->]
-    \item $\neq$ provably secure
-    \item Relies on the \emph{hardness} of problems (mathematical and/or computational)
+    \item Provably secure ($\neq$ absolute security)
+    \begin{itemize}
+      \item Security \emph{reduction}: breach of algorithm $\implies$ breach of assumption
+    \end{itemize}
+    \item Assumption: \emph{computational hardness} of problems, e.g.
     \begin{itemize}
       \item Integer factorisation
       \item Discrete logarithm problem (DLP)
@@ -119,7 +122,7 @@
   Modular arithmetic underpins most classical public-key constructions
   \begin{itemize}[<+(1)->]
     \item \enquote{Clock arithmetic}: wrap-around behaviour
-    \item Used to define hard problems:
+    \item Used in many hard problems:
     \begin{itemize}
       \item Combined with integer factorisation (e.g. the RSA problem)
       \item Part of algebraic structures (e.g. DLP-hard groups)
