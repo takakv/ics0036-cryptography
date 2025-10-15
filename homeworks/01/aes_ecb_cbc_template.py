@@ -48,60 +48,70 @@ def decrypt(ct: bytes, key: bytes, iv: bytes) -> bytes:
     pass
 
 
-# Do not modify. Needed for code correctness assertions.
-def encrypt_lib(msg: bytes, key: bytes, iv: bytes) -> bytes:
-    """Encrypt a message using library CBC.
+def main(enc: bool, f_in: str, f_out: str, key_hex: str, iv_hex: str | None) -> None:
+    key: bytes = ...
+    iv: bytes = ...
 
-    :param msg: The message to encrypt
-    :param key: The encryption key
-    :param iv: The initialisation vector
-    :return: the ciphertext
-    """
-    cipher = AES.new(key, AES.MODE_CBC, iv=iv)
-    return cipher.encrypt(pad_pkcs(msg))
+    if enc:
+        with open(f_in, "rb") as f:
+            plaintext = f.read()
 
+        ciphertext, iv = encrypt(...)
 
-# Do not modify. Needed for code correctness assertions.
-def decrypt_lib(ct: bytes, key: bytes, iv: bytes) -> bytes:
-    """Decrypt a ciphertext using library CBC.
+        with open(f_out, "wb") as f:
+            f.write(ciphertext)
+    else:
+        with open(f_in, "rb") as f:
+            ciphertext = f.read()
 
-    :param ct: The encrypted message
-    :param key: The decryption key
-    :param iv: The initialisation vector
-    :return: the unpadded plaintext
-    """
-    cipher = AES.new(key, AES.MODE_CBC, iv=iv)
-    return unpad_pkcs(cipher.decrypt(ct))
+        plaintext = decrypt(...)
 
-
-def main(i_key: str, i_msg: str, i_iv: str):
-    key = ...
-    msg = ...
-    iv = ...
-
-    ciphertext, iv = encrypt(...)
-    check_enc = encrypt_lib(msg, key, iv)
-
-    assert ciphertext == check_enc
+        with open(f_out, "wb") as f:
+            f.write(plaintext)
 
     # Do not remove or modify the print statements.
-    print("Key:", key.hex())
-    print("PT :", msg.hex())
+    # Do not include additional print statements in your submission.
     print("IV :", iv.hex())
-    print("CT :", ciphertext.hex())
-
-    decrypted = decrypt(...)
-    check_dec = decrypt_lib(ciphertext, key, iv)
-
-    assert decrypted == check_dec
-    assert decrypted == msg
+    print("Key:", key.hex())
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("key", help="the secret key")
-    parser.add_argument("message", help="the message to encrypt")
-    parser.add_argument("--iv", help="the initialisation vector (optional)")
+
+    mode_group = parser.add_mutually_exclusive_group(required=True)
+    mode_group.add_argument(
+        "-e", "--encrypt",
+        action="store_true",
+        help="encrypt the input file"
+    )
+    mode_group.add_argument(
+        "-d", "--decrypt",
+        action="store_true",
+        help="decrypt the input file"
+    )
+
+    parser.add_argument(
+        "-i", "--in",
+        required=True,
+        dest="infile",
+        help="input filename"
+    )
+    parser.add_argument(
+        "-o", "--out",
+        required=True,
+        dest="outfile",
+        help="output filename"
+    )
+
+    parser.add_argument(
+        "--key",
+        required=True,
+        help="secret key (hex string)"
+    )
+    parser.add_argument(
+        "--iv",
+        help="initialisation vector (hex string)"
+    )
 
     args = parser.parse_args()
-    main(args.key, args.message, args.iv)
+    main(args.encrypt, args.infile, args.outfile, args.key, args.iv if args.iv else None)
