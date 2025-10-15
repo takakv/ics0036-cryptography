@@ -21,7 +21,7 @@ breaklines=true
 
 \title{01}
 \author{Taaniel Kraavi}
-\date{\DTMdate{2024-10-06}}
+\date{\DTMdate{2025-10-04}}
 
 \begin{document}
 \maketitle
@@ -30,28 +30,36 @@ breaklines=true
 
 \begin{itemize}
   \item Include in your report approximately how long the homework took for you.
-  \item If you want feedback on Discord, include your username in your report.
+  \item I will give you feedback on Discord.
+  Check it after receiving your (preliminary) grade.
   \item Read through task descriptions carefully.
-  \item You may request deadline extensions until 03.10.24 23:59 EEST.
-  \item Deadlines are strict: if you do not submit your assignment by the deadline, you fail it.
-  \item To pass the course you must pass all homework assignments.
-  \item Second chances:
+  \item You may request deadline extensions until 01.10.25 23:59 EEST.
+  \item You can submit up to one week after the deadline with a 50\% point penalty.
+  0 afterwards.
+  \item Grace clause:
   \begin{itemize}
-    \item If I review your assignment before the deadline, I will \emph{always} give you a chance to fix it for the deadline (or with a slight extension).
-    Start early!
-    \item If I review your assignment after the deadline, I will give you an extension \emph{only} if you have explained what part of your code does not work, and what you did to attempt to fix it.
-    Ask questions when you are stuck to avoid risking it!
-    \item If I give you an extension, you must still fix your homework by the extended deadline to pass.
-    \item If your code does not work but you are not aware of it or have not explained your issues, you fail the homework (if I review it after the deadline).
+    \item If you submit your assignment by the deadline, you have the opportunity to fix (some) mistakes I point out to gain back up to half of the lost points.
+    \item You cannot get any points back for a task that is entirely missing or broken, e.g. code that does not run at all or does nothing.
+    If your code does not pass the assertions/test script (if available), include that info in your report.
+    Otherwise I will consider your code to be broken, i.e. no grace.
     Test your code!
-    \item If you fail your homework, you can appeal my decision within 3 days of receiving your grade (grade day + 3).
-    Write me an email or message me on Discord.
-    I will then organise an oral defence for you.
+    \item The grace clause does not apply if you requested an extension or missed the original deadline.
   \end{itemize}
   \item You may share hints with each-other, but no answers/code.
-  \item You may ask me questions (I prefer Discord to Moodle/email).
-  If your code does not work and you have not asked me any questions, you will have a hard time arguing that you actually tried solving it!
-  \item If I catch you plagiarising/copying, I will report you to the faculty and fail you for the course.
+  Ask questions in the server if they could be useful for everyone.
+  \item You may---and I encourage you to---ask me questions (preferably during practices).
+  \item You may use AI as help, but not to solve the tasks themselves.
+  \begin{itemize}
+    \item Acceptable: e.g. checking your understanding, asking how to loop in Python
+    \item Not acceptable: e.g. generating any code logic or cryptographic operations
+    \item If you use AI in any form, include in your report what you used it for
+    \item I recommend that you ask in the server/me instead of using AI
+  \end{itemize}
+  \item If I catch you plagiarising, copying, or using AI for code logic, I will report you to the faculty and fail you for the course.
+  \begin{itemize}
+    \item If during the midterm/exam you completely fumble stuff that you got points for in homework tasks, you will have to orally explain why it is so.
+    \item If you do not convince me of homework authorship, I will report you for cheating and fail you.
+  \end{itemize}
 \end{itemize}
 
 \newpage
@@ -65,6 +73,7 @@ breaklines=true
 \begin{itemize}
   \item Submit as a PDF file called \texttt{studentid-01.pdf} where \enquote{studentid} is your 6 letter student ID/username (\enquote{takraa}) for me.
   \item Submit it on Moodle as a standalone file (not as part of the code ZIP).
+  \item For a second submission, name your new file \texttt{studentid-01.2.pdf}.
 \end{itemize}
 
 \begin{task}{A little about you}
@@ -88,6 +97,7 @@ breaklines=true
     \item Standard library/namespace/module (if any) for getting cryptographic randomness.
     \item Standard library/namespace/module (if any) for encryption.
     \item Three well regarded 3\textsuperscript{rd} party libraries for cryptographic stuff (any kind).
+    \item Some cool cryptographic library/tool/project (not already named above).
   \end{enumerate}
 
   Include your sources!
@@ -106,9 +116,9 @@ breaklines=true
 \end{task}
 
 \begin{task}{A pledge}
-  \enquote{
+  \enquote{%
     I understand that I should not implement my own cryptography for any production system, i.e. for any purpose other than a personal learning challenge.
-    I understand also that any implementations done during this course are only for learning purposes, and are not for real world use. I understand that due diligence is crucial.
+    I understand also that any implementations done during this course are only for learning purposes, and are not for real world use. I understand that due diligence is crucial.%
   }
 
   \textit{Answer with yes/no.}
@@ -124,7 +134,7 @@ breaklines=true
 \textbf{Additional instructions}
 
 \begin{itemize}
-  \item I must be able to run your program with Python 3.12 and OpenSSL v3.3.1\footnotemark{}.
+  \item I must be able to run your program with Python 3.13 and OpenSSL v3.5.1\footnotemark{}.
   \footnotetext{You may use older versions of Python and OpenSSL as long as you do not use deprecated functionality.}
   \item Do not import any 3\textsuperscript{rd} party module\footnotemark{} not specified in the template files.
   \footnotetext{You may change \texttt{Crypto} to \texttt{Cryptodome} if needed.}
@@ -142,6 +152,7 @@ code/
 ├── aes_ecb_cbc.py
 ├── chacha20.py
 ├── key.txt
+├── decryption.txt
 └── ciphertexts/
     ├── ct-1.bin
     ├── ct-2.bin
@@ -156,6 +167,7 @@ code/
   If you cannot finish the 10 courses, write in your report what tasks you were stuck with and what did you try.
 
   Include a screenshot of your module completion and your username in the PDF report.
+  Include also the full link to your user profile, e.g. \url{https://cryptohack.org/user/ch-username}.
 
   I do recommend that you to attempt the \enquote{Symmetric Cryptography} module as well, but that is not a mandatory part of the homework.
 \end{task}
@@ -169,13 +181,24 @@ code/
     \texttt{aes = AES.new(key, AES.MODE\_ECB)}
   \end{center}
   Use the PKCS\#7 padding for messages that do not divide into blocks.
+  You must implement the pad/unpad functions yourself.
   \begin{tcolorbox}[title=Padding]
     Recall that padding is always added (at least for PKCS) even if the message length is a multiple of the block size.
     If the message length is a multiple of the block size, add an entire block of just padding.
   \end{tcolorbox}
 
-  Your program should take in the key and message from the CLI, and have an optional parameter for the IV (see template).
-  The key, message, and IV are provided as hex-encoded on the CLI.
+  Your program must accept the following CLI arguments (handled by the template):
+  \begin{itemize}
+    \item \texttt{-e}/\texttt{-d}: whether to encrypt or decrypt the input data
+    \item \texttt{-i}: the input filename
+    \item \texttt{-o}: the output filename
+    \item \texttt{--key}: the key (a string of hex digits)
+    \item \texttt{--iv}: the iv (a string of hex digits)
+  \end{itemize}
+
+  For encryption, providing the IV on the CLI must be optional.
+  If the IV is provided, the program must use it.
+  If not, it must generate a cryptographically random IV.
 
   \begin{tcolorbox}[title=Note]
     In practice, providing secrets (e.g. keys, passwords, etc) directly on the CLI as an argument to a program is a terrible idea, since they typically get logged into your terminal history!
@@ -183,22 +206,28 @@ code/
 
   Additional program requirements:
   \begin{itemize}
-    \item If the IV is provided with the CLI, it must use the IV. Else, it must generate a \emph{random} IV.
     \item It must work with any key-size supported by AES.
-    \item It must encrypt the provided message and print out the hex-encoded ciphertext (without the IV).
-    \item It must support multi-block messages.
-    \item It should not crash if a dubious key/IV is provided: handle your errors!
+    \item It must encrypt/decrypt the provided data and output the result to a file.
+    \item The files must be read and written to as bytes on disk.
+    \item It should print the used key and IV to the CLI as hex strings.
+    \item It should not crash if a dubious key/IV is provided (or other edge cases): handle your errors! (I/O error handling is not necessary)
+    \item You must handle errors proactively: simply catching errors thrown by PyCryptodome will not give you full points.
   \end{itemize}
 
-  Example call (with NIST AES MTT data):%
+  Example call:%
   \begin{Verbatim}
 python3 aes_ecb_cbc.py \ 
-  4278b840fb44aaa757c1bf04acbe1a3e \
-  3c888bbbb1a8eb9f3e9b87acaad986c466e2f7071c83083b8a557971918850e5 \
+  -e -i message.txt \
+  -o ciphertext.bin \
+  --key 4278b840fb44aaa757c1bf04acbe1a3e \
   --iv 57f02a5c5339daeb0a2908a06ac6393f
   \end{Verbatim}
 
-  Do not remove/modify the \texttt{print} or \texttt{assert} statements in the template!
+  Example printed output:%
+  \begin{Verbatim}
+IV: 57f02a5c5339daeb0a2908a06ac6393f
+Key: 4278b840fb44aaa757c1bf04acbe1a3e
+  \end{Verbatim}
 \end{task}
 
 %Some hints: https://www.pycryptodome.org/src/cipher/aes
@@ -212,7 +241,8 @@ python3 aes_ecb_cbc.py \
 \begin{task}{ChaCha20 encryption/decryption}
   Homework template file: \texttt{chacha20\_template.py}
 
-  Encrypt the file \texttt{plaintext.txt} $5$ times using ChaCha20 with the same key and output the ciphertext bytes into files \texttt{ct-1.bin}, \texttt{ct-2.bin}, \dots.
+  Encrypt the provided file \texttt{message.txt} $5$ times using ChaCha20 with the same key and output the ciphertext bytes into files \texttt{ct-1.bin}, \texttt{ct-2.bin}, \dots.
+  NB! The encryptions should be separate, not encapsulated, i.e. not \texttt{Enc(Enc(Enc(...)))}.
 
   \begin{tcolorbox}[title=Note]
     Make sure that you write the raw ciphertext bytes to the file, and not the bytes of a hex or base64 encoded ciphertext.
