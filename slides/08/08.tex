@@ -2,7 +2,7 @@
 
 \newlength{\offset}
 
-\title{ICS0026 Cryptography}
+\title{ICS0036 Cryptography}
 \subtitle{Certificate validity, eIDAS \& qualified signatures}
 \date{\today}
 \author{Taaniel Kraavi}
@@ -32,10 +32,9 @@
   \begin{itemize}[<+(1)->]
     \item This forms the certificate chain
   \end{itemize}
+\end{frame}
 
-  \vspace*{1em}
-
-  \pause
+\begin{frame}{Refresher on PKI}
   Two main authorities:
   \begin{itemize}[<+(1)->]
     \item Certification Authority (CA): issues \& manages certificates
@@ -57,11 +56,33 @@
   \vspace*{1em}
 
   \pause
-  Other methods exist
+  It would be nice to have a protocol\dots
+\end{frame}
+
+\begin{frame}{Certificate management protocols}
   \begin{itemize}[<+(1)->]
     \item Certificate Management Protocol (CMP)
+    \begin{itemize}
+      \item Highly flexible but quite complex
+      \item Self-contained / transport-agnostic
+    \end{itemize}
     \item Simple Certificate Enrolment Protocol (SCEP)
+    \begin{itemize}
+      \item Often used in enterprise device management (e.g. Intune)
+      \item Legacy versions are limited, e.g. no ECC support
+    \end{itemize}
+    \item Enrolment over Secure Transport (EST)
+    \begin{itemize}
+      \item Successor to SCEP
+      \item Leverages TLS for authentication
+    \end{itemize}
+    \item Automated Certificate Management Environment (ACME)
+    \begin{itemize}
+      \item Automated certificate issuance and renewal for web servers
+    \end{itemize}
   \end{itemize}
+
+  You need not recall these
 \end{frame}
 
 \begin{frame}{X.509 certificates}
@@ -76,8 +97,7 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}{X.509 v3}
-  Structure:
+\begin{frame}{X.509 v3 structure}
   \begin{itemize}[<+(1)->]
     \item Certificate
     \begin{itemize}
