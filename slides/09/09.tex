@@ -1,7 +1,7 @@
 \usepackage{tikz}
 \usetikzlibrary{positioning,calc,external}
 
-\title{ICS0026 Cryptography}
+\title{ICS0036 Cryptography}
 \subtitle{TLS, CT and CAA}
 \date{\today}
 \author{Taaniel Kraavi}
@@ -58,10 +58,10 @@
   \pause
   Transport Layer Security (TLS)
   \begin{itemize}[<+(1)->]
-    \item Born out of SSL 3.0 to replace it
+    \item Born out of SSL 3.0 with interop.-breaking changes
     \item TLS 1.0 (1999) \& TLS 1.1 (2006), deprecated in 2021 (\href{https://datatracker.ietf.org/doc/html/rfc8996}{RFC 8996})
     \item TLS 1.2 (2008, \href{https://datatracker.ietf.org/doc/html/rfc5246}{RFC 5246}) not yet deprecated, but should
-    \item TLS 1.3 (2018, \href{https://datatracker.ietf.org/doc/html/rfc8446}{RFC 8446}) obsoletes TLS 1.2
+    \item TLS 1.3 (2018, \href{https://datatracker.ietf.org/doc/html/rfc8446}{RFC 8446}) obsoletes RFC 5246
   \end{itemize}
 \end{frame}
 
@@ -70,12 +70,12 @@
   \begin{itemize}[<+(1)->]
     \item Used for securing HTTPS, email, VoIP, instant messaging, \dots
     \item Assumes a reliable transport protocol (e.g. TCP)
-    \item Datagram TLS (DTLS)
+    \item DTLS 1.3
     \begin{itemize}
-      \item \enquote{TLS for stream-communications} e.g. UDP
-      \item \href{https://datatracker.ietf.org/doc/html/rfc9147}{RFC 9147} for DTLS 1.3 (2022)
-      \item Security guarantees of TLS except for order protection / non-replayability
+      \item Datagram TLS: stream-oriented (e.g. UDP)
+      \item Security guarantees of TLS 1.3  except for order protection / non-replayability
     \end{itemize}
+    \item TLS 1.3 designed following formal security models
   \end{itemize}
 
   \vspace*{1em}
@@ -83,8 +83,8 @@
   \pause
   Connections are negotiated with the \emph{TLS handshake}.
   \begin{itemize}[<+(1)->]
-    \item Parties agree on parameters, typically client and server
-    \item The subsequent connection is \emph{stateful}
+    \item Parties agree upon and validate various parameters
+    \item The subsequent \enquote{secure} connection is stateful
   \end{itemize}
 \end{frame}
 
@@ -103,6 +103,7 @@
     \item Authenticate the server's identity
     \begin{itemize}
       \item Server's public key \& certificate chain\textsuperscript{*}
+      \item Optionally also the client's identity: mutual TLS (mTLS)
     \end{itemize}
     \item Create session keys
     \begin{itemize}
@@ -139,14 +140,14 @@
     \item {\small\texttt{ServerHello}}: negotiated connection parameters, server's DH share
     \item {\small\texttt{Certificate}}: server's certificate (and the cert. chain)
     \item {\small\texttt{CertificateVerify}}: signature over the entire handshake
-    \item {\small\texttt{Finished}}: MAC over the entire handshake
+    \item {\small\texttt{Finished}}: MAC over the entire handshake (AEAD tag)
   \end{itemize}
 
   \pause
-  Other approaches exist (e.g. based on PSK instead of DH).
+  Other variants exist (e.g. 0-RTT with a PSK, 2-RTT with HRR, mTLS).
 \end{frame}
 
-\begin{frame}{Major fixes by TLS 1.3}
+\begin{frame}{Improvements of TLS 1.3}
   \begin{itemize}[<+(1)->]
     \item Legacy symmetric encryption algorithms pruned
     \begin{itemize}
@@ -156,9 +157,9 @@
     \item Various crypto improvements
     \begin{itemize}
       \item RSA-PSS instead of PKCS\#1 v1.5
-      \item Removed DSA, EC point compression \& custom DHE groups
+      \item Removed DSA, custom DHE groups \&  EC point compression
     \end{itemize}
-    \item Removed static cipher suites
+    \item Static cipher suites removed
     \begin{itemize}
       \item Always has perfect forward secrecy (PFS)
       \item Exception: when only pre-shared keys (PSK) are used
@@ -177,7 +178,7 @@
   \vspace*{1em}
 
   \pause
-  PFS prevent past comms from being decrypted if long-term keys leak.
+  PFS prevent past sessions from being decrypted if long-term keys leak.
   \begin{itemize}[<+(1)->]
     \item Generate a new key for each communication session (ephemeral key)
     \item Discard the keys after the session
@@ -186,9 +187,12 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Major fixes by TLS 1.3 (cont.)}
+\begin{frame}{Improvements of TLS 1.3 (cont.)}
   \begin{itemize}[<+(1)->]
     \item Encryption of handshake messages after the Server Hello
+    \begin{itemize}
+      \item Good for privacy, e.g. encrypted client certificate for mTLS
+    \end{itemize}
     \item Simplified handshake in general
     \item Dropped renegotiation support
     \begin{itemize}
@@ -199,22 +203,29 @@
 \end{frame}
 
 \begin{frame}{TLS 1.3 cipher suites}
-  TLS v1.3 supports 5 cipher suites:
+  The TLS v1.3 RFC specifies 3 principal cipher suites:
   \pause
   \begin{itemize}
-    \item {\small\texttt{TLS\_AES\_256\_GCM\_SHA384}}
-    \item {\small\texttt{TLS\_CHACHA20\_POLY1305\_SHA256}}
-    \item {\small\texttt{TLS\_AES\_128\_GCM\_SHA256}}
-    \pause
-    \item {\small\texttt{TLS\_AES\_128\_CCM\_8\_SHA256}} (not enabled by default)
-    \item {\small\texttt{TLS\_AES\_128\_CCM\_SHA256}} (not enabled by default)
+    \item {\small\texttt{TLS\_AES\_128\_GCM\_SHA256}} (must)
+    \item {\small\texttt{TLS\_AES\_256\_GCM\_SHA384}} (should)
+    \item {\small\texttt{TLS\_CHACHA20\_POLY1305\_SHA256}} (should)
   \end{itemize}
 
+  \vspace*{1em}
+
   \pause
+  Also specified, but often not enabled by default:
+  \begin{itemize}
+    \item {\small\texttt{TLS\_AES\_128\_CCM\_8\_SHA256}}
+    \item {\small\texttt{TLS\_AES\_128\_CCM\_SHA256}}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{TLS 1.2 cipher suites}
   TLS 1.2 specified 37 in the original RFC\dots
-  \begin{itemize}[<+(1)->]
+  \begin{itemize}
     \item Confusing nomenclature
-    \item E.g. {\small\texttt{TLS\_ECDHE\_RSA\_WITH\_AES\_128\_GCM\_SHA256}}
+    \item e.g. {\small\texttt{TLS\_ECDHE\_RSA\_WITH\_AES\_128\_GCM\_SHA256}}
   \end{itemize}
 \end{frame}
 
@@ -257,16 +268,16 @@
   Popular CAs for TLS certificates:
   \begin{itemize}[<+(1)->]
     \item Let's Encrypt\textsuperscript{*}
-    \item GlobalSign
-    \item IdenTrust
-    \item Sectigo
-    \item DigiCert
+    \item \href{https://www.globalsign.com/en}{GlobalSign}
+    \item \href{https://www.sectigo.com}{Sectigo}
+    \item \href{https://www.digicert.com}{DigiCert}
+    \item \href{https://www.actalis.com}{Actalis}
   \end{itemize}
   
   \vfill
 
   \pause
-  Market share yearly trends for SSL certificate authorities:
+  Market share yearly trends for TLS certificate authorities:
 
   {\scriptsize\url{https://w3techs.com/technologies/history_overview/ssl_certificate/ms/y}}
 \end{frame}
@@ -275,7 +286,7 @@
   Domain validated (DV)
   \begin{itemize}[<+(1)->]
     \item Proof of control over WhoIS records
-    \item Typical confirmation: DNS record, email contact (e.g. whois, webmaster@), \dots
+    \item Typical confirmation: HTTP challenge, DNS record, email contact\textsuperscript{*}
     \item Free these days (e.g. Let's Encrypt)
   \end{itemize}
 
@@ -298,12 +309,12 @@
 
 \begin{frame}{Let's Encrypt}
   \pause
-  Let's Encrypt is a free, automated, and open certificate authority brought to you by the nonprofit Internet Security Research Group (ISRG). ({\scriptsize\url{https://letsencrypt.org}})
+  \textit{Let's Encrypt is a free, automated, and open certificate authority brought to you by the nonprofit Internet Security Research Group (ISRG).} ({\scriptsize\url{https://letsencrypt.org}})
   \begin{itemize}[<+(1)->]
-    \item Provide DV TLS certificates to any compatible client
+    \item Provides DV TLS certificates to any compatible client
     \begin{itemize}
       \item Verifies domain ownership via unique tokens
-      \item Tokens validated over web/DNS requests
+      \item Tokens validated with HTTP/DNS requests
     \end{itemize}
     \item Automated using ACME (Automatic Certificate Management Environment)
     \item \href{https://certbot.eff.org}{Certbot}
@@ -341,7 +352,7 @@
 \end{frame}
 
 \begin{frame}{Certificate pinning}
-  For the \enquote{highest} trust level, certificates and keys can be pinned.
+  Certificates and keys can be \emph{pinned}
   \begin{itemize}[<+(1)->]
     \item Client device contains a list of approved certificates
     \begin{itemize}
