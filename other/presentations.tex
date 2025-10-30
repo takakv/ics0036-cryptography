@@ -1,0 +1,196 @@
+\documentclass[usegeometry,parskip=half]{scrartcl}
+
+\usepackage[
+  a4paper,
+  top=25mm,
+  bottom=25mm,
+  left=25mm,
+  right=25mm,
+  footskip=10mm
+]{geometry}
+
+\usepackage{csquotes}
+\setquotestyle{british}
+
+\usepackage[hidelinks]{hyperref}
+\pagenumbering{gobble}
+
+\usepackage{microtype}
+\usepackage{fontspec}
+\usepackage{unicode-math}
+
+\setmainfont{Stix Two Text}
+\setsansfont{TeX Gyre Heros}
+\setmathfont{Stix Two Math} 
+
+\begin{document}
+\textbf{ICS0036 Cryptography --- group presentations}
+
+Your group, group presentation date, and topic must be finalised by 31.10.2025 23:59 EET.
+If needed, you can change the topic later by contacting me.
+
+10\% of your final grade comes from the group presentation.
+The group presentations are in-person, and all group members must participate.
+
+There are three possible presentation days, with up to 6 groups presenting each day.
+Groups shall be no larger than 3 people.
+Groups may be smaller as long as there are no more than 6 groups presenting each of the three days.
+
+
+If you know that you cannot attend \emph{any} of the group presentation dates, please tell me as soon as possible.
+In this case, you will prepare your presentation alone, and we will find a date for a presentation over Teams.
+
+You will have 10 minutes for your presentation.
+I am strict with timing, and will stop you after 11 minutes at most.
+Each member must present, with presentation time roughly equally divided between members, e.g. every member presents a 3-minute slice.
+However, your presentation can be shorter than 10 minutes if you can get all the core information across more succinctly.
+
+After the presentation, there will be 4-5 minutes for questions: at minimum, I will ask each group member one question about the slice they presented.
+Final scoring can therefore vary by member depending on the demonstrated familiarity with the topic.
+
+How you organise your research is up to you.
+You can research everything together and then divide the presentation, or everyone can search and present their own part.
+The final presentation should still be cohesive, with no repetition.
+
+If you have issues with a group member (e.g. they do no work), let me know as soon as possible.
+It is not your job to carry a weak group member.
+We can then discuss what to do, but it is fine that you plan a 6-minute presentation and let the third member suffer the consequences of their inaction.
+TL;DR I will not let a slacking teammate penalise your work if you let me know about it.
+
+What am I looking for in the presentation?
+
+I have not written out exact requirements for two reasons:
+\begin{itemize}
+  \item They highly depend on your topic choice
+  \item I wish to see what you consider important
+\end{itemize}
+
+I have only referenced a potential starting point for each of the topics.
+You are free to find and use your own sources.
+
+The rules of thumb are:
+\begin{itemize}
+  \item If analysing an attack:
+  
+  What?, When?, How?, Impact/severity (can also be perceived), Mitigation, Lessons learnt
+
+  \item If analysing a protocol:
+  
+  Design goal/protocol purpose, brief protocol overview, role of different components
+\end{itemize}
+
+You can approach the task in this way: you have to explain the gist of an attack or of a protocol to the CTO (Chief Technical Officer) of your company.
+The CTO is not a cryptographer, so you must explain anything more complex than what encryption/signing/hashing is.
+It is not enough to simply \enquote{name drop} stuff, e.g. if you mention a padding oracle, you also then have to explain it.
+
+If you have doubts about the expectations or the direction you are going in, ask me.
+
+\newpage
+
+Topics:
+\begin{itemize}
+  \item Double ratchets --- how do they work?
+
+  \url{https://signal.org/docs/specifications/doubleratchet/}
+
+  \item MTProto --- how does Telegram's protocol work?
+  
+  \url{https://core.telegram.org/mtproto}
+
+  \item \enquote{Formally verified} TLS 1.3 --- how it came to be
+  
+  \url{https://tamarin-tls.cispa.de/en/deceptive-security.html}
+
+  \item Formal verification in cryptography --- tooling and purpose
+  
+  \url{https://crypto.stackexchange.com/a/34326}
+
+  \item S/MIME and its purpose
+  
+  \url{https://www.globalsign.com/en/blog/what-is-s-mime}
+
+  \item Blind signatures and their use cases
+  
+  \url{https://www.hit.bme.hu/~buttyan/courses/BMEVIHIM219/2009/Chaum.BlindSigForPayment.1982.PDF}\\
+  \url{https://csrc.nist.gov/csrc/media/presentations/2022/stppa4-blind-sigs/images-media/20221121-stppa4--julian-loss--blind-signatures.pdf}
+
+  \item SHA-3 reference implementation bug
+  
+  \url{https://eprint.iacr.org/2023/331}
+
+  \item Heartbleed
+  
+  \url{https://www.heartbleed.com}
+
+  \item KRACK attacks
+  
+  \url{https://www.krackattacks.com}
+
+  \item Sony ECDSA fail
+  
+  \url{https://youtu.be/84WI-jSgNMQ}
+
+  \item Wii signing bug
+  
+  \url{https://wiibrew.org/wiki/Signing_bug}
+
+  \item Apple goto fail
+  
+  \url{https://gotofail.com}
+
+  \item Logjam
+  
+  \url{https://weakdh.org/}
+
+  \item Bar Mitzvah attack
+  
+  \url{https://www.blackhat.com/docs/asia-15/materials/asia-15-Mantin-Bar-Mitzvah-Attack-Breaking-SSL-With-13-Year-Old-RC4-Weakness-wp.pdf}
+
+  \item \enquote{Original} Bleichenbacher's PKCS\#1 v1.5 attack
+  
+  \url{https://crypto.stackexchange.com/a/12706}
+
+  \item ROBOT
+  
+  \url{https://robotattack.org}
+
+  \item BEAST
+  
+  \url{https://vnhacker.blogspot.com/2011/09/beast.html}
+
+  \item POODLE
+  
+  \url{https://nvd.nist.gov/vuln/detail/CVE-2014-3566}
+
+  \item DUHK
+  
+  \url{https://duhkattack.com}
+
+  \item CBC padding oracle
+  
+  \url{https://link.springer.com/chapter/10.1007/3-540-46035-7_35}\\
+  \url{https://blog.cloudflare.com/padding-oracles-and-the-decline-of-cbc-mode-ciphersuites/}
+
+  \item CVE-2008-0166 and its impact
+  
+  \url{https://nvd.nist.gov/vuln/detail/cve-2008-0166}\\
+  \url{https://16years.secvuln.info}
+
+  \item MemJam
+  
+  \url{https://arxiv.org/abs/1711.08002}
+
+  \item Rowhammer on Bitcoin
+  
+  \url{https://github.com/demining/Rowhammer-Attack}
+
+  \item TLBleed
+  
+  \url{https://www.vusec.net/projects/tlbleed/}
+
+  \item CurveSwap
+  
+  \url{https://eprint.iacr.org/2018/298}
+\end{itemize}
+
+\end{document}
