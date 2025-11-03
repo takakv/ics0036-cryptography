@@ -1,4 +1,4 @@
-\title{ICS0026 Cryptography}
+\title{ICS0036 Cryptography}
 \subtitle{Hardware security \& side channels}
 \date{\today}
 \author{Taaniel Kraavi}
@@ -68,19 +68,39 @@
   \end{itemize}
 
   \pause
-  \dots{}but chips implementing it are also called TPMs.
+  \dots{}but chips implementing it are also commonly called TPMs.
   \begin{itemize}
     \item Reference implementation: {\small\url{https://github.com/Microsoft/ms-tpm-20-ref}}
   \end{itemize}
 \end{frame}
 
-\begin{frame}{TPM chips}
-  TPMs offer hardware-level protection of authentication material.
+\begin{frame}{TPM types}
+  \begin{center}
+    \href{https://trustedcomputinggroup.org/wp-content/uploads/TPM-2.0-A-Brief-Introduction.pdf}{TCG's introduction to TPM 2.0}
+  \end{center}
+
   \begin{itemize}[<+(1)->]
-    \item Discrete, integrated (e.g. chipset), or firmware (e.g. CPU)
+    \item Discrete TPM
     \begin{itemize}
-      \item software and virtual TPMs exist\textsuperscript{*}
+      \item Hardware-level TPM
+      \item Potential advanced tamper-resistance capabilities
     \end{itemize}
+    \item Integrated TMP (e.g. chipset)
+    \begin{itemize}
+      \item Separate, but not dedicated hardware
+      \item Chip provides more than just TPM functionality
+    \end{itemize}
+    \item Firmware TPM (e.g. CPU)
+    \begin{itemize}
+      \item Implemented in protected software
+      \item Software and virtual TPMs exist\textsuperscript{*}
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{TPM goal}
+  The TPM provides a \enquote{root of trust}:
+  \begin{itemize}
     \item Secure storage of authentication artefacts
     \begin{itemize}
       \item e.g. cryptographic keys, fingerprints, passwords, \dots
@@ -95,7 +115,10 @@
   \vspace*{1em}
 
   \pause
-  The TPM provides a hardware \enquote{root of trust}.
+  TPMs can be considered \enquote{passive}.
+  \begin{itemize}
+    \item Not suited for running arbitrary code
+  \end{itemize}
 \end{frame}
 
 \begin{frame}{TPM use cases}
@@ -127,17 +150,11 @@
   \end{columns}
 \end{frame}
 
-\begin{frame}{TPM implementation security}
-  \begin{center}
-    \href{https://trustedcomputinggroup.org/wp-content/uploads/TPM-2.0-A-Brief-Introduction.pdf}{TCG's introduction to TPM 2.0}
-  \end{center}
-\end{frame}
-
 \begin{frame}{TPM sniffing attack}
   A discrete TPM must communicate with the CPU.
   \begin{itemize}[<+(1)->]
     \item TPM is tamper resistant
-    \item Communication might not be encrypted
+    \item Communication with CPU might not be encrypted
     \item Steal secrets by sniffing the bus
     \item Example: \href{https://pulsesecurity.co.nz/articles/TPM-sniffing}{BitLocker key recovery}
   \end{itemize}
@@ -153,26 +170,31 @@
   \begin{itemize}[<+(1)->]
     \item Virtual subsystem or powered by a coprocessor
     \item Code and data is protected: confidentiality \& integrity
-    \item Encrypted (and isolated) memory regions called \emph{enclaves}
+    \item Encrypted (and isolated) memory regions often called \emph{enclaves}
     \item Code runs within these regions
     \item Computation result returned to the calling process
-    \item Remote verification can enable TEE in the cloud (predefined hardware attestation)
+    \item Remote verification can enable TEE in the cloud
+    \begin{itemize}
+      \item predefined hardware attestation 
+    \end{itemize}
   \end{itemize}  
 \end{frame}
 
-\begin{frame}{TEE hardware support}
-  TEE commonly implemented on top of:
+\begin{frame}{Name dropping just in case}
+  TEE and related things:
   \begin{itemize}[<+(1)->]
-    \item AMD Platform Security Processor (PSP) 
+    \item AMD
     \begin{itemize}
-      \item AMD Secure Encrypted Virtualization (SEV)
+      \item Platform Security Processor (PSP) -- secure co-processor
+      \item Secure Encrypted Virtualization (SEV) -- TEE (VM-level)
     \end{itemize}
-    \item Intel Management Engine (ME)
+    \item Intel
     \begin{itemize}
-      \item Intel Software Guard Extensions (SGX)
+      \item Management Engine (ME) -- secure system services (separate microcontroller)
+      \item Software Guard Extensions (SGX) -- TEE (CPU enclaves)
     \end{itemize}
-    \item Apple Secure Enclave Processor (SEP)
-    \item ARM TrustZone
+    \item Apple Secure Enclave Processor (SEP) -- secure co-processor
+    \item ARM TrustZone -- TEE (secure vs. regular \enquote{world})
   \end{itemize}
 
   \vspace*{1em}
@@ -187,7 +209,10 @@
     \item physical devices
     \item attach to computers/servers
     \item safeguard keys and perform cryptographic/confidential operations
-    \item may contain multiple cryptoprocessor chips (e.g. specialised + general purpose)
+    \item may contain multiple cryptoprocessor chips
+    \begin{itemize}
+      \item e.g. specialised + general purpose
+    \end{itemize}
   \end{itemize}
 \end{frame}
 
@@ -245,6 +270,17 @@
   \end{itemize}
 \end{frame}
 
+\begin{frame}{FIPS certification}
+  \begin{itemize}
+    \item \href{https://csrc.nist.gov/pubs/fips/140-3/final}{FIPS 140-3} --- Security requirements for cryptographic modules
+    \begin{itemize}
+      \item 4 levels, with level 4 being the highest
+      \item \href{https://www.keyfactor.com/blog/a-guide-to-fips-140-3/}{\textit{A Guide to FIPS 140-3 (Keyfactor)}}
+    \end{itemize}
+    \item \href{https://csrc.nist.gov/projects/cryptographic-module-validation-program}{NIST CMVP} --- Cryptographic Module Validation Program
+  \end{itemize}
+\end{frame}
+
 \begin{frame}{Yubikeys}
   Yubikeys are hardware authentication devices.
   \begin{itemize}[<+(1)->]
@@ -258,7 +294,7 @@
   \pause
   If you work in security, you should have at least two.
   \begin{itemize}[<+(1)->]
-    \item Can be another reputable brand
+    \item Can be another reputable brand, e.g. Google Titan
     \item At least two, with one as a backup (all 2FA is not equal)
   \end{itemize}
 \end{frame}
@@ -408,7 +444,7 @@
   \pause
   Cryptographer's will $\neq$ compiler's will.
   \begin{itemize}[<+(1)->]
-    \item The compiler may optimise away constant time algorithmic
+    \item Compiler optimisations can foil constant-timeness
     \item Constant time languages/compilers attempted
     \item Speculative constant time? (Spectre)
   \end{itemize}
@@ -447,14 +483,16 @@
     \item Certification is not foolproof, but is better than nothing
     \item Tools exist to help you validate others' work
   \end{itemize}
+\end{frame}
 
-  \vspace*{1em}
-
-  \pause
-  Additional reading:
+\begin{frame}{Additional reading}
   \begin{itemize}
+    \item \url{https://github.com/veorq/cryptocoding}
+    \item \url{https://gotchas.salusa.dev}
     \item \url{https://timing.attacks.cr.yp.to/programming.html}
-    \item Additional references at the bottom
+    \begin{itemize}
+      \item Contains more links at the end
+    \end{itemize}
   \end{itemize}
 \end{frame}
 
