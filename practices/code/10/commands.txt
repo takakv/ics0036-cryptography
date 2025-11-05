@@ -1,0 +1,5 @@
+pkcs15-tool --read-certificate 02 --output sigcert.pem
+openssl x509 -in sigcert.pem -noout -pubkey > sigkey.pem
+pkcs11-tool --sign -m ECDSA-SHA384 --slot 1 --input-file testfile.txt --output-file testfile.sig
+python3 sig_wrapper.py testfile.sig testfile.asn1.sig
+openssl dgst -sha384 -verify sigkey.pem -signature testfile.asn1.sig testfile.txt
