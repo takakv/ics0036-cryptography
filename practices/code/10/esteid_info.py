@@ -10,29 +10,29 @@ from smartcard.util import toHexString
 class CC:
     def __init__(self):
         # Wait until a card is inserted into any reader.
-        self.channel = CardRequest(timeout=100, cardType=AnyCardType()).waitforcard().connection
-        print("Selected reader:", self.channel.getReader())
+        self.service = CardRequest(timeout=100, cardType=AnyCardType()).waitforcard()
+        print("Selected reader:", self.service.connection.getReader())
 
         # Use T=0 for compatibility and simplicity.
         try:
-            self.channel.connect(CardConnection.T0_protocol)
+            self.service.connection.connect(CardConnection.T0_protocol)
         except:
             # Fallback to T=1 if the reader does not support T=0.
-            self.channel.connect(CardConnection.T1_protocol)
+            self.service.connection.connect(CardConnection.T1_protocol)
 
         self._detect()
 
     def _detect(self):
-        atr = self.channel.getATR()
+        atr = self.service.connection.getATR()
         if atr == [0x3B, 0xDB, 0x96, 0x00, 0x80, 0xB1, 0xFE, 0x45, 0x1F, 0x83, 0x00,
                    0x12, 0x23, 0x3F, 0x53, 0x65, 0x49, 0x44, 0x0F, 0x90, 0x00, 0xF1]:
-            print("Estonian ID card")
+            print("Detected card: EstEID 2018 CosmoV8")
         else:
             print("Unknown card:", toHexString(atr))
             sys.exit(1)
 
     def send(self, apdu: list[int]):
-        data, sw1, sw2 = self.channel.transmit(apdu)
+        data, sw1, sw2 = self.service.connection.transmit(apdu)
 
         # Success.
         if [sw1, sw2] == [0x90, 0x00]:
@@ -51,6 +51,10 @@ class CC:
             sys.exit(1)
 
 
+def read_binary(to_read: int = 0, offset: int = 0) -> list[int]:
+    return [0x00, 0xB0] + list(offset.to_bytes(2, "big")) + [to_read]
+
+
 def main():
     cc = CC()
 
@@ -62,12 +66,18 @@ def main():
     cmd_select_mf = [0x00, 0xA4, 0x00, 0x0C]
     cc.send(cmd_select_mf)
 
+    cmd_select_dat = [0x00, 0xA4, 0x02, 0x0C]
+
+    print()
+
+    cc.send(cmd_select_dat + [0x02, 0xD0, 0x03])
+    r = cc.send(read_binary(9, 2))
+    print(f"Document number: {bytes(r).decode()}")
+
     cmd_select_dir = [0x00, 0xA4, 0x01, 0x0C]
     cc.send(cmd_select_dir + [0x02, 0x50, 0x00])
 
-    cmd_select_dat = [0x00, 0xA4, 0x02, 0x0C]
-
-    # Estonia ID1 Chip/App 2018 v1.0 page 17.
+    # EstEID2018 ID1-Developer-Guide V1.0 pages 80-81
     esteid18_map = {
         1: "Surname",
         2: "First name",
@@ -77,7 +87,7 @@ def main():
         6: "Personal identification code",
         7: "Document number",
         8: "Expiry date",
-        9: "Date and place of issuance",
+        9: "Issuance date and authority",
         10: "Type of residence permit",
         11: "Notes line 1",
         12: "Notes line 2",
@@ -86,11 +96,20 @@ def main():
         15: "Notes line 5",
     }
 
+    print()
+    print("Personal data:")
+
     # Fetch the personal data file.
     for k, v in esteid18_map.items():
         cc.send(cmd_select_dat + [0x02, 0x50, k])
-        r = cc.send([0x00, 0xB0, 0x00, 0x00, 0x00])
-        print(f"\t{v}:", bytes(r).decode())
+        r = bytes(cc.send(read_binary())).decode()
+
+        if k == 9 and len(r.split()) < 4:
+            v = "Date of issuance"
+
+        print(f"\t{v}:", r)
+
+    print()
 
     # Fetch PIN try counters.
     print("PIN try counters:")
