@@ -44,9 +44,9 @@ class Pedersen:
             raise ValueError("Message not suitable for encryption")
 
         r = secrets.randbelow(self.q)
-        tmp = gmpy2.powmod(self.pk, r, self.p)
+        blind = gmpy2.powmod_sec(self.pk, r, self.p)
         commitment = gmpy2.powmod_sec(self.g, m, self.p)
-        commitment = (commitment * tmp) % self.p
+        commitment = (commitment * blind) % self.p
 
         return Opener(commitment, m, r)
 
@@ -57,7 +57,7 @@ class Pedersen:
         :return: True if the commitment is valid, False otherwise
         """
         tmp = gmpy2.powmod(self.pk, o.r, self.p)
-        check = gmpy2.powmod_sec(self.g, o.m, self.p)
+        check = gmpy2.powmod(self.g, o.m, self.p)
         check = (check * tmp) % self.p
 
         return check == o.c
