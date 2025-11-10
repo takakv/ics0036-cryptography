@@ -1,7 +1,7 @@
 \usetikzlibrary{positioning,calc}
 \graphicspath{ {../../images/} }
 
-\title{ICS0026 Cryptography}
+\title{ICS0036 Cryptography}
 \subtitle{Commitments \& identification}
 \date{\today}
 \author{Taaniel Kraavi}
@@ -46,6 +46,10 @@
 
   \pause
   What additional challenges do you foresee?
+  \begin{itemize}[<+(1)->]
+    \item Premature halting
+    \item MITM
+  \end{itemize}
 \end{frame}
 
 \begin{frame}{Commitment schemes}
@@ -66,7 +70,7 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Quantifying the properties}
+\begin{frame}{Quantifying the properties (scandalously informal)}
   Perfect security
   \begin{itemize}
     \item There is a zero chance that an unbounded adversary can break the property
@@ -85,21 +89,26 @@
   \end{itemize}
 
   \pause
-  Commitments cannot be both perfectly hiding and perfectly binding.
+  Commitments cannot be both statistically hiding and binding.
 \end{frame}
 
 \begin{frame}{Cryptosystems as commitment schemes}
-  Any functional IND-CPA cryptosystem is hiding and perfectly binding.
-  \begin{itemize}[<+(1)->]
-    \item Intuitively, why is it perfectly binding?
-    \item Why is it hiding?
-    \item Why is it not perfectly hiding?
-  \end{itemize}
+  Any functional IND-CPA public-key cryptosystem is computationally hiding and perfectly binding.
+  \begin{enumerate}[<+(1)->]
+    \item Compute $(\PK, \SK) \gets \GEN$, \enquote{delete} $\SK$, and publish $\PK$.
+    \item To commit $m$, sample $r \getsu \mathcal{R}$ and output
+    \[
+      \begin{cases}
+        c \gets \ENC_\PK(m; r),\\
+        d \gets (m, r).
+      \end{cases}
+    \]
+    \item $(c, m, r)$ is a valid decommitment if $c = \ENC_\PK(m; r)$.
+  \end{enumerate}
+\end{frame}
 
-  \vspace*{1em}
-
-  \pause
-  E.g. ElGamal encryption can be used as a commitment scheme.
+\begin{frame}{ElGamal as a commitment scheme}
+  ElGamal encryption can be used as a commitment scheme.
   \begin{itemize}[<+(1)->]
     \item ElGamal commitments may refer to both classic and lifted ElGamal
     \item We can create public ElGamal parameters without knowing the secret key
@@ -220,7 +229,7 @@
 
 \begin{frame}{Security assumptions}
   \pause
-  We must assume a trusted registration protocol
+  The registration protocol must be trusted
   \begin{itemize}[<+(1)->]
     \item Digital identification is not possible without it
     \item No legal identity without physical measures
@@ -256,7 +265,7 @@
       \begin{itemize}[<+(1)->]
         \item Symmetric encryption
         \begin{itemize}
-          \item e: KPA-SEC, v: IND-CPA (adaptive)
+          \item e: KPA-SEC, v: IND-CPA2
         \end{itemize}
         \item Symmetric authentication (HMAC)
         \begin{itemize}
@@ -304,9 +313,20 @@
 \begin{frame}{Simulation}
   Zero-knowledge is based on the principle of \emph{simulation}.
   \begin{itemize}[<+(1)->]
-    \item Messages sent by the prover can be efficiently simulated.
-    \item These messages convince the verifier that the prover knows the secret.
-    \item I.e. an accepting transcript can be generated without involving the prover.
+    \item The simulator can efficiently simulate the prover's messages
+    \begin{itemize}
+      \item The prover is not involved in the simulation
+      \item The simulator does not know the prover's secret
+    \end{itemize}
+    \item These messages convince the verifier that the simulator knows the secret
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  If one can generate an accepting \emph{transcript} without involving the prover, the protocol is zero-knowledge.
+  \begin{itemize}[<+(1)->]
+    \item Transcript: all protocol messages exchanged between the prover and verifier
   \end{itemize}
 \end{frame}
 
