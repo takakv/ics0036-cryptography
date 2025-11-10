@@ -375,7 +375,7 @@ python3 homomorphic.py 157928...613543 296738...721947
   Since this is part of the code logic, you may not ask some AI to generate it for you.
 
   The \texttt{bruteforce} function should iteratively generate 8-byte nonces until the hash value of \texttt{SHA256(SHA256(seed||nonce))}
-  starts with 25 zero-bits (the challenge \enquote{difficulty}). That is, you try for nonces:
+  starts with at least 25 zero-bits (the challenge \enquote{difficulty}). That is, you try for nonces:
   \begin{enumerate}
     \item \texttt{0x0000000000000000}
     \item \texttt{0x0000000000000001}
