@@ -1,7 +1,8 @@
+\usepackage{pgfplots}
 \usetikzlibrary{positioning,calc}
 \graphicspath{ {../../images/} }
 
-\title{ICS0026 Cryptography}
+\title{ICS0036 Cryptography}
 \subtitle{Secret sharing \& MPC}
 \date{\today}
 \author{Taaniel Kraavi}
@@ -29,6 +30,7 @@
   In asymmetric schemes, the secret is known by (usually) a single party.
   \begin{itemize}[<+(1)->]
     \item What if the party loses the secret?
+    \item What if the single party is not trustworthy enough?
   \end{itemize}
 
   \vspace*{1em}
@@ -43,6 +45,7 @@
     \item \emph{Players}: holders of the secret shares
     \begin{itemize}
       \item A trusted \emph{dealer} generates the secret and splits it among the players
+      \item Some schemes do not need the dealer
     \end{itemize}
     \item \emph{Threshold}: minimum number of shares to reconstruct/use the secret
     \begin{itemize}
@@ -75,11 +78,6 @@
       \item e.g. naive string splitting
     \end{itemize}
   \end{itemize}
-
-  \vspace*{1em}
-
-  \pause
-  Is the nuclear launch-code splitting secure or insecure?
 \end{frame}
 
 \begin{frame}{How many to corrupt?}
@@ -160,7 +158,7 @@
         \draw (blr) -- (bur) -- (tur) -- (tlr) -- cycle;
         \draw (tll) -- (tlr) -- (tur) -- (tul) -- cycle;
     
-        % Draw middle cube.
+        % Draw middle left cube.
         \path (blr) + (1,0) coordinate (pos);
         \foreach \direction in {(0,0,1),(0,1,0),(1,0,0)} {
           \draw[dashed] (pos) ++ (bul) -- + \direction;
@@ -171,7 +169,7 @@
         \draw (pos) +(tll) -- +(tlr) -- +(tur) -- +(tul) -- cycle;
         \draw (pos) +(tll) -- +(bll) -- +(blr) -- +(bur) -- +(tur) +(blr) -- +(tlr);
 
-        % Draw right cube.
+        % Draw middle right cube.
         \path (pos) + (2,0) coordinate (pos2);
         \foreach \direction in {(0,0,1),(0,1,0),(1,0,0)} {
           \draw[dashed] (pos2) ++ (bul) -- + \direction;
@@ -185,7 +183,82 @@
         \fill[green!60] (pos2) +(0, 0.5, 0) -- +(0.5, 0.5, -0.5) -- +(1, 0.5, 0) -- +(0, 0.5, 0);
         \draw (pos2) +(tll) -- +(tlr) -- +(tur) -- +(tul) -- cycle;
         \draw (pos2) +(tll) -- +(bll) -- +(blr) -- +(bur) -- +(tur) +(blr) -- +(tlr);
-        \fill[fill opacity=0.7] (pos2) +(0.5, 0.5, -0.5) circle (0.5pt);
+        \fill[fill opacity=1] (pos2) +(0.5, 0.5, -0.5) circle (0.5pt);
+
+        % Draw right cube.
+        \path (pos2) + (2,0) coordinate (pos3);
+        \foreach \direction in {(0,0,1),(0,1,0),(1,0,0)} {
+          \draw[dashed] (pos3) ++ (bul) -- + \direction;
+        }
+
+        % Green back line
+        % \draw[very thin, dashed, draw=green!40] (pos3) +(0, 0.5, 0) -- +(0, 0.5, -1) -- +(1, 0.5, -1);
+
+        % Back green triangle
+        \fill[green!60] (pos3) +(0, 0.5, -1) -- +(0.5, 0.5, -0.5) -- +(1, 0.5, -1) -- +(0, 0.5, -1);
+        % Back triangle
+        \fill[cyan!60] (pos3) +(1, 1, -1) -- +(0, 1, -1) -- +(0.5, 0.5, -0.5);
+        % Right blue pane
+        \fill[blue!60] (pos3) +(bmd) -- +(bur) -- +(tur) -- +(tmd);
+        % \draw[very thin, draw=blue!40] (pos3) +(1,0,-1) -- +(0.784, 0, -0.784);
+        % \draw[very thin, dashed, draw=blue!40] (pos3) +(0,0,0) -- +(0.784, 0, -0.784);
+
+        % Right green triangle back
+        \fill[green!60] (pos3) +(1, 0.5, -0.5) -- +(0.5, 0.5, -0.5) -- +(1, 0.5, -1);
+        % Left green triangle back
+        \fill[green!60] (pos3) +(0, 0.5, -1) -- +(0.5, 0.5, -0.5) -- +(0, 0.5, -0.5);
+        % Left triangle
+        \fill[cyan!60] (pos3) -- +(0, 1, -1) -- +(0.5, 0.5, -0.5);
+        % Right triangle
+        \fill[cyan!60] (pos3) -- +(1, 1, -1) -- +(1, 0, 0) -- +(0.5, 0.5, -0.5);
+        % Right green triangle front
+        \fill[green!60] (pos3) +(1, 0.5, -0.5) -- +(0.5, 0.5, -0.5) -- +(1, 0.5, 0);
+        % Left green triangle front
+        \fill[green!60] (pos3) +(0, 0.5, 0) -- +(0.5, 0.5, -0.5) -- +(0, 0.5, -0.5);
+
+        % Left cyan dashed
+        % \draw[very thin, dashed, draw=cyan!40] (pos3) +(0, 0, 0) -- +(0, 0.784, -0.784);
+
+        % Left blue pane
+        \fill[blue!60] (pos3) +(bll) -- +(bmd) -- +(tmd) -- +(tll);
+        % Front triangle
+        \fill[cyan!60] (pos3) +(blr) -- +(bll) -- +(0.5, 0.5, -0.5);
+        % Green triangle front
+        \fill[green!60] (pos3) +(0, 0.5, 0) -- +(0.5, 0.5, -0.5) -- +(1, 0.5, 0);
+
+        % Super lines
+        % Cyan right line
+        % \draw[very thin, draw=cyan!40] (pos3) +(1, 1, -1) -- +(1, 0, 0);
+        % Cyan left line
+        % \draw[very thin, draw=cyan!40] (pos3) +(0, 1, -1) -- +(0, 0.784, -0.784);
+        % Blue top line
+        % \draw[very thin, draw=blue!40] (pos3) +(0,1,0) -- +(1, 1, -1);
+        % Green front line
+        % \draw[very thin, draw=green!40] (pos3) +(0, 0.5, 0) -- +(1, 0.5, 0) -- +(1, 0.5, -1);
+
+        \iffalse
+        % Back triangle
+        \fill[cyan!60] (pos3) +(1, 1, -1) -- +(0, 1, -1) -- +(0.5, 0.5, -0.5);
+        % Right blue pane
+        \fill[blue!60] (pos3) +(bmd) -- +(bur) -- +(tur) -- +(tmd);
+
+        % Left triangle
+        \fill[cyan!60] (pos3) -- +(0, 1, -1) -- +(0.5, 0.5, -0.5);
+        % Right triangle
+        \fill[cyan!60] (pos3) -- +(1, 1, -1) -- +(1, 0, 0) -- +(0.5, 0.5, -0.5);
+
+        % Red pane
+        \fill[red!60]  (pos3) +(blr) -- +(tlr) -- +(tul) -- +(bul);
+        % Left blue pane
+        \fill[blue!60] (pos3) +(bll) -- +(bmd) -- +(tmd) -- +(tll);
+
+        % Front triangle
+        \fill[cyan!60] (pos3) +(blr) -- +(bll) -- +(0.5, 0.5, -0.5);
+        \fi
+
+        \draw (pos3) +(tll) -- +(tlr) -- +(tur) -- +(tul) -- cycle;
+        \draw (pos3) +(tll) -- +(bll) -- +(blr) -- +(bur) -- +(tur) +(blr) -- +(tlr);
+        \fill[fill opacity=1] (pos3) +(0.5, 0.5, -0.5) circle (0.5pt);
       \end{tikzpicture}
     \end{figure}
     \item \dots
@@ -201,7 +274,7 @@
   Given $n+1$ distinct points, there is a unique polynomial of degree at most $n$ that passes through these points.
   \begin{itemize}[<+(1)->]
     \item Two distinct points define a line
-    \item Three distinct points define a quadratic function
+    \item Three distinct points (can) define a quadratic function
     \begin{itemize}
       \item If the points are aligned, the result is a line, i.e. $a=0$
     \end{itemize}
@@ -242,12 +315,89 @@
 \end{frame}
 
 \begin{frame}{Issues with Shamir}
-  Secret sharing is not verifiable:
-  \begin{itemize}[<+(1)->]
-    \item A malicious party can submit a fake share
-  \end{itemize}
+  Not verifiable: no pre-emptive detection of fake shares (malicious player or dealer)
 
   \pause
+  \setlength{\columnsep}{0pt}
+  \begin{columns}
+    \begin{column}{.4\textwidth}
+      \small
+      \begin{itemize}
+        \item $t = 4, n = 5$
+        \item Manipulated third share
+        \item Interpolation yields $f' (\neq f)$
+        \item $f(0) = 1 \neq -3 = f'(0)$
+      \end{itemize}
+    \end{column}
+    \begin{column}{.6\textwidth}
+      \begin{figure}
+        \begin{tikzpicture}
+        \begin{axis}[
+            width=9cm,
+            height=5cm,
+            axis x line=middle,
+            axis y line=middle,
+            minor y tick num=1,
+            grid=major,
+            grid style={dotted},
+            grid style={dotted},
+            xlabel={$x$},
+            ylabel={$y$},
+            ytick={-3,-1,1,3,5},
+            xmin=-0.5, xmax=5.5,
+            ymin=-3, ymax=6,
+            grid=both,
+            samples=300,
+            tick label style={font=\scriptsize},
+            label style={font=\small}
+        ]
+
+        \addplot[blue!60, thick, domain=-1:6]
+        {-(1/3)*x^3 + (5/2)*x^2 - (25/6)*x + 1}
+        node[pos=0.77, below, yshift=-4pt] {\scriptsize $f$};
+
+        \addplot[red!60, thick, dashed, domain=-1:6]
+        {(1/6)*x^3 - x^2 + (17/6)*x - 3}
+        node[pos=0.65, below] {\scriptsize $f'$};
+
+        \addplot[only marks, red!60, mark=square*, mark size=1pt] coordinates {
+            (0, -3)
+            (1, -1)
+            (2, 0)
+            (3, 1)
+            (4, 3)
+        };
+
+        \addplot[only marks, blue!60, mark=*, mark size=1pt] coordinates {
+            (0, 1)
+            (1, -1)
+            (2, 0)
+            (3, 2)
+            (4, 3)
+            (5, 1)
+        };
+
+        \end{axis}
+        \end{tikzpicture}
+      \end{figure}
+    \end{column}
+  \end{columns}
+
+  \vspace*{1em}
+
+  \pause
+  \small
+  Naive combinatoric detection is not scalable: worst case of $\binom{n}{t}$ comparisons.
+  \vspace{-3mm}
+  \begin{itemize}
+    \footnotesize
+    \item Coding-theoretic improvements often applicable
+    \vspace{-2mm}
+    \item Error correction techniques for Reed-Solomon codes, e.g. Guruswami-Sudan
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Issues with Shamir}
   There is a single point of failure:
   \begin{itemize}[<+(1)->]
     \item Need for a trusted dealer
@@ -255,6 +405,12 @@
     \begin{itemize}
       \item During generation and reassembly
       \item The shares must be directly available (knowledge and not possession)
+    \end{itemize}
+    \item e.g. for ElGamal
+    \begin{itemize}
+      \item The dealer computes $x \getsu \ZZ_q$ and $\PK \gets g^x$
+      \item The dealer shares $x$ between $n$ players and publishes $\PK$
+      \item $t$ players collaborate to recover $\SK = x$ needed for decryption: $c_2 \cdot c_1^{-x}$
     \end{itemize}
   \end{itemize}
 \end{frame}
@@ -320,7 +476,7 @@
     \item Zero knowledge proofs can be used in, for, or with with MPC
     \item In general, MPC protocols can get very complex and are out of our scope
     \begin{itemize}
-      \item MPC alliance \href{https://wiki.mpcalliance.org/protocols.html}{\textit{wiki}}
+      \item MPC alliance \href{https://web.archive.org/web/20240720125512/https://wiki.mpcalliance.org/protocols.html}{\textit{wiki}}
     \end{itemize}
   \end{itemize}
 
