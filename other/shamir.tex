@@ -55,17 +55,17 @@ Note that the polynomial is defined in the field $\ZZ_{\lvert\GG\rvert}$ and so 
 The dealer privately gives each \emph{player} their secret share $s_i=f(i)$, where $i\in\{1,\dots,n\}$, and publishes all $i$.
 Notably, $h \gets g^S$, and the public key is not computed from the key-shares.
 
-From Lagrange's interpolation theorem, we know that a polynomial of degree $t-1$ can be reconstructed when knowing at least $t$ points of the polynomial.
+From Lagrange's interpolation theorem, we know that a polynomial of degree $t-1$ can be reconstructed when knowing at least $t$ distinct points of the polynomial.
 Let $f(x_j) = y_j$.
 The Lagrange interpolating polynomial is given by
 \[
-  f(x)=\sum_{j=1}^t y_j \delta_j(x)\quad\text{where}\quad
-  \delta_j(x)=\prod_{k=1,k\neq j}^{t}\frac{x-x_k}{x_j-x_k}.
+  f(x)=\sum_{j=1}^t y_j l_j(x)\quad\text{where}\quad
+  l_j(x)=\prod_{k=1,k\neq j}^{t}\frac{x-x_k}{x_j-x_k}.
 \]
 
 Because we only wish to know $S = f(0)$, we have
 \[
-  \delta_j(0) = \prod_{k=1,k\neq j}^t \frac{-x_k}{x_j-x_k}\cdot\frac{-1}{-1}=
+  l_j(0) = \prod_{k=1,k\neq j}^t \frac{-x_k}{x_j-x_k}\cdot\frac{-1}{-1}=
   \prod_{k=1,k\neq j}^t \frac{x_k}{x_k-x_j}
 \]
 and so
@@ -73,6 +73,11 @@ and so
   f(0)= \sum_{j=1}^{t} y_j\prod_{k=1,k\neq j}^{t}\frac{x_k}{x_k - x_j},
 \]
 and we can reconstruct the secret.
+
+Notably, if the first $t$ players are available, i.e. the players with points $\bigl(1, f(1)\bigr), \dots, \bigl(t, f(t)\bigr)$, then $x_i = i$, and so
+\[
+  f(0) = \sum_{j=1}^{t} y_j\prod_{k=1,k\neq j}^{t}\frac{k}{k - j}.
+\]
 
 \textit{Example.}
 Let us consider $p = 23$ and $q = (23-1)/2 = 11$.
@@ -139,7 +144,7 @@ Let us then try reconstructing the polynomial with different subsets:
 
   \item $P_1$ and $P_3$
   
-  Notice that here $s_1, s_3$ are not consecutive points, so the indexes in the recovery formula must be readjusted.
+  Notice that here $(1, s_1), (3, s_3)$ are not consecutive points, so the indexes in the recovery formula must be readjusted.
   That is, $x_2 = 3$ and not $2$, and $y_2 = s_3$ and not $s_2$.
   \[
     f(0) = s_1 \frac{3}{3-1} + s_3 \frac{1}{1-3} =
@@ -173,7 +178,7 @@ Let us then try reconstructing the polynomial with different subsets:
   Demystifying the $\Pi$ notation
 \end{center}
 
-How do we interpret $\delta_j(x)=\prod_{k=1,k\neq j}^{t}\frac{x-x_k}{x_j-x_k}$?
+How do we interpret $l_j(x)=\prod_{k=1,k\neq j}^{t}\frac{x-x_k}{x_j-x_k}$?
 
 More generally, the $\prod_{i = 1}^n a_i$ notation signifies the product of elements $a_1, a_2, \dots, a_n$.
 That is,
@@ -189,26 +194,26 @@ Then we have
 \]
 since we multiply together all values $a_i$ except for $a_j = a_{i = j}$.
 
-In the notation of $\delta_j(x)$, the $j$ in the subscript fixes the value of $j$.
-For example, for $\delta_3(x)$, we have $j = 3$.
-The $x$ which is given to the function $\delta_j$ is a variable, so its value is fixed by what is passed to the function.
+In the notation of $l_j(x)$, the $j$ in the subscript fixes the value of $j$.
+For example, for $l_3(x)$, we have $j = 3$.
+The $x$ which is given to the function $l_j$ is a variable, so its value is fixed by what is passed to the function.
 Thus, in the function
 \[
-  \delta_j(x)=\prod_{k=1,k\neq j}^{t}\frac{x-x_k}{x_j-x_k},
+  l_j(x)=\prod_{k=1,k\neq j}^{t}\frac{x-x_k}{x_j-x_k},
 \]
 we have that $x, j, t$ are fixed, since $t$ is fixed by the protocol setting.
-The only value which then \enquote{changes} when computing $\delta_j(x)$ with a particular input $x$ is the value $k$, since we consider $x_1, x_2, \dots, x_{j-1}, x_{j+1}, \dots, x_t$.
+The only value which then \enquote{changes} when computing $l_j(x)$ with a particular input $x$ is the value $k$, since we consider $x_1, x_2, \dots, x_{j-1}, x_{j+1}, \dots, x_t$.
 Notice that we have excluded $x_j$.
 Indeed, if $j = k$ then $x_k = x_j$ and the denominator is $0$.
 Division by $0$ is not defined.
 
 If the reuse of the variable $x$ is confusing, we can also rename it as $x \to z$ to get
 \[
-  \delta_j(z)=\prod_{k=1,k\neq j}^{t}\frac{z-x_k}{x_j-x_k}.
+  l_j(z)=\prod_{k=1,k\neq j}^{t}\frac{z-x_k}{x_j-x_k}.
 \]
 By unwrapping the product, we get
 \[
-  \delta_j(z)= \frac{z-x_1}{x_j - x_1} \cdot \frac{z-x_2}{x_j - x_2} \cdot
+  l_j(z)= \frac{z-x_1}{x_j - x_1} \cdot \frac{z-x_2}{x_j - x_2} \cdot
   \dots
   \cdot \frac{z-x_{j-1}}{x_j - x_{j-1}} \cdot \frac{z-x_{j+1}}{x_j - x_{j+1}} \cdot
   \dots
@@ -217,7 +222,7 @@ By unwrapping the product, we get
 
 For example, if $z = 0, t = 3$ and $j = 2$ we get
 \[
-  \delta_2(0) = \frac{0-x_1}{x_2 - x_1} \cdot \frac{0-x_3}{x_2 - x_3} =
+  l_2(0) = \frac{0-x_1}{x_2 - x_1} \cdot \frac{0-x_3}{x_2 - x_3} =
   \frac{x_1 \cdot x_3}{(x_2 - x_1)(x_2 - x_3)}.
 \]
 The values $x_1, x_2, x_3$ are then specific and distinct $x$ coordinates of points on the polynomial.
