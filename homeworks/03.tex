@@ -74,8 +74,8 @@
   PGP stands for \emph{Pretty Good Privacy} and is a cryptographic toolset which can be used for encryption and signing of data.
   However, PGP is proprietary software (its history is quite complex) which therefore limits its use by the open source community and the general public.
 
-  Since the functionality provided by the PGP was useful however, eventually the \emph{OpenPGP standard} was developed (\href{https://datatracker.ietf.org/doc/html/rfc4880}{RFC 4880}).
-  In July of this year, \href{https://datatracker.ietf.org/doc/html/rfc9580}{RFC 9580} was published to supersede RFC 4880, but the state of implementations is muddy.
+  Since the functionality provided by the PGP was useful, eventually the \emph{OpenPGP standard} was developed (\href{https://datatracker.ietf.org/doc/html/rfc4880}{RFC 4880}).
+  In July of 2024, \href{https://datatracker.ietf.org/doc/html/rfc9580}{RFC 9580} was published to supersede RFC 4880, but the state of implementations is muddy.
   If you are interested in tech drama, see:
   \begin{itemize}
     \item \href{https://lwn.net/Articles/953797/}{A schism in the OpenPGP world},
@@ -114,7 +114,7 @@
     \end{itemize}
     \item \href{https://www.gnupg.org/gph/en/manual/x135.html}{\textit{Making and verifying signatures}} (The GNU Privacy Handbook)
     \begin{itemize}
-      \item For each of the different signature methods, come up with a use-case where that specific method is suitable.
+      \item For each of the different signature methods, explain their usefulness and describe a use-case where that specific method is suitable, but the others are not.
     \end{itemize}
 
     \item \href{https://www.gnupg.org/gph/en/manual/x334.html}{\textit{Validating other keys on your public keyring}}
@@ -150,7 +150,7 @@
     \item What was the time on my computer at the moment of singing (Estonian local time)?
     \item What is the signing time reported by DigiDoc (Estonian local time)?
     \item Do these times differ? Why yes/why not?
-    \item Did I issue the signature with my ID-card or Smart-ID?
+    \item What eID \enquote{device} did I use to issue the signature?
     How do you know which?
   \end{itemize}
 \end{task}
@@ -183,8 +183,8 @@ hw3/
   Add your additional code files to the hw3 directory as well, if any.
 \end{itemize}
 
-\begin{task}{PGP keys}
-  Generate a PGP primary key that can only certify other keys, but not sign or encrypt, and which is valid for two months.
+\begin{task}{GPG keys}
+  Generate a GPG primary key that can only certify other keys, but not sign or encrypt, and which is valid for two months.
   Then, generate a subkey for it which can only sign data, but not encrypt, and which is valid for one month.
   Please do not publish your key to any keyserver online!
 
@@ -192,7 +192,7 @@ hw3/
   For the key metadata, use your real name and your TalTech email.
   For the comment, use \enquote{Assignment 3}.
   \autoref{fig:gpg} displays what your key should look like on the command line.
-  You can also find my PGP public key in \texttt{pubkey.asice}.
+  You can also find my GPG public key in \texttt{pubkey.asice}.
   Pay attention to the \texttt{[C]} and \texttt{[S]} markers.
 
   \begin{figure}[h!]
@@ -207,7 +207,7 @@ hw3/
   Then, generate a revocation certificate for the primary key.
 
   \begin{tcolorbox}
-    If you ever have to generate a PGP key, make sure to always also generate a revocation certificate!
+    If you ever have to generate a GPG key, make sure to always also generate a revocation certificate!
     Make sure to store this certificate in a safe but available (for you) manner.
     This allows you to revoke a key should you lose it or should it become compromised.
     \tcblower
@@ -221,13 +221,13 @@ hw3/
     In practice, you should of course never leak your revocation certificate, as anyone can permanently revoke your key with it.
   \end{tcolorbox}
 
-  Include the file as \texttt{revocation.cdoc2} in your repo.
+  Include the file as \texttt{revocation.cdoc2} in your repository.
 \end{task}
 
 \begin{task}{Propagating trust}
   Task file: \texttt{pubkey.asice}
 
-  Export your PGP public key from the previous task into a file in PEM format and sign it with an Estonian digital signature (ID-card, Mobile-ID, Smart-ID, digi-ID, \dots) with DigiDoc.
+  Export your GPG public key from the previous task into a file in armored format and sign it with an Estonian digital signature (ID-card, Mobile-ID, Smart-ID, digi-ID, \dots) with DigiDoc.
   
   Include thee file as \texttt{studentid.asice} in your repo, where \enquote{studentid} is your student identifier (\enquote{takraa} for me).
   \begin{tcolorbox}
@@ -259,7 +259,7 @@ hw3/
     \label{fig:digidoc}
   \end{figure}
 
-  Upload the file as \texttt{spurious.asice} in the homework submission on Moodle.
+  Include the file as \texttt{spurious.asice} in your repository.
 
   \textit{Hint.}
   The \href{https://www.id.ee/wp-content/uploads/2021/06/bdoc-spec212-eng.pdf}{BDOC 2.1} reference can help you if you are unable to re-assemble the container in a way such that DigiDoc actually opens it.
