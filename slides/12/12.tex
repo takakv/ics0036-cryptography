@@ -1,6 +1,6 @@
 \graphicspath{ {../../images/} }
 
-\title{ICS0026 Cryptography}
+\title{ICS0036 Cryptography}
 \subtitle{Proof systems \& zero-knowledge}
 \date{\today}
 \author{Taaniel Kraavi}
@@ -168,8 +168,8 @@
 \begin{frame}{ZK proof of knowledge}
   A ZKP does not require a prover to know a witness for the statement.
   \begin{itemize}[<+(1)->]
-    \item In most cases ZKPs do imply/require knowledge of a witness
-    \item A ZKP is then called a zero-knowledge \emph{proof of knowledge}
+    \item In practice, we mostly require and prove knowledge of the witness
+    \item A ZKP is then called a zero-knowledge \emph{proof of knowledge} (ZKPoK)
   \end{itemize}
 
   \vspace*{1em}
@@ -181,7 +181,7 @@
 \begin{frame}{Knowledge-soundness}
   The notion of \emph{knowledge-soundness} implies that a prover must know a witness.
   \begin{itemize}[<+(1)->]
-    \item We show the existence of an efficient extractor that can recover the witness except with some small probability.
+    \item We show the existence of an efficient extractor that can recover the witness, except with some small probability.
   \end{itemize}
 
   \vspace*{1em}
@@ -232,7 +232,7 @@
 
 \begin{frame}{Transferability}
   Interactive ZKPoKs are not \emph{transferable}.
-  \begin{itemize}
+  \begin{itemize}[<+(1)->]
     \item A verifier not involved in the interaction is not convinced given just the transcript
     \item This follows from the potential non-randomness of challenges
     \item How can we fix the challenge for transferability?
