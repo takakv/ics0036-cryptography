@@ -8,7 +8,7 @@
 \ExecuteOptions{english}
 \ProcessOptions\relax
 
-\LoadClass[parskip=half]{scrartcl}
+\LoadClass[parskip=half,fontsize=11pt]{scrartcl}
 \KOMAoptions{usegeometry}
 
 \RequirePackage[
@@ -24,9 +24,13 @@
 \RequirePackage{fontspec}
 \RequirePackage{unicode-math}
 
-\setmainfont{Stix Two Text}
-\setsansfont{TeX Gyre Heros}
-\setmathfont{Stix Two Math}
+\IfFontExistsTF{Calibri}{%
+  \setmainfont{Calibri}%
+  \setsansfont{Calibri}%
+}{%
+  \setmainfont{Carlito}%
+  \setsansfont{Carlito}%
+}
 
 % Hide the class options from babel
 \let\syl@classoptions\@classoptionslist
@@ -39,7 +43,16 @@
 \let\@classoptionslist\syl@classoptions
 
 \RequirePackage[autostyle]{csquotes}
-\RequirePackage[hidelinks]{hyperref}
+\RequirePackage{xcolor}
+\RequirePackage{hyperref}
+
+\definecolor{taltech}{HTML}{870042}
+\hypersetup{colorlinks=true,urlcolor=blue,linkcolor=blue}
+
+\RequirePackage{scrlayer-scrpage}
+\clearpairofpagestyles
+\rofoot*{\pagemark}
+\pagestyle{scrheadings}
 
 \newcommand{\syl@s}[3]{%
   \expandafter\newcommand\csname syl@s@#1\endcsname{\ifsyl@estonian #3\else #2\fi}%
@@ -164,21 +177,56 @@
 \lecturers{Taaniel Kraavi, \email{taaniel.kraavi@taltech.ee}}
 
 \newcommand{\makesyllabustitle}{%
-  \begin{center}
-    \syl@s@university\par
+  \begingroup
+    \raggedright
+    \syl@s@university\\
     \syl@s@faculty\par
-    \medskip
-    \textbf{\syl@code\ \syl@title}\par
-    \medskip
-    \textbf{\syl@s@doctype}\par
-    \csname syl@s@\syl@season\endcsname\ \syl@year
-  \end{center}
-  \hypersetup{pdftitle={\syl@code\ \syl@title\ --- \syl@s@doctype}}%
+    \bigskip
+    {\color{taltech}\bfseries\Large\syl@code\ \syl@title\par}
+    \smallskip
+    {\color{taltech}\large
+      \syl@s@doctype\\
+      \csname syl@s@\syl@season\endcsname\ \syl@year\par}
+  \endgroup
+  \bigskip
+  \hypersetup{pdftitle={\syl@code\ \syl@title\ -- \syl@s@doctype}}%
 }
 
-\newcommand{\syl@head}[1]{\par\medskip\noindent\textbf{#1}\par\nobreak}
+\newlength{\syl@labelwidth}
+\newlength{\syl@labelsep}
+\newlength{\syl@bodyindent}
+\newbox\syl@labelbox
+\newbox\syl@bodybox
+\newdimen\syl@labelht
+\newdimen\syl@bodyht
 
-\newcommand{\field}[2]{\syl@head{\csname syl@s@#1\endcsname}#2\par}
+\AtBeginDocument{%
+  \setlength{\syl@labelwidth}{0.23\textwidth}%
+  \setlength{\syl@labelsep}{0.02\textwidth}%
+  \setlength{\syl@bodyindent}{\dimexpr\syl@labelwidth+\syl@labelsep\relax}%
+}
+
+\newcommand{\field}[2]{%
+  \par\vskip\dimexpr\medskipamount+\baselineskip\relax
+  \begingroup
+    \setbox\syl@labelbox=\hbox{%
+      \textcolor{taltech}{%
+        \parbox[t]{\syl@labelwidth}{\raggedright\bfseries
+          \csname syl@s@#1\endcsname}}}%
+    \syl@labelht=\dimexpr\ht\syl@labelbox+\dp\syl@labelbox\relax
+    \dp\syl@labelbox=\z@
+    \setbox\syl@bodybox=\vbox{%
+      \leftskip=\syl@bodyindent
+      \@totalleftmargin=\syl@bodyindent
+      \linewidth=\dimexpr\textwidth-\syl@bodyindent\relax
+      \noindent\llap{\box\syl@labelbox\hspace{\syl@labelsep}}\ignorespaces #2\par}%
+    \syl@bodyht=\dimexpr\ht\syl@bodybox+\dp\syl@bodybox\relax
+    \unvbox\syl@bodybox
+    \ifdim\syl@bodyht<\syl@labelht
+      \vskip\dimexpr\syl@labelht-\syl@bodyht\relax
+    \fi
+  \endgroup
+}
 
 \newcommand{\stdfield}[1]{%
   \field{#1}{\csname syl@s@#1text\endcsname}%
@@ -199,13 +247,18 @@
 }
 
 \newcommand{\makescheduletitle}{%
-  \section*{\syl@s@scheduletitle}
+  \par\bigskip
+  {\color{taltech}\bfseries\Large\syl@s@scheduletitle\par}
+  \medskip
   \syl@s@scheduledisclaimer\par
 }
 
 \newcommand{\week}[3]{%
-  \par\medskip\noindent\textbf{\syl@s@week\ #1}\hfill #2\par\nobreak
-  \noindent\emph{#3}\par
+  \par\medskip
+  {\color{taltech}\bfseries\syl@s@week\ #1\par}\nobreak
+  #3\par
+  \edef\syl@date{\detokenize{#2}}%
+  \ifx\syl@date\empty\else #2\par\fi
 }
 
 \newcommand{\syl@item}[2]{\par\noindent\textbf{#1}\ #2\par}
