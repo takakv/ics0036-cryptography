@@ -1,0 +1,205 @@
+\documentclass[english]{syllabus}
+
+\coursecode{ICS0036}
+\coursetitle{Cryptography}
+\semester{autumn}{2026}
+
+\begin{document}
+
+\makesyllabustitle
+
+\field{objectives}{This course aims to introduce fundamental cryptographic primitives, techniques and protocols with a focus on their applications, and to build students' ability to design and analyse secure digital systems.}
+
+\field{outcomes}{
+  After completing this course, the student:
+  \begin{itemize}
+    \item describes the basic properties, functions and limitations of common cryptographic primitives;
+    \item explains how cryptographic protocols (e.g. TLS) combine different primitives to achieve multiple security goals, and identifies and explains basic cryptographic issues in a protocol design;
+    \item knows which cryptographic algorithms and protocols to use in practice, how to securely instantiate them, and the risks associated with selecting nonstandard options;
+    \item understands and justifies the principles of trust networks and PKI;
+    \item writes programs/scripts that perform common cryptographic operations using standard libraries and tools;
+    \item consults authoritative sources on cryptographic best practices.
+  \end{itemize}
+}
+
+\field{description}{Pseudorandomness; symmetric and asymmetric cryptosystems; hash functions, MACs and KDFs; digital signatures, certificates, PKI and eIDAS; TLS; side-channel attacks and basics of secure programming; commitment and identification schemes; zero-knowledge proofs and Sigma protocols; secret sharing and secure multi-party computation; online voting; post-quantum cryptography.}
+
+\field{language}{English}
+
+\field{eap}{6 ECTS}
+
+\field{students}{Elective course for the Cybersecurity Engineering programme.}
+
+\stdfield{specialneeds}
+
+\stdfield{registration}
+
+\field{prerequisites}{Familiarity with discrete mathematics and basic programming is expected.
+Familiarity with Python is helpful, but not required.}
+
+\field{resources}{Access to a computer and an Internet connection.
+During the course you will need to be able to write and run Python $\ge 3.11$.
+We will be installing free software including OpenSSL and GMP.
+Access to a \emph{*nix} operating system is thus recommended (WSL should be sufficient on Windows).}
+
+\stdfield{lecturers}
+
+\field{contact}{Contact me either by email or on Discord (preferred).
+I will generally reply as soon as I can; if you receive no response within 48 hours, please remind me again.}
+
+\field{timetable}{
+  Lectures are on Tuesdays, 12:00--13:30.\\
+  Practicals are on Wednesdays, 16:00--17:30.
+
+  If I have to cancel a class (e.g. due to sickness or a conference), I will provide a recording and/or a written worksheet to make up for the lost session.
+}
+
+\field{process}{
+  Participation in both lectures and practicals is recommended, but not mandatory.
+  Participating in at least 8 lectures and 8 practicals relaxes your final exam pass requirement (see the \enquote{Assessment criteria for the exam} section).
+
+  Lectures and practicals will be recorded with Echo360.
+  However, some recordings may be incomplete if I have to edit them, e.g. due to the Chatham House Rule.
+
+  Lectures will give theoretical foundations while practicals will supplement the theory with further examples and showcase some tools and how to use them.
+  Each practical will have some tasks that you must complete.
+  You will have two weeks to complete and submit those tasks.
+
+  The material compounds quickly: each topic ties into the listed learning outcomes and cannot be treated in isolation.
+  Your workload will explode if you do not learn the material consistently and on time -- beware!
+
+  The recommended way to follow this course is to attend the lectures and practicals, and note down only the \enquote{eureka} moments and biggest pain points.
+  Then, preferably the same evening, but no later than the next lecture, you should rewatch the lecture at your own pace, and pause and rewind where necessary.
+  You are unlikely to grasp a lecture's material solely by attending it.
+
+  Homework assignments cover groups of topics.
+  Solutions must be committed to TalTech's GitLab, but grades and completion are tracked in Moodle.
+
+  There is a midterm (online, in Moodle) that serves as a mandatory self-check.
+  Its grade does not affect your final grade, provided that you get at least one point on it.
+  Optional, ungraded self-checks will be available for some, if not all, of the weekly topics.
+
+  The course ends with a mandatory exam.
+  The main form of the exam is in-person and written (on paper), but there will be limited slots for an oral exam alternative for those who prefer that form.
+  The slots are allocated on a \enquote{first-come, first-served} basis, with priority for students who must take the oral exam due to special needs.
+}
+
+\field{esupport}{
+  \url{https://moodle.taltech.ee/course/view.php?id=37761}
+
+  Moodle also has a link to the course's Discord server.
+  Joining the server is not mandatory, but I strongly recommend it.
+}
+
+\field{literature}{
+  Listed and linked in Moodle.
+  All course materials are also available on GitHub at \href{https://github.com/takakv/ics0036-cryptography}{takakv/ics0036-cryptography}.
+}
+
+\field{assessment}{
+  The course is graded on a 100-point scale.
+  \begin{itemize}
+    \item 30p are earned from 5 homework assignments, worth 6p each.
+
+    \item 20p are earned from practical tasks.
+    The grade will be the percentage of correct submissions.
+    For example, assuming that there are 16 graded tasks, correctly submitting 12 of them will yield 15p.
+    
+    \item 50p are earned from the final exam.
+    The exam grade will be scaled to 50p.
+  \end{itemize}
+
+  15/30 homework points are necessary, but not sufficient, to pass the course.
+  You will have at least 14 days from each assignment's publication date to submit it.
+  You can submit assignments up to 7 days late for half of the original points.
+  Past the 7 days, the assignment receives 0 points.
+  If circumstances prevent you from meeting a deadline, write to me with your reason no later than 4 days before it, and I will consider an extension.
+
+  Similarly, 10/20 practical points are necessary, but not sufficient, to pass the course.
+  You will have at least 14 days to submit the graded tasks.
+  The tasks are graded automatically, and you have 3 attempts in total for each.
+  If your third submission still does not pass, the task will be counted as failed.
+  If you are facing issues, ask questions before your third submission.
+  A failed task is final unless you can show that the grading was mistaken.
+}
+
+\field{exam}{
+  The written exam contains a true/false (T/F) section with 20 questions and six sections with short-form open-ended questions:
+  \begin{enumerate}
+    \item Symmetric cryptography
+    \item Public key cryptosystems
+    \item Signature schemes
+    \item Hash functions and KDFs
+    \item PKI
+    \item Protocols \& esoterics
+  \end{enumerate}
+
+  Alternatively, there will be limited slots (likely no more than 10) for an oral exam, which covers the same topics but has no T/F section.
+  While the oral exam is an alternative to the written one, the written exam is the main expected form of final assessment.
+
+  The written exam lasts 2 hours and the oral exam lasts 30 minutes.
+  Both exams are closed book, but a single-sided, handwritten A4 cheat sheet is allowed only for the written exam.
+
+  Students are allowed one retake, provided that their first attempt is not the last available exam attempt.
+  There will be at least 3 separate exam dates.
+  As per university rules, I will announce the exam dates at least a month in advance, and the last attempt's grade counts.
+
+  The first written exam attempt will be in week 16, with the other two in January.
+  The oral exam option will only be available before the winter break.
+}
+
+\field{examcriteria}{
+  Each T/F question is worth one point.
+  Each open-ended question states its point value next to the question, and each of the six sections is worth at least 9 points.
+  To pass the exam, the student must score at least 3 points in each of the open-ended sections.
+  The course cannot be passed without passing the exam.
+
+  Students who attend at least 8 lectures and 8 practicals earn a 3-point shortfall allowance across the sections.
+  For example, the exam is still passed with:
+  \begin{itemize}
+    \item three sections graded 2;
+    \item two sections graded 1 and 2;
+    \item one section graded 0.
+  \end{itemize}
+}
+
+\field{finalgrade}{
+  The final grade is conditional on the following requirements:
+  \begin{itemize}
+    \item The student must earn at least 15/30 points from the homework assignments.
+    \item The student must earn at least 10/20 points from the practical tasks.
+    \item The student must earn at least 3 points in each of the six open-ended sections in the exam, subject to the shortfall allowance described above.
+    \item The student must earn at least one point on the midterm.
+  \end{itemize}
+
+  Unless all requirements are satisfied, the final grade is 0, regardless of whether the total points amount to at least 51p.
+
+  \gradescale
+}
+
+\stdfield{practices}
+
+\stdfield{ai}
+
+\makescheduletitle
+
+\week{1}{}{Introduction}
+\week{2}{}{Randomness, one time pad (OTP), stream ciphers}
+\week{3}{}{Block ciphers}
+\week{4}{}{Hash functions and key derivation functions (KDF)}
+\week{5}{}{Hash structures and message authentication codes (MAC)}
+\week{6}{}{Diffie-Hellman (DH), elliptic curve cryptography (ECC), key encapsulation mechanisms (KEM)}
+\week{7}{}{ElGamal and RSA}
+\week{8}{}{Digital signatures and public key infrastructure (PKI)}
+\week{9}{}{Certificate validity, eIDAS, and qualified signatures}
+\week{10}{}{TLS, WebPKI and certificate transparency (CT)}
+\note{The midterm unlocks on the Monday of week 10 and must be attempted by 23:59 local time that Sunday.}
+\week{11}{}{Side channels, hardware security}
+\week{12}{}{Commitment schemes and zero-knowledge proofs (ZKP)}
+\week{13}{}{Secret sharing, MPC}
+\week{14}{}{Internet voting and IVXV}
+\week{15}{}{Post-quantum cryptography (PQC)}
+\week{16}{}{Revision}
+\note{The oral exams and the first written exam will also take place this week.}
+
+\end{document}
