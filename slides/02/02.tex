@@ -1,5 +1,14 @@
 \graphicspath{ {../../images/} }
-\usetikzlibrary{external}
+\usetikzlibrary{
+  calc,
+  decorations.pathreplacing,
+  decorations.pathmorphing,
+  shapes,
+  positioning,
+  patterns,
+  shadows.blur,
+  external,
+  overlay-beamer-styles}
 \usepackage{pifont}
 
 % Needed for the distinguishing game
@@ -20,9 +29,7 @@
   \titlepage
 \end{frame}
 
-\begin{frame}
-  \frametitle{Is it random?}
-
+\begin{frame}{Is it random?}
   \begin{itemize}
     \item<1-> 2204219747
     \begin{itemize}
@@ -34,7 +41,7 @@
     \begin{itemize}
       \item<2-> \texttt{01010100 01100101 01010011 00000111}
       \item<2-> \texttt{0}: $18$, \texttt{1}: $14$
-      \item<4-> Source: first 10 decimal digits of $\pi$
+      \item<4-> Source: first 10 fractional digits of $\pi$
     \end{itemize}
     \item<1-> 1918987876
     \begin{itemize}
@@ -45,9 +52,7 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}
-  \frametitle{XKCD 221}
-
+\begin{frame}{XKCD 221}
   \begin{figure}
     \centering
     \includegraphics[height=80px]{xkcd221.png}
@@ -55,33 +60,7 @@
   \end{figure}
 \end{frame}
 
-\begin{frame}
-  \frametitle{Randomness}
-
-  % Mention double pendulums, Cloudflare lava lamps
-  \begin{itemize}[<+->]
-    \item Randomness is unprovable
-    \item Statistical tests for non-randomness
-    \item \enquote{True} randomness:
-    \begin{itemize}
-      \item Thermal noise, photoelectric effect, quantum phenomena, \dots
-    \end{itemize}
-    \vspace*{1em}
-    \item Random sequence
-    \begin{itemize}
-      \item forward \& backward unpredictable
-      \item follows no deterministic pattern
-      \item cannot be compressed
-      \item has no description shorter than itself
-    \end{itemize}
-    \vspace*{1em}
-    \item Computers and humans are predictable
-  \end{itemize}
-\end{frame}
-
-\begin{frame}
-  \frametitle{Randomness in cryptography}
-
+\begin{frame}{Randomness in cryptography}
   High quality randomness is crucial in cryptography:
   \begin{itemize}[<+(1)->]
     \item secret values (e.g. secrecy of keys)
@@ -89,48 +68,108 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}
-  \frametitle{RNG}
-
-  RNG: random number generator
+\begin{frame}{What is randomness?}
+  \pause
+  Colloquially: lack of predictability/patterns
+  \pause
   \begin{itemize}[<+(1)->]
-    \item The term is often used loosely
-    \item More precise terminology:
+    \item Apparent or actual
+    \item No reliable strategy to guess the outcome in advance
     \begin{itemize}
-      \item hardware, true \& quantum RNG: HRNG, TRNG, QRNG
-      \item NRBG: non-deterministic random bit generator
+      \item Epistemological issue?
     \end{itemize}
   \end{itemize}
 
-  \vspace*{1em}
+  \vspace{1em}
 
   \pause
-  In cryptography, we consider TRNGs.
-\end{frame}
-
-\begin{frame}
-  \frametitle{TRNG}
-
-  \pause
-  A TRNG requires a physical source of \emph{entropy}.
+  Probability in the aggregate
   \begin{itemize}[<+(1)->]
-    \item Entropy (in computing): amount of unpredictable randomness
-    \item Therefore, entropy must be collected
-  \end{itemize}
-
-  \vspace*{1em}
-
-  \pause
-  Entropy sources:
-  \begin{itemize}[<+(1)->]
-    \item Integrated (opaque)
-    \item External (more choice)
+    \item Outcomes need not have the same probability
+    \item Probability distribution: map of outcomes to probabilities
+    \item Distributions describe long-run average behaviour
   \end{itemize}
 \end{frame}
 
-\begin{frame}
-  \frametitle{Entropy pool}
+\begin{frame}{When is randomness?}
+  \pause
+  A truly random sequence\pause{} has no description shorter than itself.
+  \pause
+  \begin{itemize}
+    \item Other definitions/notions exist
+  \end{itemize}
 
+  \vspace{1em}
+
+  \pause
+  Can we prove randomness?
+  \begin{itemize}[<+(1)->]
+    \item Kolmogorov complexity is uncomputable
+    \begin{itemize}
+      \item $K(s)$: length of shortest program producing $s$
+      \item Consequence: a sequence cannot be certified random algorithmically
+    \end{itemize}
+    \item Statistical tests for non-randomness
+    \begin{itemize}
+      \item Disprove rather than prove
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Are you sure that's random?}
+  \begin{figure}
+    \centering
+    \includegraphics[height=100px]{dilbert-random.jpg}
+    \caption{Dilbert on randomness}
+  \end{figure}
+\end{frame}
+
+\begin{frame}{Entropy}
+  In computing, the amount of unpredictability is called \emph{entropy}.
+
+  \pause
+  Entropy must be collected from unpredictable sources:
+  \begin{itemize}[<+(1)->]
+    \item Classical physical processes
+    \begin{itemize}
+      \item E.g. thermal noise
+    \end{itemize}
+    \item Quantum processes
+    \begin{itemize}
+      \item E.g. photoelectric effect
+    \end{itemize}
+  \end{itemize}
+
+  \vspace{1em}
+
+  \pause
+  Random $\neq$ unbiased!
+  \begin{itemize}[<+(1)->]
+    \item Cryptography requires \emph{uniform}, unpredictable values
+    \pause
+    \item Uniform distribution: all outcomes equally likely
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{RNG terminology}
+  The term \emph{Random Number Generator} is often loosely used.
+  \begin{itemize}[<+(1)->]
+    \item HRNG, TRNG, QRNG: hardware, true \& quantum RNG
+    \item NRBG: non-deterministic random bit generator
+  \end{itemize}
+
+  \vspace{1em}
+
+  \pause
+  For \emph{full entropy}, TRNGs typically use:
+  \begin{itemize}[<+(1)->]
+    \item Noise source: raw entropy collection
+    \item Randomness extractor: \enquote{polish}/de-bias the input
+    \item Often also \enquote{health tests}: fail-safe
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Entropy pool \& computers}
   \pause
   How do computers fill the entropy pool?
   \begin{itemize}[<+(1)->]
@@ -154,38 +193,10 @@
   Do we always need a TRNG?
 \end{frame}
 
-% \begin{frame}
-%   \frametitle{RNG}
-
-%   \begin{itemize}[<+->]
-%     \item Random number generators
-%     \item RNG boogaloo:
-%     \begin{itemize}
-%       \item hardware, true \& quantum RNG: HRNG, TRNG, QRNG
-%       \item NRBG: non-deterministic random bit generator
-%     \end{itemize}
-%     \item HRNG requires a physical source of entropy
-%     \begin{itemize}
-%       \item Integrated (opaque)
-%       \item External (more choice)
-%     \end{itemize}
-%     \item How do computers fill the entropy pool?
-%     \begin{itemize}
-%       \item Hardware sources, interrupt signals, user behaviour, \dots
-%       \item Beware of boot: low entropy
-%       \item Quantity of entropy?
-%       \item To block or not to block?
-%     \end{itemize}
-%     \item Do we always need a TRNG?
-%   \end{itemize}
-% \end{frame}
-
-\begin{frame}
-  \frametitle{PRNG}
-
+\begin{frame}{PRNG}
   PRNG: pseudo-random number generator
   \begin{itemize}[<+(1)->]
-    \item More precise terminology:
+    \item Additional terms:
     \begin{itemize}
       \item CSPRNG: cryptographically secure PRNG
       \item DRBG: deterministic random bit generator
@@ -197,16 +208,14 @@
   \vspace*{1em}
 
   \pause
-  Best practice: CSPRNG seeded (and reseeded) by a TRNG.
+  Common practice: CSPRNG seeded (and reseeded) by a TRNG.
   \begin{itemize}[<+(1)->]
     \item Suitable for most (cryptographic) uses.
     \item A CSPRNG does not protect against a poor seed.
   \end{itemize}
 \end{frame}
 
-\begin{frame}
-  \frametitle{Resources}
-
+\begin{frame}{Resources}
   Some recommendations/standards:
   \begin{itemize}
     \item \href{https://csrc.nist.gov/projects/random-bit-generation}{NIST on random bit generation}
@@ -220,37 +229,35 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}
-  \frametitle{An intuition on construction}
+% \begin{frame}
+%   \frametitle{An intuition on construction}
 
-  We want a black box with:
-  \begin{itemize}[<+(1)->]
-    \item \enquote{confusion}
-    \item diffusion (avalanche effect)
-  \end{itemize}
+%   We want a black box with:
+%   \begin{itemize}[<+(1)->]
+%     \item \enquote{confusion}
+%     \item diffusion (avalanche effect)
+%   \end{itemize}
 
-  \pause
-  Given this black box:
-  \begin{itemize}[<+(1)->]
-    \item compute one output \enquote{block} from the seed and counter
-    \item increment the counter
-    \item repeat as needed
-  \end{itemize}
+%   \pause
+%   Given this black box:
+%   \begin{itemize}[<+(1)->]
+%     \item compute one output \enquote{block} from the seed and counter
+%     \item increment the counter
+%     \item repeat as needed
+%   \end{itemize}
 
-  \pause
-  This is one type of construction, but there are others.
-\end{frame}
+%   \pause
+%   This is one type of construction, but there are others.
+% \end{frame}
 
-\begin{frame}
-  \frametitle{Getting randomness on *nix}
-
+\begin{frame}{Getting randomness on *nix}
   \pause
   Device files:
   \begin{itemize}
     \item \texttt{/dev/random}: historically blocking, but not any more ($\ge$ kernel 5.6)
     \item \texttt{/dev/urandom}: historically non-blocking
     \pause
-    \item Both are a CSPRNG outputs seeded from the entropy pool
+    \item Both are CSPRNG outputs seeded from the entropy pool
     \pause
     \item Documentation is commonly obsolete
     \pause
@@ -267,7 +274,7 @@
 \end{frame}
 
 \begin{frame}{Platform functions}
-  \begin{itemize}[<+(1)->]
+  \begin{itemize}
     \item Linux: \href{https://man7.org/linux/man-pages/man2/getrandom.2.html}{\texttt{getrandom()}}
     \begin{itemize}
       \item \texttt{GRND\_RANDOM} flag for \texttt{random} vs \texttt{urandom}
@@ -278,16 +285,35 @@
     \vspace*{1em}
     \item Windows: \href{https://learn.microsoft.com/en-us/windows/win32/api/bcrypt/nf-bcrypt-bcryptgenrandom}{\texttt{BCryptGenRandom}}
     \begin{itemize}
-      \item \href{https://learn.microsoft.com/en-us/windows/win32/api/wincrypt/nf-wincrypt-cryptgenrandom}{\texttt{CryptGenRandom}} is being deprecated
-      \item For .NET, use \href{https://learn.microsoft.com/en-us/dotnet/api/system.security.cryptography.randomnumbergenerator}{\texttt{RandomNumberGenerator}}
-      \item \href{https://learn.microsoft.com/en-us/dotnet/api/system.security.cryptography.rngcryptoserviceprovider}{\texttt{RNGCryptoServiceProvider}} is deprecated
+      \item \href{https://learn.microsoft.com/en-us/windows/win32/api/wincrypt/nf-wincrypt-cryptgenrandom}{\texttt{CryptGenRandom}} is deprecated
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Distinguishing games}
+  \begin{figure}
+    \centering
+    \includegraphics[height=150px]{fire-distinguisher.jpg}
+  \end{figure}
+\end{frame}
+
+\begin{frame}{Distinguishing games (informal)}
+  In crypto, security is often defined through (computational) \emph{indistinguishability}.
+  \begin{itemize}[<+(1)->]
+    \item An adversary participates in a distinguishing game
+    \item Goal: tell scenario A apart from scenario B
+    \item The scheme is secure\textsuperscript{*} if no (bounded) adversary is successful:
+    \par
+    \begin{itemize}
+      \item Unsuccessful $=$ no better than random guessing
+      \item The adversary has no \emph{advantage} over random guessing
     \end{itemize}
   \end{itemize}
 \end{frame}
 
 \begin{frame}{PRNG security (informal)}
   \pause
-  The output of a CSPRNG should be \emph{indistinguishable} from true randomness to a \emph{computationally bounded} adversary.
+  The CSPRNG output should be \emph{indistinguishable} from true randomness to a \emph{computationally bounded} adversary.
   \begin{enumerate}[<+(1)->]
     \item The challenger selects one of the two algorithms:
     \begin{align*}
@@ -309,9 +335,125 @@
   If the adversary is correct only about half the time, we consider the CSPRNG to be \enquote{secure}.
 \end{frame}
 
-\begin{frame}
-  \frametitle{Trusting randomness}
+% CSPRNG distinguishing game.
+\tikzset{
+  Squiggly/.style={
+    decorate,
+    decoration={snake, segment length=4, amplitude=0.9},
+  },
+  arrowlabel/.style={
+    midway,
+    fill=bg,
+    inner sep=2pt,
+    rounded corners=1pt,
+  },
+  divider/.style={
+    dotted,
+    thick
+  },
+  worldlabel/.style={
+    font=\footnotesize
+  }
+}
 
+% Single world
+\newcommand{\prngworld}[2]{%
+  \draw[rounded corners,thick,fill=red!85]  (0, 0)   rectangle ++(0.8, -3.8);
+  \draw[rounded corners,thick,fill=blue!50] (2.6, 0) rectangle ++(3.6, -3.8);
+
+  \node at (0.4, 0.5) {$\AD$};
+  \node at (4.4, 0.5) {Challenger};
+
+  \node[worldlabel] at (3.1, 1.3) {#1};
+
+  \draw[->,thick,visible on=<2->] (0.8, -0.9) -- (2.6, -0.9)
+    node[arrowlabel] {$\ell$};
+
+  #2
+
+  \draw[<-,thick,visible on=<5->] (0.8, -3.2) -- (2.6, -3.2)
+    node[arrowlabel] {$r$};
+
+  \draw[->,thick,visible on=<6->] (0.4, -3.8) decorate[Squiggly]{ -- (0.4, -4.16) };
+  \node[visible on=<6->] at (0.4, -4.45) {$\mathit{guess}$};
+}
+
+% Two worlds
+\newcommand{\prngdiagram}[4]{%
+  \begin{tikzpicture}[scale=0.8, transform shape]
+    \prngworld{#1}{#3}
+
+    \draw[divider] (6.9, 1.6) -- (6.9, -4.8);
+
+    \begin{scope}[shift={(7.6, 0)}]
+      \prngworld{#2}{#4}
+    \end{scope}
+  \end{tikzpicture}%
+}
+
+\begin{frame}{CSPRNG distinguishing game}
+  \begin{figure}
+    \centering
+    \prngdiagram
+      {World $0$: true randomness}
+      {World $1$: CSPRNG}
+      {\node[visible on=<3->] at (4.4, -2.05) {$r \getsu \{0,1\}^\ell$};}
+      {\node[visible on=<4->] at (4.4, -1.8)  {$s \getsu \{0,1\}^k$};
+       \node[visible on=<4->] at (4.4, -2.35) {$r \gets \mathsf{CSPRNG}(s, \ell)$};}
+  \end{figure}
+
+  \visible<7->{The adversary must output 0 or 1.}
+\end{frame}
+
+% \begin{frame}<7>{PRNG distinguishing game}
+%   \begin{figure}
+%     \centering
+%     \prngdiagram{World $?$}{World $?$}{}{}
+%   \end{figure}
+
+%   \visible<7->{The adversary does not know which world they are in.}
+% \end{frame}
+
+\begin{frame}<7-8>{CSPRNG distinguishing game}
+  \begin{columns}[T]
+    \begin{column}{0.55\textwidth}
+      \centering
+      \begin{minipage}[c][5.2cm][c]{\linewidth}
+        \centering
+        \begin{tikzpicture}[scale=0.7, transform shape]
+          \prngworld{World $?$}{}
+        \end{tikzpicture}
+      \end{minipage}
+
+      \vspace*{1em}
+      The actual world is unknown\dots\\
+      {\scriptsize (black box API access only)}
+    \end{column}
+    \begin{column}{0.4\textwidth}
+      \centering
+      \onslide<8->
+      \begin{minipage}[c][5.2cm][c]{\linewidth}
+        \centering
+        \begin{align*}
+          &\begin{game}{\GAME_0}
+            &r\getsu\{0,1\}^\ell\\
+            &\RETURN r
+          \end{game}\\[0.7em]
+          &\begin{game}{\GAME_1}
+            &s\getsu\{0,1\}^k\\
+            &r\gets\mathsf{CSPRNG}(s, \ell)\\
+            &\RETURN r
+          \end{game}
+        \end{align*}
+      \end{minipage}
+
+      \vspace*{1em}
+      \dots{}but the candidates are known.
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Trusting randomness}
   \pause
   Mixing entropy sources
   \begin{itemize}[<+(1)->]
@@ -340,9 +482,7 @@
   {\scriptsize \textsuperscript{*}without information loss}
 \end{frame}
 
-\begin{frame}
-  \frametitle{XOR}
-
+\begin{frame}{XOR}
   \pause
   XOR ($\oplus$): exclusive OR
   \pause
@@ -379,9 +519,7 @@
   {\scriptsize \textsuperscript{*} knowing the output and an input}
 \end{frame}
 
-\begin{frame}
-  \frametitle{One-time pad (OTP)}
-
+\begin{frame}{One-time pad (OTP)}
   Symmetric, deterministic cryptosystem
   \begin{columns}[T]
     \begin{column}{0.55\textwidth}
@@ -411,8 +549,7 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}
-  \frametitle{One-time pad (OTP)}
+\begin{frame}{One-time pad (OTP)}
   The OTP is \textbf{information theoretically secure}, i.e. it has \emph{perfect secrecy}.
   \begin{itemize}[<+(1)->]
     \item No bit of information is leaked
@@ -428,8 +565,7 @@
   \end{center}
 \end{frame}
 
-\begin{frame}
-  \frametitle{OTP limitations}
+\begin{frame}{OTP limitations}
 
   \pause
   Size issues:
@@ -456,8 +592,7 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}
-  \frametitle{Symmetric cryptosystems}
+\begin{frame}{Symmetric cryptosystems}
 
   A \emph{private-key encryption scheme} is a triple of algorithms:
   \begin{itemize}
@@ -480,8 +615,7 @@
   The cryptosystem is \emph{functional} (achieves \emph{correctness}) if $\DEC_k(\ENC_k(m))=m$.
 \end{frame}
 
-\begin{frame}
-  \frametitle{Symmetric cryptosystems}
+\begin{frame}{Symmetric cryptosystems}
   \framesubtitle{For mathematical rigour}
 
   Keys, messages, and ciphertexts must belong to \emph{spaces}, i.e. sets of elements:
@@ -537,9 +671,7 @@
   Can Eve guess the message that Alice sent Bob?
 \end{frame}
 
-\begin{frame}
-  \frametitle{Semantic security (informal)}
-
+\begin{frame}{Semantic security (informal)}
   Cryptographers speak of \emph{semantic security}.
   \begin{itemize}[<+(1)->]
     \item Knowing a ciphertext is no more useful than only knowing its length
@@ -554,10 +686,13 @@
     \item We aim for CPA-\emph{indistinguishability} instead
     \item IND-CPA $\implies$ IND-SEM
   \end{itemize}
+
+  \vspace{1em}
+  \pause
+  NB! Encryption does not attempt to hide a message's length.
 \end{frame}
 
-\begin{frame}
-  \frametitle{IND-CPA (informal)}
+\begin{frame}{IND-CPA (informal)}
 
   The scheme has IND-CPA if a computationally bounded adversary cannot distinguish which of two messages was encrypted.
   \begin{enumerate}[<+(1)->]
@@ -568,6 +703,49 @@
 
   \pause
   If the adversary is correct only about half the time, we consider the cryptosystem to have IND-CPA.
+\end{frame}
+
+\begin{frame}{IND-CPA game}
+  \begin{figure}
+    \centering
+    \begin{tikzpicture}[
+      scale=0.85, transform shape,
+      phaselabel/.style={
+        anchor=west,
+        font=\footnotesize
+      }]
+
+      \draw[rounded corners,thick,fill=blue!50] (5, 0) rectangle ++(3, -3.6);
+      \draw[rounded corners,thick,fill=red!85]  (0, 0) rectangle ++(1, -3.6);
+
+      \node at (6.5, 0.5) {Challenger};
+      \node at (0.5, 0.5) {$\AD$};
+
+      \node[visible on=<2->] at (6.5, -0.5) {$k \gets \GEN()$};
+
+      \draw[->,thick,visible on=<3->] (1, -1.5) -- (5, -1.5)
+        node[arrowlabel] {$m_0, m_1$};
+
+      \node[visible on=<4->] at (6.5, -2.1) {$b \getsu \{0, 1\}$};
+      \node[visible on=<4->] at (6.5, -2.6) {$c \gets \ENC_k(m_b)$};
+
+      \draw[<-,thick,visible on=<5->] (1, -3.2) -- (5, -3.2)
+        node[arrowlabel] {$c$};
+
+      \draw[->,thick,visible on=<6->] (0.5, -3.6) decorate[Squiggly]{ -- (0.5, -3.96) };
+      \node[visible on=<6->] at (0.5, -4.25) {$b'$};
+
+      \def\phasex{8.5}
+
+      \draw[divider,visible on=<3->] (-1, -1) -- (9, -1);
+      \node[phaselabel,visible on=<2->] at (\phasex, -0.5) {Setup};
+      \node[phaselabel,visible on=<3->] at (\phasex, -2.3) {Challenge};
+    \end{tikzpicture}
+  \end{figure}
+
+  \visible<7->{$\AD$ succeeds if $b' = b$.}
+  
+  \visible<8->{If $\lvert{}m_0\rvert{} \neq \lvert{}m_1\rvert{}$ the challenger must abort, i.e. messages must be of equal length.}
 \end{frame}
 
 \begin{frame}{Stream ciphers (conceptually)}
@@ -610,6 +788,7 @@
     \item Is \emph{not} secret
     \item Must be freshly selected for each encryption
     \item Must \emph{not} be reused under the same key
+    \par
     \begin{itemize}
       \item Easiest way: use a \enquote{long enough} nonce to statistically avoid this
     \end{itemize}
@@ -621,8 +800,7 @@
 
 \begin{frame}{What to use?}
   Some well-known ciphers include
-  \pause
-  \begin{itemize}[<+->]
+  \begin{itemize}[<+(1)->]
     \item[\ding{55}] RC4: belongs in a museum, weak!
     \item[\ding{55}] A5/1: used for GSM, weak!
     \item[\ding{55}] E0: used for Bluetooth, weak!
