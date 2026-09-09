@@ -18,8 +18,9 @@ Contents:
 - A function
 
   ```py
-    def recover_words(ct1: bytes, ct2: bytes, words: list[str]) -> tuple[str, str]:
+  def recover_words(ct1: bytes, ct2: bytes, words: list[str]) \
+          -> tuple[str, str] | tuple[None, None]
         ...
   ```
 
-  that recovers the two words from two ciphertexts of equal length using words from a wordlist.
+  that recovers the two words from two ciphertexts of equal length using words from a wordlist. Note that if recovery fails, the function should return `None, None`.
