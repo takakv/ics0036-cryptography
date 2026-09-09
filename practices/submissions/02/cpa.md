@@ -18,7 +18,7 @@ Contents:
 - A function
 
   ```py
-  from collections.abc import Callable
+  from typing import Callable
 
   def distinguisher(challenger: Callable[[bytes, bytes], tuple[bytes, bytes]]) \
         -> bool:
@@ -31,5 +31,5 @@ Contents:
   For example:
 
   ```py
-  guessed_first = distinguisher(challenger)
+  guessed_m2 = distinguisher(challenger)
   ```
