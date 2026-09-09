@@ -19,7 +19,7 @@ Contents:
 
   ```py
   def recover_words(ct1: bytes, ct2: bytes, words: list[str]) \
-          -> tuple[str, str] | tuple[None, None]
+          -> tuple[str, str] | tuple[None, None]:
       ...
   ```
 

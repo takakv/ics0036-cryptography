@@ -30,5 +30,5 @@ Contents:
   For example:
 
   ```py
-    guessed_first = distinguisher(challenger)
+  guessed_first = distinguisher(challenger)
   ```
