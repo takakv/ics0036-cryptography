@@ -20,11 +20,12 @@ Contents:
   ```py
   from collections.abc import Callable
 
-  def distinguisher(challenger: Callable[[bytes, bytes], bytes]) -> bool:
+  def distinguisher(challenger: Callable[[bytes, bytes], tuple[bytes, bytes]]) \
+        -> bool:
       ...
   ```
 
-  that calls the given `challenger` with two messages of the adversary's own choice, and returns `True` if the first message was encrypted, `False` otherwise.
+  that calls the given `challenger` with two messages of the adversary's own choice, and returns `False` if the first message was encrypted, `True` otherwise.
   The adversary should win the game 100% of the time.
 
   For example:
