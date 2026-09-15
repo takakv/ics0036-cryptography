@@ -1,12 +1,14 @@
 # Winning IND-CCA2
 
+> Note: Do not submit it on GitLab until `cbc.md` is also ready.
+
 Deadline: `2026-10-04T23:59:59+03:00`
 
 Filename: `cca.py`
 
 Third-party modules: `cryptography`
 
-Helper script: `challenger.py`
+Helper code: `challenger.py` – copy paste the code into your own script.
 
 Contents:
 
