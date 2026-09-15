@@ -1,5 +1,14 @@
 \graphicspath{ {../../images/} }
-\usetikzlibrary{external}
+\usetikzlibrary{
+  calc,
+  decorations.pathreplacing,
+  decorations.pathmorphing,
+  shapes,
+  positioning,
+  patterns,
+  shadows.blur,
+  external,
+  overlay-beamer-styles}
 \usepackage{pifont}
 
 \title{ICS0036 Cryptography}
@@ -91,29 +100,63 @@
   \end{center}
 
   \pause
-  Properties:
-  \begin{itemize}[<+->]
-    \item Messages and ciphertexts of fixed size (blocks)
-    \item Deterministic by default
-    \item Confusion \& diffusion
+  Block ciphers are deterministic and operate on fixed-length \emph{blocks}.
+  \begin{itemize}[<+(1)->]
+    \item $E(K, \cdot) : \{0, 1\}^s \times \{0, 1\}^n \to \{0, 1\}^n$
+    \item Common notation: $E_K(\cdot) \defeq E(K, \cdot)$
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Block cipher versatility}
+  A block cipher operation is a keyed shuffle.
+  \begin{itemize}[<+(1)->]
+    \item Reversible with the key, indistinguishable from random without
+    \item Pseudorandom permutation (PRP)
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  Built using block ciphers:
+  \begin{itemize}[<+(1)->]
+    \item Stream ciphers
+    \item CSPRNGs
+    \item MACs \& authenticated encryption (AE)
+    \item Key derivation functions (KDF)
   \end{itemize}
 \end{frame}
 
 \begin{frame}{Modes of operation}
+  \pause
   \emph{Modes of operation} are used to extend operations to data larger than a block.
+  \begin{itemize}[<+(1)->]
+    \item Some modes also provide authenticity
+  \end{itemize}
+
+  \vspace*{0.5em}
 
   \pause
   Examples:
-  \begin{itemize}[<+->]
-    \item ECB (NB! danger-zone)
-    \item CBC
-    \item CTR
-    \item GCM (authenticated encryption)
-  \end{itemize}
+  \begin{columns}
+    \begin{column}{0.4\textwidth}
+      \begin{itemize}[<+(1)->]
+        \item ECB (NB! danger-zone)
+        \item CBC
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \begin{itemize}[<+(1)->]
+        \item CTR
+        \item GCM (authenticated encryption)
+      \end{itemize}
+    \end{column}
+  \end{columns}
+
+  \vspace*{1em}
 
   \pause
-  Warnings:
-  \begin{itemize}[<+->]
+  Important:
+  \begin{itemize}[<+(1)->]
     \item A secure cipher with an insecure mode is insecure!
     \item Pick the right mode for the right task!
   \end{itemize}  
@@ -136,7 +179,7 @@
   \end{center}
 
   \pause
-  Do not use, \emph{ever}\textsuperscript{*}.
+  Do not use, \emph{ever}\textsuperscript{*}
 
   \pause
   A building block for
@@ -162,7 +205,26 @@
   \end{columns}
 \end{frame}
 
-\begin{frame}{Initialisation Vector (IV)}
+\begin{frame}{Core tenet of encryption}
+  \begin{center}
+    IND-CPA requires randomised encryption!
+
+    \vspace*{2em}
+
+    \pause
+    Ephemeral random values are necessary, but not sufficient for IND-CPA.
+  \end{center}
+\end{frame}
+
+\begin{frame}{Initialisation Vector (IV) \& nonce}
+  IVs provide randomness and/or uniqueness.
+  \begin{itemize}[<+(1)->]
+    \item Nonce: number used once (not necessarily random)
+    \item Not secret: can be sent with the ciphertext
+  \end{itemize}
+
+  \pause
+  Attempt at improving ECB:
   \begin{center}
   \begin{tikzpicture}
     \foreach \x in {1, 2, 3} {
@@ -183,12 +245,6 @@
     }
   \end{tikzpicture}
   \end{center}
-
-  \begin{itemize}[<+(1)->]
-    \item Different ways to apply the IV (XOR on the figure)
-    \item Do not reuse (under the same key)
-    \item Not secret: sent with the ciphertext
-  \end{itemize}
 \end{frame}
 
 \begin{frame}{Cipher Block Chaining (CBC) mode}
@@ -220,21 +276,8 @@
   \end{tikzpicture}
   \end{center}
 
-  \begin{columns}
-    \begin{column}{0.5\textwidth}
-      \begin{itemize}[<+(1)->]
-        \item Serial encryption
-        \item Parallel decryption
-        \item Pre-encryption change propagation
-    \end{itemize}
-    \end{column}
-    \begin{column}{0.5\textwidth}
-      \pause
-      \begin{block}{Note}
-        Not security properties!
-      \end{block}
-    \end{column}
-  \end{columns}
+  \pause
+  CBC requires random and unique IVs!
 \end{frame}
 
 \begin{frame}{CBC Tux}
@@ -302,55 +345,41 @@
     We will cover data authentication \& integrity in a later lecture.
   \end{block}
 
-  \vspace*{1em}
-
-  \begin{columns}[b]
-    \begin{column}{0.4\textwidth}
-      \pause
-      AE assures:
-      \begin{itemize}[<+->]
-        \item confidentiality
-        \item authenticity
-      \end{itemize}
-    \end{column}
-    \begin{column}{0.53\textwidth}
-      \pause
-      Authenticity is a special case of integrity.
-    \end{column}
-  \end{columns}
-
-  \vspace*{1em}
-
-  \pause
-  Authenticated encryption with associated data (AEAD):
-  \begin{itemize}[<+->]
-    \item Additional associated data AAD: the \emph{header}
-    \item Authenticated, but not confidential
+  \vspace*{0.5em}
+  
+  AE provides confidentiality \& authenticity.
+  \begin{itemize}[<+(1)->]
+    \item Authenticity and integrity provided by the \emph{authentication tag}
+    \item If tag verification fails, do not decrypt the ciphertext
+    \item Do not use\textsuperscript{*} unauthenticated encryption! \hspace{1em} {\scriptsize\textsuperscript{*}without a very good reason}
   \end{itemize}
 
   \vspace*{1em}
 
   \pause
-  Authenticity provided by the \emph{authentication tag}.
+  Authenticated encryption with associated data (AEAD):
+  \begin{itemize}[<+(1)->]
+    \item Additional associated data AAD: the \emph{header}
+    \item Authenticated, but not confidential
+  \end{itemize}
 \end{frame}
 
 \begin{frame}
   \frametitle{Galois/Counter (GCM) mode}
 
-  You do not need to know/remember this!
+  You do not need to remember this schema!
   \begin{center}
     \url{https://csrc.nist.rip/groups/ST/toolkit/BCM/documents/proposedmodes/gcm/gcm-spec.pdf\#page=8}
   \end{center}
   \pause
-  However, you should understand what it does (not how) and why it is useful.
+  However, you should understand what it does and why it is useful.
 \end{frame}
 
-\begin{frame}{Dangers of GCM}
-  In GCM-mode, nonce reuse enables the \emph{forbidden attack}:
+\begin{frame}{Pitfalls of GCM}
+  In GCM-mode, nonce reuse enables the \enquote{forbidden attack}:
   \begin{itemize}[<+(1)->]
     \item practical attack (real-world applicable)
-    \item enables authentication key recovery
-    \item $\implies$ message forgery (breaks authenticity)
+    \item enables authentication key recovery $\implies$ data forgery
   \end{itemize}
 
   \pause
@@ -366,8 +395,6 @@
 \end{frame}
 
 \begin{frame}{Padding messages}
-  How should we pad messages?
-
   \begin{columns}
     \begin{column}{0.5\textwidth}
       \begin{itemize}[<+(1)->]
@@ -375,7 +402,7 @@
         \texttt{1a 1a 1a 1a 1a 00 00 00}
         \item ISO/IEC 7816-4\\
         \texttt{1a 1a 1a 1a 1a 80 00 00}
-        \item PKCS\#5 and PKCS\#7\\
+        \item PKCS\#5 and PKCS\#7 (most common)\\
         \texttt{1a 1a 1a 1a 1a 03 03 03}\\
         \texttt{1a 1a 1a 05 05 05 05 05}
       \end{itemize}
@@ -393,7 +420,11 @@
   \vspace*{1em}
 
   \pause
-  Padding is always added.
+  In non-streaming modes, padding should always be added for unambiguity!
+  \begin{itemize}[<+(1)->]
+    \item If the message is block-aligned, add a full padding block
+    \item NOT intended for randomisation: that is the IV's role
+  \end{itemize}
 \end{frame}
 
 \begin{frame}{Block-size \& key size}
@@ -418,37 +449,50 @@
   \end{itemize}
 
   \pause
-  More complex parameters exist, but usually are not of the user's concern.
+  More complex parameters exist, but are not usually for the user to tune.
 \end{frame}
 
 \begin{frame}{Security level}
   \pause
-  The \emph{security level} is a measure of the \enquote{strength} that a cryptographic primitive achieves.
+  The \emph{security level} is a measure of the \enquote{strength} that a primitive achieves.
 
   \begin{itemize}[<+(1)->]
     \item Often called \emph{bits of security}
     \item $n$-bits of security: $2^n$ operations to break (typical definition)
-    \item Essentially refers to the \emph{brute-force} break
-    \item Not always clear cut!
+    \item Strength measured differently for different primitives!
+    \par
+    \begin{itemize}
+      \item Consult authoritative sources (e.g. NIST, ANSSI, BSI)
+      \item Not always clear cut
+    \end{itemize}
+  \end{itemize}
+
+  \pause
+  For symmetric cryptosystems with $k$-bit keys
+  \begin{itemize}[<+(1)->]
+    \item classical strength = $k$
+    \item quantum resistance is trickier to measure
+    \par
+    \begin{itemize}
+      \item The commonly claimed $k/2$ is overly conservative and not true practice!
+    \end{itemize}
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Security level}
-  \begin{itemize}[<+->]
-    \item Secure symmetric cryptosystems: classical strength = key size (typically)
-    \item Strength measured differently for different primitives
-    \item Broken primitive: an attack beats the \emph{target security level}
+\begin{frame}{Cryptographic break}
+  In terms of the \enquote{raw} security level:
+  \begin{itemize}[<+(1)->]
+    \item Computational break: attack with lower complexity than the claimed level
     \item Not all \emph{breaks} are practical
-    \item \enquote{Practical} break historically fixed at $2^{80}$ ($2^{100}$ also common) \dots
-    \item \dots{}but is arguably no longer enough
-    \item Bitcoin hashing data: \url{https://www.blockchain.com/explorer/charts/hash-rate}
+    \item Theoretical breaks can still be useful
+    \item Historically accepted minimum security levels: $2^{80}$, later $2^{112}$
+    \item Modern minimum required security level: 128 bits
   \end{itemize}
 \end{frame}
 
 \begin{frame}{Some ciphers}
   Some well-known ciphers include
-  \pause
-  \begin{itemize}[<+->]
+  \begin{itemize}[<+(1)->]
     \item[\ding{55}] DES (Data Encryption Standard): belongs in a museum, weak!
     \item[\ding{55}] 3DES: deprecated
     \item[\ding{51}] Twofish: successor to the insecure Blowfish
@@ -470,8 +514,9 @@
 
 \begin{frame}{AES}
   Advanced Encryption Standard
-  \begin{itemize}[<+(1)->]
-    \item Originally called Rijndael
+  \pause
+  \begin{itemize}
+    \item A subset of the Rijndael cipher family
     \item Standardised by NIST in 2001 (\href{https://csrc.nist.gov/pubs/fips/197/final}{FIPS 197})
     \item Later standardised by ISO (\href{https://www.iso.org/standard/54531.html}{ISO/IEC 18033-3:2010})
     \item Superseded the Data Encryption Standard (DES)
@@ -479,7 +524,7 @@
 
   \pause
   Practical info:
-  \begin{itemize}[<+->]
+  \begin{itemize}[<+(1)->]
     \item Block size: 128 bits
     \item \href{https://csrc.nist.gov/pubs/sp/800/197/iprd}{NIST SP 800-197}: work on 256-bit block AES (in progress)
     \item Key sizes: 128, 192, 256 bits
@@ -487,115 +532,265 @@
 \end{frame}
 
 \begin{frame}{Attacks on AES}
-  No current practical attack can break AES confidentiality (when correctly used and implemented).
+  No practical attack is known against the AES cipher (when correctly implemented).
 
   \begin{itemize}[<+(1)->]
-    \item Best current key recovery attack: $2^{126.0}$ operations (\href{https://doi.org/10.1007\%2F978-3-319-19962-7_3}{Tao \& Wu, 2015})
-    \item Security can be weakened by the mode of operation
-    \item Lots of problematic implementations (side channel attacks)
-    \item Various breaks if not enough \emph{rounds} are performed
-    \item AES-256 is considered \emph{quantum resistant} (128 bits of security)
-    \item AES-128, AES-192 are not considered quantum resistant
+    \item Best known key recovery attack: $\sim 2^{126}$ operations (not practical)
+    \item AES-128 is considered \emph{quantum resistant} in practice regardless of key-length
+    \par
+    \begin{itemize}
+      \item See {\footnotesize\url{https://words.filippo.io/128-bits/}} for the rationale
+      \item AES-256 may still be recommended or required by standards/guidance
+    \end{itemize}
+    \item Implementation dangers: side channel attacks
+    \par
+    \begin{itemize}
+      \item Hardware implementations \emph{should} be protected against cache timing attacks
+    \end{itemize}
   \end{itemize}
 
   \pause
   Pick the implementation carefully!
 \end{frame}
 
-\begin{frame}{Recap}
-  Block ciphers:
+\begin{frame}{Symmetric encryption recap}
+  Use AE(AD) constructions whenever possible!
   \begin{itemize}[<+(1)->]
-    \item Well suited for static/fixed data, e.g. stored files, passwords, \dots
-    \item Often used for \enquote{regular} communication
+    \item Do not reuse nonces: breaks confidentiality
+    
+    \vspace*{0.5em}
+
+    \item AES-GCM should be your default choice
     \begin{itemize}
-      \item e.g. messaging apps (Signal \& WhatsApp, Telegram\textsuperscript{*})
+      \item 128/192/256-bit keys, 96-bit nonce (standard)
+      \item Brittle: nonce reuse enables universal forgeries
+      \item May be slow without AES hardware support
     \end{itemize}
-    \item Can work as stream ciphers
-    \item Typically better studied
-  \end{itemize}
 
-  \vspace*{1em}
+    \vspace*{0.5em}
 
-  \pause
-  Prefer AES whenever possible
-  \begin{itemize}
-    \item Use with an authentication mechanism (AES-GCM or separate MAC)
-    \item Key sizes: 128, 196, 256 bits, with AES-256 being quantum-safe
-    \item Often hardware accelerated
+    \item ChaCha20-Poly1305 is the primary alternative
+    \begin{itemize}[<+(1)->]
+      \item Fast without hardware support
+      \item 256-bit key, 96-bit nonce (192-bit XChaCha20)
+      \item Not standardised by NIST (not FIPS compliant)
+    \end{itemize}
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Recap}
-  Stream ciphers:
+\begin{frame}{Data limits}
+  AES-GCM:
   \begin{itemize}[<+(1)->]
-    \item Well suited for data streams, e.g. real-time communication, internet traffic
-    \item Modern stream ciphers are very fast (efficient in software)
-    \item Redundancy for block-cipher breaks (for pure stream ciphers)
+    \item Message length limit: $2^{32} - 2$ blocks $\approx 64$ GiB
+    \item Re-keying needed after $2^{32}$ invocations \href{https://csrc.nist.gov/pubs/sp/800/38/d/final}{[SP 800-38D \S 8.3]}
   \end{itemize}
 
-  \vspace*{1em}
+  \vspace*{0.5em}
 
   \pause
-  Use ChaCha20 if you need a \enquote{pure} stream cipher
+  ChaCha20-Poly1305:
   \begin{itemize}[<+(1)->]
-    \item Use with an authentication mechanism: ChaCha20-Poly1305
-    \item 256-bit key, 96-bit nonce (192-bit nonce for XChaCha20-Poly1305)
-    \item Quantum safe
+    \item Message length limit: $\approx 256$ GiB for 96-bit nonces \href{https://datatracker.ietf.org/doc/html/rfc8439\#section-2.8}{[RFC 8439]}
+    \item Re-keying? Some theoretical bounds, but no concrete message count limits
+  \end{itemize}
+
+  \vspace*{0.5em}
+
+  \pause
+  Nonce/IV reuse may be catastrophic (under the same key)!
+  \begin{itemize}[<+(1)->]
+    \item Nonce/IV space may need to be partitioned in multi-sender cases
+    \item Re-key well before the \enquote{trouble} bounds
   \end{itemize}
 \end{frame}
 
-\begin{frame}{ChaCha20 vs AES}
-  \pause
-  Not going to tell you $>$:)
-  \begin{itemize}[<+(1)->]
-    \item Both are generally good options
-    \item For web-servers, you should support both (TLS 1.3)
-  \end{itemize}
+\begin{frame}{IND-CCA1: lunchtime attack (non-adaptive)}
+  \begin{figure}
+    \centering
+    \begin{tikzpicture}[
+      scale=0.9, transform shape,
+      Squiggly/.style={
+        decorate,
+        decoration={snake, segment length=4, amplitude=0.9},
+      },
+      arrowlabel/.style={
+        midway,
+        fill=bg,
+        inner sep=2pt,
+        rounded corners=1pt,
+      },
+      divider/.style={
+        dotted,
+        thick
+      },
+      challengeline/.style={
+        thick,
+        gray!70,
+      },
+      phaselabel/.style={
+        anchor=west,
+        font=\footnotesize
+      }]
 
-  \pause
-  Things to keep in mind:
-  \begin{itemize}[<+(1)->]
-    \item Performance: which is faster for you? your peers/use case?
-    \item Standardisation: AES-GCM is FIPS compliant, ChaCha20 is not
-    \item Implementation quality: ChaCha20 is timing safe (not the whole story!)
-    \item Degree of authenticity: (X)ChaCha20-Poly1305 offers stronger properties
-    \item Theoretical security: ChaCha20 has a larger security \enquote{margin}
-  \end{itemize}
+      \draw[rounded corners,thick,fill=blue!50] (5, 0) rectangle ++(3, -5);
+      \draw[rounded corners,thick,fill=red!85]  (0, 0) rectangle ++(1, -5);
+
+      \node (P) at (6.5, 0.5) {Challenger};
+      \node (K) at (0.5, 0.5) {$\AD$};
+
+      \draw[->,thick,visible on=<3->] (1, -1.5) -- (5, -1.5)
+        node[arrowlabel] {$m_i \lor c_i$};
+      \draw[<-,thick,visible on=<3->] (1, -2)   -- (5, -2)
+        node[arrowlabel] {$\ENC_k(m_i) \lor \DEC_k(c_i)$};
+
+      \node[visible on=<2->] at (6.5, -0.5) {$k \gets \GEN()$};
+      \node[visible on=<4->] at (6.5, -3.25) {$b \getsu \{0, 1\}$};
+      \node[visible on=<4->] at (6.5, -3.75) {$C \gets \ENC_k(M_b)$};
+
+      \draw[->,thick,visible on=<4->] (1, -3) -- (5, -3) node[arrowlabel] {$M_0, M_1$};
+      \draw[<-,thick,visible on=<4->] (1, -4) -- (5, -4) node[arrowlabel] {$C$};
+
+      \draw[->,thick,visible on=<5->] (0.5, -5) decorate[Squiggly]{ -- (0.5, -5.36) };
+      \node[visible on=<5->] at (0.5, -5.6) {$b'$};
+
+      \def\phasex{8.5}
+
+      \draw[divider,visible on=<3->] (-1, -1) -- (9, -1)
+        node[above=2pt, anchor=west, fill=bg, inner sep=2pt] {};
+      \node[phaselabel,visible on=<2->] at (\phasex, -0.5) {Setup};
+
+      \draw[divider,visible on=<4->] (-1, -2.5) -- (9, -2.5)
+        node[above=2pt, anchor=west, fill=bg, inner sep=2pt] {};
+      \node[phaselabel,visible on=<3->] at (\phasex, -1.75) {Phase 1};
+
+      \draw[divider,visible on=<5->] (-1, -4.5) -- (9, -4.5)
+        node[below=2pt, anchor=west, fill=bg, inner sep=2pt] {};
+      \node[phaselabel,visible on=<4->] at (\phasex, -3.5) {Challenge};
+
+      \draw[
+        decorate,
+        decoration={brace, mirror, amplitude=6pt},
+        visible on=<3->
+      ] (-0.1, -1.1) -- (-0.1, -2.4) {};
+      \node[anchor=east,font=\footnotesize,visible on=<3->] at (-0.3, -1.75) {loop};
+    \end{tikzpicture}
+  \end{figure}
+
+  \visible<6->{NB! We assume that (challenge) messages are of equal length.}
 \end{frame}
 
-\begin{frame}{Block cipher versatility}
-  Built using block ciphers:
-  \begin{itemize}[<+(1)->]
-    \item Stream ciphers
-    \item CSPRNGs
-    \item Cryptographic hash functions
-    \item Secure PRPs (pseudo-random permutations)
-    \item Message authentication codes (MACs) \& AE
-  \end{itemize}
+\begin{frame}{IND-CCA2: adaptive}
+  The adversary can submit new queries after receiving the challenge.
+
+  \pause
+  \begin{figure}
+    \centering
+    \begin{tikzpicture}[
+      scale=0.9, transform shape,
+      Squiggly/.style={
+        decorate,
+        decoration={snake, segment length=4, amplitude=0.9},
+      },
+      arrowlabel/.style={
+        midway,
+        fill=bg,
+        inner sep=2pt,
+        rounded corners=1pt,
+      },
+      divider/.style={
+        dotted,
+        thick
+      },
+      challengeline/.style={
+        thick,
+        gray!70,
+      },
+      phaselabel/.style={
+        anchor=west,
+        font=\footnotesize
+      }]
+
+      \draw[rounded corners,thick,fill=blue!50] (5, 0) rectangle ++(3, -5);
+      \draw[rounded corners,thick,fill=red!85]  (0, 0) rectangle ++(1, -5);
+
+      \node[visible on=<2->] at (0.5, -0.5) {$\vdots$};
+      \node[visible on=<2->] at (6.5, -0.5) {$\vdots$};
+
+      \node[visible on=<3->] at (6.5, -1.75) {$b \getsu \{0, 1\}$};
+      \node[visible on=<3->] at (6.5, -2.25) {$C \gets \ENC_k(M_b)$};
+
+      \draw[->,thick,visible on=<3->] (1, -1.5) -- (5, -1.5) node[arrowlabel] {$M_0, M_1$};
+      \draw[<-,thick,visible on=<3->] (1, -2.5) -- (5, -2.5) node[arrowlabel] {$C$};
+
+      \node[visible on=<4->] at (6.5, -3.75) {$\mathsf{Abort\ if\ } c_j = C$};
+
+      \draw[->,thick,visible on=<4->] (1, -3.5) -- (5, -3.5)
+        node[arrowlabel] {$m_j \lor c_j$};
+      \draw[<-,thick,visible on=<4->] (1, -4)   -- (5, -4)
+        node[arrowlabel] {$\ENC_k(m_j) \lor \DEC_k(c_j)$};
+
+      \draw[->,thick,visible on=<5->] (0.5, -5) decorate[Squiggly]{ -- (0.5, -5.36) };
+      \node[visible on=<5->] at (0.5, -5.6) {$b'$};
+
+      \def\phasex{8.5}
+
+      \draw[divider,visible on=<3->] (-1, -1) -- (9, -1)
+        node[above=2pt, anchor=west, fill=bg, inner sep=2pt] {};
+      \node[phaselabel,visible on=<2->,align=left] at (\phasex, -0.5) {Setup +\\Phase 1};
+
+      \draw[divider,visible on=<4->] (-1, -3) -- (9, -3)
+        node[below=2pt, anchor=west, fill=bg, inner sep=2pt] {};
+      \node[phaselabel,visible on=<3->] at (\phasex, -2) {Challenge};
+
+      \draw[divider,visible on=<5->] (-1, -4.5) -- (9, -4.5)
+        node[below=2pt, anchor=west, fill=bg, inner sep=2pt] {};
+      \node[phaselabel,visible on=<4->] at (\phasex, -3.75) {Phase 2};
+
+      \draw[
+        decorate,
+        decoration={brace, mirror, amplitude=6pt},
+        visible on=<4->
+      ] (-0.1, -3.1) -- (-0.1, -4.4) {};
+      \node[anchor=east,font=\footnotesize,visible on=<4->] at (-0.3, -3.75) {loop};
+    \end{tikzpicture}
+  \end{figure}
 \end{frame}
 
 \begin{frame}{Disk encryption}
-  Specific modes of operation exist, e.g. XTS (AES-XTS is standardised).
+  Tricky requirements:
+  \begin{itemize}[<+(1)->]
+    \item random access
+    \item length-preserving: no room for IVs and tags
+  \end{itemize}
+
+  \vspace*{1em}
 
   \pause
   How to do it with CBC?
   \begin{itemize}[<+(1)->]
-    \item Encrypt each sector
+    \item Encrypt each (logical) sector
     \item Use sector number as IV
-    \item ESSIV mode improves it a little (SN + key hash)
-    \item No integrity!
+    \item ESSIV: $IV = E_{\mathrm{hash}(K)}(\mathrm{SN})$ -- unpredictable without the key
   \end{itemize}
+\end{frame}
 
-  \pause
-  Some tools:
+\begin{frame}{Disk encryption (cont.)}
+  In practice:
   \begin{itemize}[<+(1)->]
-    \item LUKS (dm-crypt)
-    \item BitLocker
-    \item FileVault
+    \item XTS-AES: no chaining, parallel decryption
+    \begin{itemize}
+      \item BitLocker, FileVault, LUKS, \dots
+    \end{itemize}
+    \item Google Adiantum: ChaCha-based
+    \begin{itemize}
+      \item Devices without AES acceleration, e.g. entry-level Android devices
+    \end{itemize}
   \end{itemize}
 
+  \vspace*{1em}
+
   \pause
-  Trivia: Google Adiantum cipher composition.
+  No integrity in any of these!
 \end{frame}
 
 \begin{frame}{Keys and passwords}
@@ -603,16 +798,21 @@
   A human-generated password typically has low \emph{entropy}, i.e. not random enough.
 
   \pause
-  Key derivation functions (more on week 6):
+  Key derivation functions (more next week):
   \begin{itemize}[<+(1)->]
     \item Derive secret keys from a secret value
     \item \enquote{Stretch} (and strengthen) secrets
-    \item Hash-function or block-cipher based (typically)
-    \item Attack resistant: slow down attacks
   \end{itemize}
 
+  \vspace*{1em}
+
   \pause
-  Encryption keys are derived from passwords for \enquote{user-facing} symmetric cryptosystems.
+  E.g. disk encryption key wrapping:
+  \begin{itemize}[<+(1)->]
+    \item Generate random disk encryption key (DEK)
+    \item Derive key encryption key from user-provided password (KEK)
+    \item Encrypt DEK with KEK
+  \end{itemize}
 \end{frame}
 
 \end{document}
