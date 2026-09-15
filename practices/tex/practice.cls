@@ -37,7 +37,7 @@
 \def\@maketitle{%
   \newpage
   \begin{center}%
-    {Practice session \@title{} --- \@date\par}%
+    {Practice session \@title{} -- \@date\par}%
   \end{center}%
   \par}
 \makeatother
@@ -46,7 +46,7 @@
 \newenvironment*{task}[1]{%
   \refstepcounter{task}%
   \vspace*{1em}
-  \textbf{Task~\thetask{} --- {#1}}\par}{}
+  \textbf{Task~\thetask{} -- {#1}}\par}{}
 
 %\makeatletter
 %\newcommand\task{\@startsection {task}{1}{\z@}%
