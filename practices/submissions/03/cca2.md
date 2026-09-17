@@ -1,7 +1,5 @@
 # Winning IND-CCA2
 
-> Note: Do not submit it on GitLab until `cbc.md` is also ready.
-
 Deadline: `2026-10-04T23:59:59+03:00`
 
 Filename: `cca.py`
