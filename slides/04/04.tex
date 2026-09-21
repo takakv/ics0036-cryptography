@@ -1,10 +1,17 @@
 \graphicspath{ {../../images/} }
 \usetikzlibrary{external}
 
+% Needed for setting font size for mono blocks
 \usepackage{fancyvrb}
 
+% Needed for argon2id hash colours
+\usepackage[dvipsnames]{xcolor}
+
+% Needed for argon2id hash to fit
+\setmonofont{cmuntt}
+
 \title{ICS0036 Cryptography}
-\subtitle{Public-key cryptography \& RSA}
+\subtitle{Hash functions \& KDFs}
 \date{\today}
 \author{Taaniel Kraavi}
 \institute%
@@ -18,489 +25,468 @@
   \titlepage
 \end{frame}
 
-\begin{frame}{Public-key cryptosystem}
-  A \emph{public-key encryption scheme} is a triple of algorithms:
+\begin{frame}{Hash functions}
+  \pause
+  A map from arbitrary sized data to fixed-size values.
   \begin{itemize}[<+(1)->]
-    \item $\GEN$ is a randomised \emph{key generation algorithm}: $(\PK,\SK)\gets\GEN$
-    \item $\ENC$ is a (possibly randomised) \emph{encryption algorithm}: $c\gets\ENC_\PK(m)$
-    \item $\DEC$ is a \emph{decryption algorithm}: $m\gets\DEC_\SK(c)$.
+    \item $h:\{0,1\}^* \to \{0,1\}^n$
+    \item Extendable-output functions (XOF): arbitrary-length output
+    \item Values are called \emph{hashes} or \emph{digests}
+    \item Deterministic
   \end{itemize}
 
-  \pause
-  There are two keys:
-  \begin{itemize}[<+(1)->]
-    \item $\SK$ is the \emph{secret key}, also called \emph{private key}
-    \item $\PK$ is the \emph{public key}
-    \item $\PK$ is derived from the $\SK$
-    \item It should be \emph{infeasible} to derive $\SK$ from the $\PK$
-  \end{itemize}
+  \vspace*{1em}
 
   \pause
-  The cryptosystem is \emph{functional} if $\DEC_\SK(\ENC_\PK(m))=m$.
+  A good hash function:
+  \begin{itemize}[<+(1)->]
+    \item efficient to compute
+    \item outputs are (close to) uniformly distributed
+    \item low risk of collisions
+  \end{itemize}
 \end{frame}
 
-\begin{frame}{Public-key cryptosystem}
+\begin{frame}{Pigeonhole principle}
+  \pause
+  If $n$ items are put into $m$ containers, with $n > m$, then at least one container must contain more than one item.
+
+  \vspace*{1em}
+
+  \pause
   \begin{center}
-    \begin{tikzpicture}
-      \node (alice) at (0,0)      {\includegraphics[height=80px]{alice}};
-      \node (bob)   at (8, 0)     {\includegraphics[height=80px]{bob}};
-      \node (eve)   at (4, -2.1)  {\includegraphics[height=80px]{eve}};
-  
-      \draw[->,thick] (alice.east) -- (bob.west);
-      
-      \node[anchor=east] (gen) at (11, 2) {$(\PK,\SK)\gets\GEN$};
-      \draw[<-,dashed,thick] (alice.north) |- (gen.west);
-
-      \node (el) at (eve.north) [xshift=-5px] {};
-      \node (er) at (eve.north) [xshift=5px] {};
-
-      \path let \p1 = (el) in node (circ1) at (\x1,2) {};
-      \path let \p1 = (er) in node (circ2) at (\x1,0) {};
-
-      \node[anchor=west] (m) at (-3, 0.25) {$m\gets\MMM$};
-      \node[anchor=west] (enc) at (-3, -0.25) {$c\gets\ENC_\PK(m)$};
-      \node[anchor=east] (dec) at (11, 0) {$m\gets\DEC_\SK(c)$};
-      
-      \node (c) at (circ2.north) [yshift=5px] {$c$};
-
-      \draw[->,dashed,thick] (circ1) -- (el);
-      \draw[->,thick] (circ2.center) -- (er);
-
-      \node[anchor=center,draw,circle,fill=white,thick,minimum size = 2px, inner sep=0pt] at (circ1) {};
-      \node[anchor=center,draw,circle,fill=white,thick,minimum size = 2px, inner sep=0pt] at (circ2) {};
-  
-      \node (ska) at (circ1.north) [yshift=5px] {$\PK$};
-    \end{tikzpicture}
-  \end{center}
-
-  \pause
-  The public key $\PK$ should be known to everyone.
-\end{frame}
-
-\begin{frame}{Observations}
-  Letterbox system:
-  \begin{itemize}[<+(1)->]
-    \item Anyone can encrypt messages with the public key
-    \item Only the intended recipient can decrypt the messages
-    \item CPA setting becomes trivial
-  \end{itemize}
-
-  \vspace*{1em}
-
-  \pause
-  {Key exchange} is no longer a confidentiality problem
-  \begin{itemize}[<+(1)->]
-    \item The authenticity problem remains\dots
-    \item \dots but is also partially solved via PK systems
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Security of PK systems}
-  Security based on well-studied mathematical assumptions.
-  \begin{itemize}[<+(1)->]
-    \item Provably secure ($\neq$ absolute security)
-    \begin{itemize}
-      \item Security \emph{reduction}: breach of algorithm $\implies$ breach of assumption
-    \end{itemize}
-    \item Assumption: \emph{computational hardness} of problems, e.g.
-    \begin{itemize}
-      \item Integer factorisation
-      \item Discrete logarithm problem (DLP)
-      \item Lattice problems
-    \end{itemize}
-    \item Public key derived from secret key: mathematical link
-    \item Easy to overlook timing side-channels in implementations!
-  \end{itemize}
-
-  \vspace*{1em}
-
-  \pause
-  These principles are useful for more than just confidentiality.
-\end{frame}
-
-\begin{frame}{Modular arithmetic}
-  Modular arithmetic underpins most classical public-key constructions
-  \begin{itemize}[<+(1)->]
-    \item \enquote{Clock arithmetic}: wrap-around behaviour
-    \item Used in many hard problems:
-    \begin{itemize}
-      \item Combined with integer factorisation (e.g. the RSA problem)
-      \item Part of algebraic structures (e.g. DLP-hard groups)
-    \end{itemize}
-    \item Hard problems: intractable for sufficiently large numbers
-    % \begin{itemize}
-    %   \item Intractable for classical computers
-    %   \item Solvable (eventually) by quantum computers (Shor's algorithm)
-    %   \item 48-bit factorisation claimed by Yan et al. (Dec. 2022)
-    % \end{itemize}
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Terminology refresher}
-  Two integers are \alert{congruent} modulo $n$ if
-  \[
-    a \equiv b \pmod{n},
-  \]
-  \pause
-  that is, if $n \mid a - b$ (read as: $n$ divides $a-b$).
-
-  \vspace*{1em}
-
-  \pause
-  You will often see the notation
-  \[
-    a \bmod n = b
-  \]
-  due to its familiarity among programmers:
-  \begin{center}
-    \texttt{b = a \% n}.
+    \includegraphics[height=150px]{pigeonhole}
   \end{center}
 \end{frame}
 
-\begin{frame}{Terminology refresher}
-  In both
-  \begin{itemize}
-    \item $a \equiv b \pmod{n}$ 
-    \item $a \bmod n = b$,
-  \end{itemize}
-  $n$ is called the \alert{modulus}.
-
-  \pause
-  Some terminology you might encounter:
+\begin{frame}{Hash collisions}
+  By the pigeonhole principle, hashing is susceptible to collisions.
   \begin{itemize}[<+(1)->]
-    \item $\ZZ_n$: \emph{ring} of integers modulo $n$
-    \begin{itemize}
-      \item Essentially just the set of values $\{0, 1, \dots, n-1\}$ (a bit simplified)
-    \end{itemize}
-    \item $\ZZ_n^*$: integers modulo $n$ with modular multiplicative inverses
-    \begin{itemize}
-      \item The \emph{multiplicative group} of integers modulo $n$
-      \item Integers for which there exists $a^{-1}$ such that $a\cdot a^{-1} \equiv 1 \pmod{n}$
-    \end{itemize}
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Modulo bias}
-  How should we generate $n$-bit numbers in a range?
-
-  \pause
-  Naive approach:
-  \begin{itemize}[<+(1)->]
-    \item Generate a random $n$-bit number
-    \item Take the number modulo the upper limit
-  \end{itemize}
-
-  \pause
-  This approach introduces bias!
-\end{frame}
-
-\begin{frame}{Modulo bias}
-  \begin{figure}
-    \includegraphics[height=200px]{bias}
-  \end{figure}
-\end{frame}
-
-\begin{frame}{Modulo bias}
-  \pause
-  We must use \alert{rejection sampling} instead!
-
-  \vspace*{1em}
-
-  \pause
-  Example from the GO standard library:
-  \url{https://go.dev/src/crypto/rand/util.go}
-
-  \vspace*{1em}
-
-  \pause
-  Other examples (not an endorsement):
-  \url{https://www.pcg-random.org/posts/bounded-rands.html}
-\end{frame}
-
-\begin{frame}{Integer factorisation}
-  \pause
-  \begin{block}{Fundamental theorem of arithmetic}
-    Every integer greater than $1$ has a unique prime factorisation.
-  \end{block}
-
-  \pause
-  Testing for primality is efficient (polynomial-time)
-  \pause
-  \begin{itemize}
-    \item For large numbers, tests are typically probabilistic
-  \end{itemize}
-  
-  \pause
-  Efficient factorisation is unsolved on classical computers
-  \begin{itemize}[<+(1)->]
-    \item No known polynomial-time algorithm
-    \item Known best general purpose algorithm: GNFS
-    \item Special purpose algorithms exist (e.g. Pollard's rho)
-    \item Shor's algorithm exists for quantum computers (not yet practical)
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{RSA Numbers}
-  \pause
-  \begin{block}{Semiprime}
-    A number with exactly two prime factors.
-  \end{block}
-  
-  \begin{itemize}[<+(1)->]
-    \item RSA Factoring Challenge (1991)
-    \item \href{https://en.wikipedia.org/wiki/RSA_numbers}{RSA numbers}: published semiprimes
-    \item Discontinued in 2007
-  \end{itemize}
-
-  \pause
-  Largest RSA number factored to date:
-  \begin{itemize}[<+(1)->]
-    \item RSA-250: 829-bit (Feb. 2020)
-    \item $\sim$2700 CPU core-years
-    \item 2.1 GHz Intel Xeon Gold 6130 CPU
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{RSA cryptosystem}
-  Public-key cryptosystem by Rivest, Shamir \& Adleman (1977).
-  
-  \begin{enumerate}[<+(1)->]
-    \item Generate two secret large primes $p,q$ (caveats apply)
-    \item Compute $n=pq$, and $\varphi(n)=(p-1)(q-1)$
-    \item $e \getsu \ZZ_{\varphi(n)}^*$ and set $d = e^{-1} \bmod \varphi(n)$
-    \item $\SK=(p,q,e,d)$ and $\PK = (n,e)$
-  \end{enumerate}
-
-  \pause
-  Variants exist:
-  \begin{itemize}[<+(1)->]
-    \item Carmichael's totient $\lambda$ over Euler's totient $\varphi$ (e.g. \href{https://csrc.nist.gov/pubs/fips/186-5/final}{FIPS 186-5})
-    \item Originally: pick $d$, compute $e$ (optimises decryption)
-    \item More caveats: do not implement RSA yourself!
-    \item DYOR when choosing an implementation
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{RSA cryptosystem}
-  Encryption:
-  \pause
-  \begin{itemize}
-    \item $c \equiv m^e \pmod{n}$
-  \end{itemize}
-
-  \pause
-  Decryption:
-  \pause
-  \begin{itemize}
-    \item $c^d \equiv \bigl(m^e\bigr)^d \equiv m \pmod{n}$
+    \item Different inputs have the same hash
+    \item $h(x_1) = h(x_2), x_1 \neq x_2$
   \end{itemize}
 
   \vspace*{1em}
 
   \pause
-  $m < n$ to avoid information loss!
-\end{frame}
-
-\begin{frame}{Modular exponentiation}
-  Naive exponentiation $m^e \bmod n$ is expensive and wasteful.
-
-  \pause
-  Modular exponentiation is a technique to improve this computation.
-
-  \pause
-  \[
-    a^b \bmod c = \Bigl((a \bmod c)^b\Bigr) \bmod c
-  \]
-
-  \pause
-  Fast modular exponentiation
+  Consequences:
   \begin{itemize}[<+(1)->]
-    \item Exponentiation by squaring
-    \item Nice intro on this \href{https://dev-notes.eu/2019/12/Fast-Modular-Exponentiation/}{\textit{blog}}
+    \item \enquote{General computing}: bad performance (e.g. indexing)
+    \item Cryptography: loss of integrity and/or security
   \end{itemize}
 
+  \vspace*{1em}
+
   \pause
-  \begin{block}{Warning!}
-    Very vulnerable to timing-based side channels!
-  \end{block}
-  
+  Not all hash functions provide \enquote{strong} integrity guarantees!
 \end{frame}
 
-\begin{frame}{Issues with \enquote{textbook} RSA}
-  Textbook RSA is:
+\begin{frame}{Cryptographic hash functions (CHF)}
+  A \emph{cryptographic hash function} must additionally satisfy:
   \begin{itemize}[<+(1)->]
-    \item Deterministic (not IND-CPA)
-    \item Vulnerable to small-exponent attacks
-    \begin{itemize}
-      \item Coppersmith's attack (small public key)
-      \item Wiener's attack (small private key)
-    \end{itemize}
-    \item Malleable (not IND-CCA)
+    \item Collision resistance
+    \item (First) preimage resistance
+    \item Second preimage resistance
   \end{itemize}
 
-  \pause
-  Padding schemes can improve these issues somewhat.
+  \vspace*{1em}
 
   \pause
-  Padding schemes do not protect against fatal mistakes, e.g.
+  Good designs typically have:
   \begin{itemize}[<+(1)->]
-    \item re-using primes with different keys
-    \item using weak or small primes (\href{https://cybersec.ee/2017/10/18/rsa-2048-bit-keys-in-estonian-id-cards-issued-after-october-2014-are-factorizable/}{Estonian example})
+    \item Uniform output distribution
+    \item Avalanching
+    \item Non-linearity
   \end{itemize}
 \end{frame}
 
-\begin{frame}{RSA padding schemes}
-  \pause
-  PKCS \#1:
+\begin{frame}{Avalanche effect}
+  We often model an ideal hash function as a random oracle.
   \begin{itemize}[<+(1)->]
-    \item \texttt{RSAES-PKCS1-v1\_5} vulnerable!
-    \item \texttt{RSAES-OAEP} (PKCS \#1 v2.0)
-    \item \href{https://datatracker.ietf.org/doc/html/rfc8017}{RFC 8017} -- PKCS \#1 v2.2
+    \item Changing just a single input re-randomises the output
+    \item Flip $50\%$ bits (on average)
+
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  Example:
+  \begin{itemize}
+    \item {\small\texttt{md5sum(0x80) = 8d39dd7eef115ea6975446ef4082951f}}
+    \item {\small\texttt{md5sum(0x81) = cd25041f9f36811b04ab3015805fe816}}
+    \pause\item $71/128$ bits changed
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Resistance attacks}
+  Collision attack:
+  \begin{itemize}[<+(1)->]
+    \item Find any two distinct inputs with the same hashes
+    \item Find any $x, y$ with $x \neq y$ s.t. $h(x) = h(y)$
   \end{itemize}
 
   \pause
-  OAEP --- Optimal Asymmetric Encryption Padding
+  (First) preimage attack:
   \begin{itemize}[<+(1)->]
-    \item \enquote{Provides} randomness (probabilistic encryption)
-    \item Prevents partial decryption
-    \item IND-CCA1 (non-adaptive, \enquote{lunchtime} attack)
-    \item Not IND-CCA2 (adaptive)
+    \item Given some hash, find an input that produces this hash
+    \item Given $y \getsu \{0,1\}^n$, find any $x$ such that $h(x) = y$
+  \end{itemize}
+
+  \pause
+  Second preimage attack:
+  \begin{itemize}[<+(1)->]
+    \item Given an input, find another input that produces the same hash
+    \item Given $x$, find $y \neq x$ s.t. $h(x) = h(y)$
   \end{itemize}
 \end{frame}
 
 \begin{frame}{Security level}
-  PK cryptography typically requires larger keys to achieve the same security level as symmetric cryptosystems.
+  Let $n$ denote the output length of a CHF in bits.
+
+  \vspace*{1em}
 
   \pause
-  Some shaky explanations:
+  Collision resistance:
   \begin{itemize}[<+(1)->]
-    \item Not all keys in the bit-space are valid
-    \item Mathematical problems with various algorithms to attempt to solve them
-    \item Relationship between public and secret key
+    \item $n/2$ against classical adversaries (birthday attack)
+    \item $n/3$ against quantum adversaries (BHT algorithm)
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  Preimage resistance (first \& second):
+  \begin{itemize}[<+(1)->]
+    \item $n$ against classical adversaries
+    \item $n/2$ against quantum adversaries
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Security level (classical adversaries!)}
-  Estimates defined in \href{https://csrc.nist.gov/pubs/sp/800/57/pt1/r5/final}{NIST SP 800-57 REV. 5}
+\begin{frame}{\enquote{Weak} vs \enquote{strong} collision resistance}
+  Collision resistance $\implies$ second preimage resistance
+  \begin{itemize}[<+(1)->]
+    \item If you cannot find any collision, you cannot find a specific one
+    \item 2\textsuperscript{nd} PIR is sometimes called \emph{weak} CR
+    \item In practice, \emph{strong} CR is expected
+  \end{itemize}
+
+  \vspace*{1em}
 
   \pause
+  Collision \& pre-image resistance are not everything
+  \begin{itemize}[<+(1)->]
+    \item Attacks due to constructions may exist, e.g. length-extension
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{CHFs and integrity}
+  CHFs enable integrity verification:
+  \begin{itemize}[<+(1)->]
+    \item 2\textsuperscript{nd} PIR: cannot change data without changing the hash
+    \item Hash the data and compare it to a provided hash
+    \par
+    \begin{itemize}
+      \item If the hashes are equal, data is (likely) unchanged
+    \end{itemize}
+    \item Danger: an attacker may replace the data and the hash
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  CHFs have many more uses, some of which we will see later.
+\end{frame}
+
+\begin{frame}{Similar hashes}
+  \pause
+  How closely do you check your hashes?
   \begin{center}
-  \begin{tabular}{@{}ccc@{}}
-    Security Strength & Symmetric & RSA\\
-    \toprule
-    128 & AES-128 & $k = 3072$\\
-    192 & AES-192 & $k = 7680$\\
-    256 & AES-256 & $k = 15360$
-  \end{tabular}
+    \includegraphics[width=\textwidth]{hashsimil}
   \end{center}
+  \vfill
+  {\scriptsize\url{https://www.da.vidbuchanan.co.uk/blog/colliding-secure-hashes.html}}
+\end{frame}
+
+\begin{frame}[fragile]{Drunken bishops}
+  \begin{columns}[onlytextwidth]
+    \begin{column}{0.6\textwidth}
+      \pause
+      Drunken bishops algorithm:
+      \begin{itemize}[<+(1)->]
+        \item OpenSSH fingerprint visualisation algorithm
+        \item ASCII random art
+        \item More robust (visually) than hex comparison
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.3\textwidth}
+      \begin{Verbatim}[fontsize=\scriptsize]
++--[ED25519 256]--+
+|             ..  |
+|           .  +. |
+|          + .o .o|
+|         = =.. .o|
+|        S =.+.=..|
+|       o O E.+...|
+|      . . B.O  ..|
+|       .oo.Oo= ..|
+|      .. o*=+oo  |
++----[SHA256]-----+
+      \end{Verbatim}
+    \end{column}
+  \end{columns}
+
+  \vfill
 
   \pause
-  Other recommendations:
+  For critical applications, always check hashes programmatically!
+\end{frame}
+
+\begin{frame}{What CHFs are not}
+  CHFs are not suitable for encryption:
+  \begin{itemize}[<+(1)->]
+    \item hashes cannot be \enquote{decrypted}
+    \item there is no secret key
+    \item keyed hash functions: MACs, not encryption
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{What CHFs are not}
+  CHFs are not suitable for protecting passwords:
+  \begin{itemize}[<+(1)->]
+    \item hash functions should be fast to compute
+    \item passwords should be slow to brute force
+    \item deterministic: enables pre-computation attacks (e.g. rainbow tables)
+    \item use a KDF designed for passwords instead
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{What CHFs are not}
+  CHFs are not suitable for anonymisation/pseudonymisation:
+  \begin{itemize}[<+(1)->]
+    \item hashing identifiers does not anonymise them
+    \item small input spaces (e.g. EE ID codes) are brute-forceable
+    \item you cannot do lookups if you salt the data
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Danger zone}
+  Well known hash functions you should not use:
+  \begin{itemize}[<+(1)->]
+    \item MD5: collisions can be found in seconds
+    \item SHA-1:
+    \begin{itemize}
+      \item collision \href{https://shattered.io}{\textit{demonstrated}}
+      \item chosen-prefix collisions are practical
+    \end{itemize} 
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{NIST approved}
+  SHA-2 family
+    \begin{itemize}[<+(1)->]
+      \item SHA-256, SHA-384, SHA-512, SHA-512/256
+    \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  SHA-3 family (Keccak)
+    \begin{itemize}[<+(1)->]
+      \item SHA3-256, SHA3-384, SHA3-512
+      \item SHAKE128, SHAKE256 -- variable length output (XOF)
+    \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  SHA-224, SHA-512/224, SHA3-224 do not provide 128-bit collision security
+\end{frame}
+
+\begin{frame}{SHA-2}
+  Secure Hash Algorithm 2
   \begin{itemize}
-    \item BSI: \href{https://www.bsi.bund.de/EN/Themen/Unternehmen-und-Organisationen/Standards-und-Zertifizierung/Technische-Richtlinien/TR-nach-Thema-sortiert/tr02102/tr02102_node.html}{TR-02102-1}
-    \item ANSSI: \href{https://cyber.gouv.fr/le-referentiel-general-de-securite-version-20-les-documents}{RGS v2.0 annex B1}
-    \item NCSC (NL): \href{https://english.ncsc.nl/publications/publications/2025/06/26/security-guidelines-for-transport-layer-security-2025-05}{IT Security Guidelines for
-    Transport Layer Security (TLS)\textsuperscript{*}}
-    \item {\scriptsize\url{https://www.keylength.com/en/compare/}} (convenient but outdated)
+    \item Designed by the NSA
+    \item Published in 2001
+    \item \href{https://csrc.nist.gov/pubs/fips/180-4/upd1/final}{FIPS 180-4 (Secure Hash Standard)}
+    \pause
+    \item Merkle-Damgård construction -- vulnerable to length-extension attacks 
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Hybrid encryption}
-  Public-key cryptosystems are slow, but \enquote{solve} the key exchange problem\textsuperscript{*}.
+\begin{frame}{SHA-3}
+  Secure Hash Algorithm 3
+  \begin{itemize}[<+(1)->]
+    \item NIST hash function competition (announced 2007)
+    \item Need for an alternative construction (to complement SHS)
+    \item Won by Keccak in 2012
+    \item SHA-3 standardised in 2015 (\href{https://csrc.nist.gov/pubs/fips/202/final}{FIPS 202})
+    \pause
+    \item Sponge construction -- not vulnerable to length-extension attacks
+    \pause
+    \item Variable length output variants (SHAKE128 \& SHAKE256)
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{BLAKE}
+  BLAKE's (SHA-3 finalist) successors are good alternatives to SHA-3.
+
+  \vspace*{1em}
 
   \pause
-  Hybrid cryptosystem:
+  BLAKE2b
   \begin{itemize}
-    \item \emph{key encapsulation mechanism} (KEM)
-    \item \emph{data encapsulation scheme}
+    \item Quite popular in blockchain, e.g. ZCash and Polkadot
+    \item The full BLAKE2 family includes more functions
   \end{itemize}
 
   \pause
-  Key encapsulation mechanisms:
-  \begin{itemize}[<+(1)->]
-    \item Not simply PK encryption: there are changes
-    \item Key derivation functions (KDF) often used
-    \item PQ-safe: ML-KEM (\href{https://csrc.nist.gov/pubs/fips/203/final}{FIPS 203})
-  \end{itemize}
-
-  \pause
-  We will talk more about key exchange algorithms next week.
-\end{frame}
-
-\begin{frame}{KEMs}
-  A \emph{key encapsulation mechanism} is a triple of algorithms:
-  \begin{itemize}[<+(1)->]
-    \item $\GEN$ is a randomised \emph{key generation algorithm}: $(\PK,\SK)\gets\GEN(\cdot)$
-    \item $\Encaps$ is a randomised \emph{encapsulation algorithm}: $(k, c)\gets\Encaps(\PK)$
-    \item $\Decaps$ is a \emph{decapsulation algorithm}: $k\gets\Decaps(\SK, c)$.
-  \end{itemize}
-
-  \pause
-  Terminology:
-  \begin{itemize}[<+(1)->]
-    \item $\SK$ is the secret encapsulation key, $\PK$ is its public counterpart
-    \item $k$ is the shared secret key (symmetric key)
-    \item $c$ is the encapsulated secret, also called the \emph{encapsulation}
-  \end{itemize}
-
-  \pause
-  The scheme is \emph{functional} if $\Decaps_\SK(c) = k$ for $(k,c) \gets \Encaps(\PK)$.
-\end{frame}
-
-\begin{frame}{Signature scheme pitfall}
-  \pause
-  \begin{block}{Common misconception}
-    By \enquote{encrypting} with a secret key and \enquote{decrypting} with a public key, a public-key encryption scheme becomes a signature scheme.
-  \end{block}
-
-  \begin{itemize}[<+(1)->]
-    \item Under no circumstance shall you do this!
-    \item Generally it does not even work (formatting issues)
-    \item Different security requirements
-    \item Key separation principle: use separate keys for different purposes
-    \item Subtleties existthat you do not even know exist!
-  \end{itemize}
-
-  \pause
-  \textbf{Use the right tool for the right task. Never assume!}
-\end{frame}
-
-\begin{frame}{ASN.1}
-  Abstract Syntax Notation One
-  \begin{itemize}[<+(1)->]
-    \item Many serialisation formats (encoding rules)
-    \item \enquote{DER} used in cryptography: unequivocal
-    \item \href{https://letsencrypt.org/docs/a-warm-welcome-to-asn1-and-der/}{\textit{A Warm Welcome to ASN.1 and DER}} by Let's Encrypt
-  \end{itemize}
-
-  \pause
-  Some tools:
-  \begin{itemize}[<+(1)->]
-    \item \url{https://asn1.io/asn1playground/}
-    \item \url{https://lapo.it/asn1js/}
-    \item \texttt{dumpasn1} (CLI)
+  BLAKE3
+  \begin{itemize}
+    \item Very fast in software
+    \item Useful built-in features, e.g. XOF, KDF, MAC
   \end{itemize}
 \end{frame}
 
-\begin{frame}[fragile]{PEM}
-  PEM-format is often used to store cryptographic keys and certificates.
+\begin{frame}{Key derivation functions (KDF)}
+  1. Derive one or many keys from high-entropy secret input:
+  \begin{itemize}[<+(1)->]
+    \item obtain keys of a required format
+    \item \enquote{Standard} choice: HKDF (\href{https://datatracker.ietf.org/doc/html/rfc5869}{RFC 5869})
+    \item e.g. hybrid encryption (cryptographic KDF, \enquote{fast KDF})
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  2. Stretch and/or strengthen keys from the input data:
+  \begin{itemize}[<+(1)->]
+    \item user-provided passwords: short and low entropy
+    \item increased brute-force resistance needed
+    \item e.g. symmetric key from a password (password-based KDF, \enquote{slow KDF})
+    \item e.g. securely store passwords in \texttt{/etc/shadow}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Right tool for the right task}
   \pause
   \begin{itemize}
-    \item Base-64 encoded DER data with a header and footer
-    \item Header of type \texttt{-----BEGIN ***-----}
-    \item Footer of type \texttt{-----END ***-----}
+    \item Deriving keys from passwords
+    \begin{itemize}
+      \item key stretching: do not use CHFs!
+      \item The final result is secret and used as a key
+    \end{itemize}
+    \pause
+    \item Storing passwords with validation requirements (e.g. social media DB)
+    \begin{itemize}
+      \item colloquially: password \enquote{hashing}
+      \item key stretching: do not use CHFs!
+      \item The final result is stored and used for comparison
+    \end{itemize}
+    \pause
+    \item Hybrid cryptosystems
+    \begin{itemize}
+      \item high-entropy key derivation: use HKDF
+      \item The final result is secret and used as a key
+    \end{itemize}
   \end{itemize}
+\end{frame}
+
+\begin{frame}{Password hashing pt. 1}
+  Introduce randomness with a \emph{salt}:
+  \begin{itemize}[<+(1)->]
+    \item similar to a nonce/IV: \emph{always} use but \emph{do not re-use}
+    \item use \emph{before} hashing to change the output
+    \item store the salt alongside the hash, it is \emph{not secret}
+    \item prevents direct comparison (e.g. different users, same password)
+    \item prevents pre-computation attacks (e.g. rainbow tables) for long-enough salts
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Password hashing pt. 2}
+  Increase execution time/resources needed:
+  \begin{itemize}[<+(1)->]
+    \item e.g. iterative hashing: $H(H(H(\dots H(H(\mathit{password}))\dots)))$
+    \begin{itemize}
+      \item different techniques exist, e.g. memory-hard constructions
+      \item no computational shortcuts must be known
+    \end{itemize}
+    \item slows down brute-force (e.g. dictionary attacks)
+    \item different use-cases: different parameters (social media login vs. FDE)
+    \item use at least the recommended minimum params (KDF-dependent)
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Salted password validation}
+  To validate a provided password:
+  \begin{enumerate}[<+(1)->]
+    \item look up the salted password with an identifier (e.g. username)
+    \item hash the provided password with the stored salt
+    \item compare the result with the stored result (in constant time)
+    \item accept or reject
+  \end{enumerate}
+
+  \vspace*{1em}
 
   \pause
-  E.g.
-  \begin{Verbatim}[fontsize=\scriptsize]
------BEGIN PRIVATE KEY-----
-MIIEugIBADANBgkqhkiG9w0BAQEFAASCBKQwggSgAgEAAoIBAQCia55HYo4DjM6H
-sVVls62L4hrbVOOB6KoGO+tMJ3qLSyB697JEDW7aRBkTaLL6viVD0fuysaZMD+qN
-...
-DYsJXzMRkVGNJ/ayDyc=
------END PRIVATE KEY-----
-  \end{Verbatim}
+  Example of a salted hash (argon2id):
+  \vspace*{-1em}
+  \begin{center}
+    \texttt{\$argon2id\$v=19\${\color{Melon}m=19456,t=2,p=1}\${\color{CadetBlue}bXlzYWx0IDop}\${\color{PineGreen}16E7QlHDtnMnvUsXDPtqKA}}\\
+    \texttt{%
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ %
+    \ {\color{Melon}params}\ \ \ \ \ %
+    \ \ \ \ \ {\color{CadetBlue}salt}\ \ \ \ \ %
+    \ \ \ \ \ \ {\color{PineGreen}pwd hash}%
+    \ \ \ \ \ \ \ }
+  \end{center}
+\end{frame}
+
+\begin{frame}{Peppering}
+  A pepper is a secret used to protect passwords without encryption:
+  \begin{itemize}[<+(1)->]
+    \item shared among all passwords in a database
+    \item secret, and not stored with the password
+    \begin{itemize}
+      \item store on an HSM or a digital vault
+      \item if the DB can be breached, what else can...
+    \end{itemize}
+    \item trickier to use for questionable benefit
+    \begin{itemize}
+      \item good salting will protect the passwords
+      \item increases the complexity for yourself
+      \item lose the pepper = credentials are void
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Peppering}
+  Peppering can work for your personal passwords:
+  \begin{itemize}[<+(1)->]
+    \item use for critical passwords in your password manager
+    \item manually enter the prefix/suffix
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{What to use for password hashing?}
+  Password Hashing Competition (2013):
+  \begin{itemize}[<+(1)->]
+    \item Modelled after NIST competitions
+    \item Winner: Argon2
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  OWASP password storage cheat sheet (\href{https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html}{\textit{link}}):
+  \begin{enumerate}[<+(1)->]
+    \item Use Argon2id whenever possible (not Argon2d or Argon2i)
+    \item \texttt{scrypt} if Argon2id is not available
+    \item \texttt{bcrypt} for legacy systems
+    \item PBKDF2 if FIPS-compliance is needed
+  \end{enumerate}
+
+  \pause
+  Suggested parameters in \href{https://datatracker.ietf.org/doc/html/rfc9106\#name-parameter-choice}{RFC9106} and the OWASP cheat sheet.
 \end{frame}
 
 \end{document}
