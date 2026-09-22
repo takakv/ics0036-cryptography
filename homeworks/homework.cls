@@ -18,6 +18,8 @@
 \RequirePackage{amssymb}
 \RequirePackage{amsthm}
 
+\RequirePackage{crysymb}
+
 \RequirePackage[hidelinks]{hyperref}
 
 \RequirePackage{tcolorbox}
@@ -33,6 +35,9 @@
 
 \RequirePackage{bookmark}
 
+\RequirePackage{booktabs}
+\renewcommand{\arraystretch}{1.2}
+
 \RequirePackage{datetime2}
 \DTMsetdatestyle{ddmmyy}
 \DTMsetup{datesep=.}
@@ -44,7 +49,7 @@
 \def\@maketitle{%
   \newpage
   \begin{center}%
-    {Homework~\@title{} --- Deadline:~\@date~23:59~EET\par}%
+    {Assignment~\@title{}\par}%
   \end{center}%
   \par}
 \makeatother
