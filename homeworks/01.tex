@@ -6,8 +6,6 @@
 \usepackage{tikz}
 \usetikzlibrary{positioning,calc}
 
-\newcommand*{\ENC}{\mathsf{Enc}}
-
 \usepackage{listings}
 
 \lstset{
@@ -20,8 +18,6 @@ breaklines=true
 \fvset{listparameters=\setlength{\topsep}{0pt}\setlength{\partopsep}{0pt}}
 
 \title{01}
-\author{Taaniel Kraavi}
-\date{\DTMdate{2025-10-04}}
 
 \begin{document}
 \maketitle
@@ -29,37 +25,19 @@ breaklines=true
 \textbf{Organisational details}
 
 \begin{itemize}
-  \item Include in your report approximately how long the homework took for you.
-  \item I will give you feedback on Discord.
-  Check it after receiving your (preliminary) grade.
-  \item Read through task descriptions carefully.
-  \item You may request deadline extensions until 01.10.25 23:59 EEST.
-  \item You can submit up to one week after the deadline with a 50\% point penalty.
-  0 afterwards.
-  \item Grace clause:
+  \item Include in your report approximately how long the assignment took you.
+  \item You must follow the submission instructions outlined on GitLab.
+  The theory part must be formatted as Markdown.
+  \item If the GitLab Markdown formatting pipeline does not succeed, I will not grade your assignment (you will receive 0).
+  \item I will provide feedback on GitLab and/or Discord.
+  Check both after receiving your grade.
   \begin{itemize}
-    \item If you submit your assignment by the deadline, you have the opportunity to fix (some) mistakes I point out to gain back up to half of the lost points.
-    \item You cannot get any points back for a task that is entirely missing or broken, e.g. code that does not run at all or does nothing.
-    If your code does not pass the assertions/test script (if available), include that info in your report.
-    Otherwise I will consider your code to be broken, i.e. no grace.
-    Test your code!
-    \item The grace clause does not apply if you requested an extension or missed the original deadline.
+    \item My initial feedback may be quite minimal as there are so many of you.
+    However, you can request additional feedback.
+    Specific questions are also welcome.
+    \item Do not share the feedback you receive, as this may give others an unfair advantage.
   \end{itemize}
-  \item You may share hints with each-other, but no answers/code.
-  Ask questions in the server if they could be useful for everyone.
-  \item You may---and I encourage you to---ask me questions (preferably during practices).
-  \item You may use AI as help, but not to solve the tasks themselves.
-  \begin{itemize}
-    \item Acceptable: e.g. checking your understanding, asking how to loop in Python
-    \item Not acceptable: e.g. generating any code logic or cryptographic operations
-    \item If you use AI in any form, include in your report what you used it for
-    \item I recommend that you ask in the server/me instead of using AI
-  \end{itemize}
-  \item If I catch you plagiarising, copying, or using AI for code logic, I will report you to the faculty and fail you for the course.
-  \begin{itemize}
-    \item If during the midterm/exam you completely fumble stuff that you got points for in homework tasks, you will have to orally explain why it is so.
-    \item If you do not convince me of homework authorship, I will report you for cheating and fail you.
-  \end{itemize}
+  \item If you cannot convince me that the homework is your own work should I ask for it, I will report you to the faculty and fail you.
 \end{itemize}
 
 \newpage
@@ -71,203 +49,89 @@ breaklines=true
 \textbf{Additional instructions}
 
 \begin{itemize}
-  \item Submit as a PDF file called \texttt{studentid-01.pdf} where \enquote{studentid} is your 6 letter student ID/username (\enquote{takraa}) for me.
-  \item Submit it on Moodle as a standalone file (not as part of the code ZIP).
-  \item For a second submission, name your new file \texttt{studentid-01.2.pdf}.
+  \item \textbf{Please do not use AI} except where explicitly allowed.
+  Challenge your understanding and look for additional written sources if the lecture and provided materials are not enough.
+  Critical thinking and clear communication are skills -- use them or lose them.
+  \item You must reference all external materials you rely on, including AI tools, if you choose to use them anyway.
 \end{itemize}
 
 \begin{task}{A little about you}
-  What role are you currently working as/what would you like to work as?
-  Is or do you anticipate cryptography to be somehow related to your work?
-  Was there any specific reason (other than the 6 ECTS) that made you pick this course/what do you hope to gain from it?
+  What role do you currently work in, or hope to work in?
+  Is cryptography relevant to your work, or do you expect it to become relevant?
+  What do you hope to gain from this course?
 
   \textit{Just a few sentences (3--4) is fine.}
 \end{task}
 
-\begin{task}{Knowing your system}
-  What operating system do you use? Give three examples of disk-encryption software supported on your OS (include links).
-
-  Do you use full disk encryption? If not, would you start using it?
-\end{task}
-
-\begin{task}{Knowing your tools}
-  What programming language do you use most/are you most comfortable in?
-  For this language, list the following:
+\begin{task}{Standard libraries}
+  What programming language do you use most / are you most comfortable with?
+  For that language, list the following:
   \begin{enumerate}
-    \item Standard library/namespace/module (if any) for getting cryptographic randomness.
-    \item Standard library/namespace/module (if any) for encryption.
-    \item Three well regarded 3\textsuperscript{rd} party libraries for cryptographic stuff (any kind).
-    \item Some cool cryptographic library/tool/project (not already named above).
+    \item The standard library / namespace / module (if any) for cryptographic randomness.
+    \item The standard library / namespace / module (if any) for encryption.
+    \item Three well-regarded third-party libraries for cryptographic functionality (any kind).
+    \item One cool cryptographic library, tool, or project not already listed.
   \end{enumerate}
-
-  Include your sources!
 \end{task}
 
-\begin{task}{Cryptographer's Rosetta}
-  If your mother tongue is not English, try to find a frequency diagram for your language (as we did for the shift cipher).
+\begin{task}{A long time}
+  Benchmark how long it takes for your computer to iterate over the 32-bit space.
+  Based on that, estimate how long it would take to cover the 128-bit space.
 
-  If your mother tongue is English, or you cannot find a diagram for your mother tongue, find a frequency diagram for bigrams (two letter pairs, e.g. \enquote{at}, \enquote{to}, \enquote{no}, \dots) or trigrams.
-
-  Include the source!
-\end{task}
-
-\begin{task}{Knowing your processor}
-  Benchmark how long it takes for your computer to iterate over the 32-bit space (practice 1). How long would it take for your computer to cover the 128-bit space based on this info? Show your calculations.
+  Show your calculations and give the final result in seconds and years.
 \end{task}
 
 \begin{task}{A pledge}
   \enquote{%
-    I understand that I should not implement my own cryptography for any production system, i.e. for any purpose other than a personal learning challenge.
-    I understand also that any implementations done during this course are only for learning purposes, and are not for real world use. I understand that due diligence is crucial.%
+    I understand that I should not implement my own cryptography for any production system, i.e. for any purpose other than personal learning.
+    I also understand that any implementations done during this course are for learning purposes only and are not for real-world use.
+    I understand that due diligence is crucial.%
   }
 
   \textit{Answer with yes/no.}
 \end{task}
 
 \newpage
-\setcounter{task}{0}
 
-\begin{center}
-  Practical tasks
-\end{center}
-
-\textbf{Additional instructions}
-
-\begin{itemize}
-  \item I must be able to run your program with Python 3.13 and OpenSSL v3.5.1\footnotemark{}.
-  \footnotetext{You may use older versions of Python and OpenSSL as long as you do not use deprecated functionality.}
-  \item Do not import any 3\textsuperscript{rd} party module\footnotemark{} not specified in the template files.
-  \footnotetext{You may change \texttt{Crypto} to \texttt{Cryptodome} if needed.}
-  You are free to import any built-in module.
-  If you feel the need to import some other 3\textsuperscript{rd} party module, please check with me beforehand!
-  \item Your program must not have any unhandled errors that are dependent on user provided data.
-  Print a message and exit with an error code without printing the trace when you encounter a situation that should error.
-  However, you need not handle file-based errors, e.g. file read/write errors, although it is good practice to handle them.
-  \item Submit on Moodle as a ZIP file called \texttt{code.zip}.
-  \item Your Python files must have the same name as the template files but without the \texttt{template} suffix, e.g. \texttt{chacha20\_template.py} becomes \texttt{chacha20.py}.
-  \item You may change everything in the template files as long as I can run your program with the CLI arguments specified in the templates.
-  \item Your ZIP must have the following structure/contents:
-  \begin{Verbatim}
-code/
-├── aes_ecb_cbc.py
-├── chacha20.py
-├── key.txt
-├── decryption.txt
-└── ciphertexts/
-    ├── ct-1.bin
-    ├── ct-2.bin
-    ├── ct-3.bin
-    ├── ct-4.bin
-    └── ct-5.bin
-  \end{Verbatim}
-\end{itemize}
-
-\begin{task}{Cryptohack}
-  Create an account on \url{https://cryptohack.org/courses/}, and try to finish at least the 10 courses of the \enquote{Introduction to Cryptohack}.
-  If you cannot finish the 10 courses, write in your report what tasks you were stuck with and what did you try.
-
-  Include a screenshot of your module completion and your username in the PDF report.
-  Include also the full link to your user profile, e.g. \url{https://cryptohack.org/user/ch-username}.
-
-  I do recommend that you to attempt the \enquote{Symmetric Cryptography} module as well, but that is not a mandatory part of the homework.
-\end{task}
-
-\begin{task}{AES CBC from ECB}
-  Homework template file: \texttt{aes\_ecb\_cbc\_template.py}
-
-  The task is to use a library implementation of AES (you need not implement AES yourself) in ECB mode, and build the CBC mode out of it.
-  That is, you must instantiate AES with
-  \begin{center}
-    \texttt{aes = AES.new(key, AES.MODE\_ECB)}
-  \end{center}
-  Use the PKCS\#7 padding for messages that do not divide into blocks.
-  You must implement the pad/unpad functions yourself.
-  \begin{tcolorbox}[title=Padding]
-    Recall that padding is always added (at least for PKCS) even if the message length is a multiple of the block size.
-    If the message length is a multiple of the block size, add an entire block of just padding.
-  \end{tcolorbox}
-
-  Your program must accept the following CLI arguments (handled by the template):
+\begin{task}{RNGarök}
+  Search for one example of a real-world RNG failure and its consequences.
+  In a few short sentences, state:
   \begin{itemize}
-    \item \texttt{-e}/\texttt{-d}: whether to encrypt or decrypt the input data
-    \item \texttt{-i}: the input filename
-    \item \texttt{-o}: the output filename
-    \item \texttt{--key}: the key (a string of hex digits)
-    \item \texttt{--iv}: the iv (a string of hex digits)
+    \item the system or product,
+    \item what went wrong,
+    \item what the impact was, and
+    \item what should have been done instead.
   \end{itemize}
 
-  For encryption, providing the IV on the CLI must be optional.
-  If the IV is provided, the program must use it.
-  If not, it must generate a cryptographically random IV.
-
-  \begin{tcolorbox}[title=Note]
-    In practice, providing secrets (e.g. keys, passwords, etc) directly on the CLI as an argument to a program is a terrible idea, since they typically get logged into your terminal history!
-  \end{tcolorbox}
-
-  Additional program requirements:
-  \begin{itemize}
-    \item It must work with any key-size supported by AES.
-    \item It must encrypt/decrypt the provided data and output the result to a file.
-    \item The files must be read and written to as bytes on disk.
-    \item It should print the used key and IV to the CLI as hex strings.
-    \item It should not crash if a dubious key/IV is provided (or other edge cases): handle your errors! (I/O error handling is not necessary)
-    \item You must handle errors proactively: simply catching errors thrown by PyCryptodome will not give you full points.
-  \end{itemize}
-
-  Example call:%
-  \begin{Verbatim}
-python3 aes_ecb_cbc.py \ 
-  -e -i message.txt \
-  -o ciphertext.bin \
-  --key 4278b840fb44aaa757c1bf04acbe1a3e \
-  --iv 57f02a5c5339daeb0a2908a06ac6393f
-  \end{Verbatim}
-
-  Example printed output:%
-  \begin{Verbatim}
-IV: 57f02a5c5339daeb0a2908a06ac6393f
-Key: 4278b840fb44aaa757c1bf04acbe1a3e
-  \end{Verbatim}
+  Include your source(s).
+  It does not have to be a research article; a popular science blog or news post is fine.
+  You may use AI to discover a failure / find sources, but you may not use it for writing the answer.
 \end{task}
 
-%Some hints: https://www.pycryptodome.org/src/cipher/aes
+\begin{task}{Another Encryption Standard}
+  Skim the public comments submitted in response to the call for comments on \href{https://csrc.nist.gov/pubs/sp/800/197/iprd}{NIST SP 800-197}.
+  You do not need to read all comments in full; it is fine to focus on only a few.
 
-%https://www.pycryptodome.org/src/util/util#Crypto.Util.Padding.pad
-%https://www.pycryptodome.org/src/util/util#crypto-util-strxor-module
-
-%AES.block_size
-%AES.key_size[0]
-
-\begin{task}{ChaCha20 encryption/decryption}
-  Homework template file: \texttt{chacha20\_template.py}
-
-  Encrypt the provided file \texttt{message.txt} $5$ times using ChaCha20 with the same key and output the ciphertext bytes into files \texttt{ct-1.bin}, \texttt{ct-2.bin}, \dots.
-  NB! The encryptions should be separate, not encapsulated, i.e. not \texttt{Enc(Enc(Enc(...)))}.
-
-  \begin{tcolorbox}[title=Note]
-    Make sure that you write the raw ciphertext bytes to the file, and not the bytes of a hex or base64 encoded ciphertext.
-  \end{tcolorbox}
-
-  Write the key into a file called \texttt{key.txt} as a hex string, e.g.
-  \begin{tcolorbox}[title={\texttt{key.txt}}]
-    \texttt{4278b840fb44aa...}
-  \end{tcolorbox}
-
-  Write the data needed for the decryption of each file, one hex string per line, into a file named \texttt{decryption.txt}.
-  Remember to clear the file at the beginning of each encryption cycle, i.e. there should only be 5 lines in the file.
-
-  Test your program!
+  Identify and briefly explain, in your own words:
   \begin{itemize}
-    \item Your program should be able to decrypt all ciphertexts!
-    \item Your program should not crash!
+    \item two potential advantages of standardising and adopting Rijndael-256, and
+    \item two potential disadvantages.
   \end{itemize}
 
-  Include the generated files \texttt{ct-\{1-5\}.bin}, \texttt{key.txt}, \texttt{decryption.txt} into your submission ZIP.
-
-  Example call:%
-  \begin{Verbatim}
-python3 chacha20.py encrypt 4278b840fb44aa... message.txt cts/
-  \end{Verbatim}
+  The goal of the task is to familiarise you with the \enquote{Call for Comments} process.
+  The expertise and backgrounds of authors vary, which is why the process is important.
+  The same is true for readers, and comments can be useful even if you do not understand some (or even most) parts.
 \end{task}
 
+\begin{task}{AEGIS}
+  \href{https://datatracker.ietf.org/doc/html/rfc10032}{RFC 10032} for the AEGIS family of AEAD algorithms has been freshly published.
+
+  Using whichever method of your choice (including AI), find and state three (high-level) improvements that AEGIS (e.g. AEGIS-128L) offers over AES-GCM (e.g. AES-128-GCM).
+  State also at least one disadvantage it has compared to AES-GCM.
+
+  If you use AI, include the model, your prompt, and a brief description (written by you) of how you validated its answer(s) in the submission.
+  For the love of all things crypto, please do not paste a wall of text yap such as those produced by Opus 5 as the answer.
+  
+  Include sources used other than the RFC and/or the AI output.
+\end{task}
 \end{document}
