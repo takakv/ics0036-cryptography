@@ -1,11 +1,9 @@
 \graphicspath{ {../../images/} }
-\usetikzlibrary{external}
-
-% Needed for ECC graph
-\usepackage{pgfplots}
+\usetikzlibrary{external,overlay-beamer-styles}
+\usepackage{caption}
 
 \title{ICS0036 Cryptography}
-\subtitle{DL, DH \& ECC}
+\subtitle{Hash structures \& MACs}
 \date{\today}
 \author{Taaniel Kraavi}
 \institute%
@@ -18,615 +16,482 @@
 \begin{frame}
   \titlepage
 \end{frame}
- 
-\begin{frame}{Sets}
-  A \emph{set} is a collection of distinct (mathematical) objects.
-  \begin{itemize}[<+(1)->]
-    \item $x\in S$: element $x$ is a member of $S$ (belongs to)
-    \item $x\notin S$: element $x$ is not a member of $S$ (does not belong to)
-    \item $n = \lvert S\rvert$: $S$ has $n$ elements (cardinality, size)
-  \end{itemize}
 
-  \pause
-  Sets you must know:
+\begin{frame}{Hash-based structures}
+  Hash chains:
   \begin{itemize}[<+(1)->]
-    \item Integers without $0$: $\ZZ\setminus\{0\}=\ZZ^*=\{\dots, -2, -1, 1, 2, 3, \dots\}$
-    \item Integers modulo $p$: $\ZZ/p\ZZ = \ZZ_p = \{0, 1, 2, \dots, p-1\}$
-    \item Invertible integers modulo $p$: $(\ZZ/p\ZZ)^\times = \ZZ_p^*$ (if $p$ is prime)
-    \item $n$-bit bitstrings: $\{0, 1\}^n$
-    \item All bitstrings: $\{0, 1\}^*$
+    \item Link data with the previous element (linked list)
+    \item Any modification to chain elements voids the subsequent chain
+    \item The most recent element must be monitored
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Binary operations}
-  A \emph{binary operation} is a rule which for any two set elements, gives another set element.
+\begin{frame}{Hash chain}
+  \begin{center}
+    \begin{tikzpicture}
+      [every node/.style={fill=gray!20,draw=black,circle,line width=0.5mm,inner sep=1.5mm}]
+      \node[label={[yshift=-6mm]\small $x_1 = H(0)$}] (x1) at (0, 0) {};
+      \node[label={[yshift=-6mm]\small $x_2 = H(x_1)$}] (x2) at (3, 0) {};
+      \node[label={[yshift=-6mm]\small $x_3 = H(x_2)$}] (x3) at (6, 0) {};
+      \node[fill=red!60,label={[yshift=-6mm]\small $x_4 = H(x_3)$}] (x4) at (9, 0) {};
+
+      \draw[->,line width=0.5mm] (x1) -- (x2);
+      \draw[->,line width=0.5mm] (x2) -- (x3);
+      \draw[->,line width=0.5mm] (x3) -- (x4);
+    \end{tikzpicture}
+  \end{center}
+
+  \pause
+  Link nodes with hashes:
   \begin{itemize}[<+(1)->]
-    \item The set is \emph{closed} under the operation
-    \item E.g. $\ZZ$ is closed under addition and multiplication
-    \item E.g. $\NN$ is not closed under subtraction
-  \end{itemize}
-
-  \pause
-  A binary operation $\circ$ is a \emph{mapping} of elements:
-  \[
-    \circ: S \times S \to S
-  \]
-
-  \pause
-  $\circ$ denotes some arbitrary operation (alternatively $\star, \ast, \diamond$, \dots)
-\end{frame}
-
-\begin{frame}{Commutativity \& associativity}
-  Let $S$ be a set and $\circ$ a binary operation on $S$.
-
-  \pause
-  $\circ$ is \emph{commutative} if for all $a, b\in S$,
-  \[
-      a \circ b = b \circ a\ .
-  \]
-
-  \pause
-  $\circ$ is \emph{associative} if for all $a, b, c\in S$,
-  \[
-    a \circ (b \circ c) = (a \circ b) \circ c\ .
-  \]
-
-  \pause
-  Questions:
-  \begin{itemize}[<+(1)->]
-    \item Addition and $\ZZ$?
-    \item Subtraction and $\ZZ$?
-    \item XOR ($\oplus$) and $\{0,1\}^*$?
+    \item 1\textsuperscript{st} node: $x_1 = H(0)$
+    \item 2\textsuperscript{nd} node: $x_2 = H(x_1) = H\bigl(H(0)\bigr)$
+    \item \dots
+    \item i\textsuperscript{th} node: $x_i = H(x_{i-1}) = H\Bigl(H\bigl(\dots H(0)\dots\bigr)\Bigr)$
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Groups}
-  A \emph{group} is a set $\GG$ with a binary operation $\circ$ on $\GG$ for which the following properties hold:
-  \begin{enumerate}[<+(1)->]
-    \item Associativity: for all $a, b, c\in \GG$,
-    \[
-      a \circ (b \circ c) = (a \circ b) \circ c
-    \]
-    \item Identity element: there is an element $e\in \GG$ s.t. for all $a\in \GG$,
-    \[
-      a \circ e = a = e \circ a
-    \]
-    \item Inverse element: for each $a\in \GG$ there must exist $b\in \GG$ s.t.,
-    \[
-      a \circ b = e = b \circ a
-    \]
-  \end{enumerate}
+\begin{frame}{Hash-based structures}
+  Hash trees (Merkle trees):
+  \begin{itemize}[<+(1)->]
+    \item Improvement to the linear nature of the chain
+    \item Link elements in a tree structure (e.g. binary tree)
+    \item Verify trail using intermediate nodes
+    \item The root node must be monitored
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{(Binary) Merkle tree}
+\only<1>{
+  \colorlet{colorMerkleRoot}{gray!20}
+  \colorlet{colorHashOneToFour}{gray!20}
+  \colorlet{colorHashOneToTwo}{gray!20}
+  \colorlet{colorHashThreeToFour}{gray!20}
+  \colorlet{colorLeafThree}{yellow!60}
+  \colorlet{colorLeafFour}{gray!20}
+  \colorlet{colorHashFiveToEight}{gray!20}
+}
+\only<2->{
+  \colorlet{colorLeafFour}{purple!60}
+  \colorlet{colorHashThreeToFour}{teal!60}
+  \colorlet{colorHashOneToTwo}{gray!20}
+  \colorlet{colorHashOneToFour}{gray!20}
+  \colorlet{colorHashFiveToEight}{gray!20}
+  \colorlet{colorMerkleRoot}{gray!20}
+}
+\only<3->{
+  \colorlet{colorHashOneToTwo}{purple!60}
+  \colorlet{colorHashOneToFour}{teal!60}
+  \colorlet{colorHashFiveToEight}{gray!20}
+  \colorlet{colorMerkleRoot}{gray!20}
+}
+\only<4->{
+  \colorlet{colorHashFiveToEight}{purple!60}
+  \colorlet{colorMerkleRoot}{red!60}
+}
+  \vspace*{-3em}
+  \begin{figure}
+    \centering
+    \begin{tikzpicture}
+      [level distance=10mm,
+      every node/.style={fill=colorMerkleRoot,draw=black,circle,line width=0.5mm,inner sep=1.5mm},
+      edge from parent/.style={<-,draw},
+      level 1/.style={sibling distance=40mm,line width=0.5mm,nodes={fill=gray!20}},
+      level 2/.style={sibling distance=20mm,nodes={fill=gray!20}},
+      level 3/.style={sibling distance=10mm,nodes={fill=gray!20}}]
+      \node[label={[yshift=-13mm,visible on=<4->]north:\small $x_{\mathit{root}}=H(x_{1,4}||x_{5,8})$}] {}
+        child {node[
+          label={[visible on=<3->]left:{\small $x_{1,4}=H(x_{1,2}||x_{3, 4})$}},
+          fill=colorHashOneToFour] {}
+          child {node[label={left:\small $x_{1,2}=H(x_1||x_2)$},
+                  fill=colorHashOneToTwo] {}
+            child {node[label=south:{\small $x_1$}] {}}
+            child {node[label=south:{\small $x_2$}] {}}
+          }
+          child {node[label={[xshift=-1mm,visible on=<2->]right:\small $x_{3,4}$},
+                  fill=colorHashThreeToFour] {}
+            child {node[label=south:{\small $x_3$},fill=yellow!60] {}}
+            child {node[label=south:{\small $x_4$},fill=colorLeafFour] {}}
+          }
+        }
+        child {node[label={[visible on=<4->]right:\small $x_{5,8}=H(x_{5,6}||x_{7,8})$},
+                fill=colorHashFiveToEight] {}
+          child {node {}
+            child {node[label=south:{\small $x_5$}] {}}
+            child {node[label=south:{\small $x_6$}] {}}
+          }
+          child {node {}
+            child {node[label=south:{\small $x_7$}] {}}
+            child {node[label=south:{\small $x_8$}] {}}
+          }
+        };
+    \end{tikzpicture}
+  \end{figure}
   \vspace*{-1em}
-  \pause
-  A group is \emph{abelian} (or commutative) if commutativity also holds for all elements.
+  \onslide<5->
+  Knowing node $x_3$, we can verify the path to the root given only:
+  \[
+    x_4, x_{1,2}, x_{5,8}, x_{\mathit{root}}
+  \]
 \end{frame}
 
-\begin{frame}{Examples and bamboozles}
-  Questions:
-  \begin{columns}[T]
-    \begin{column}{0.4\textwidth}
-        \begin{itemize}[<+(1)->]
-        \item Is $(\NN, +)$ a group?
-        \item Is $(\ZZ, +)$ a group?
-      \end{itemize}
-    \end{column}
-    \begin{column}{0.4\textwidth}
-      \begin{itemize}[<+(1)->]
-        \item Is $(\ZZ^*, +)$ a group?
-        \item Is $(\RR^*, \cdot)$ a group?
-      \end{itemize}
-    \end{column}
-  \end{columns}
+\begin{frame}{Widely witnessed evidence}
+  \begin{figure}
+    \centering
+    \includegraphics[width=0.8\textwidth]{guardtime_root}
+    \caption*{The Guardtime Merkle root published in a newspaper.}
+  \end{figure}
+
+  \pause
+  {\scriptsize\url{https://x.com/Guardtime/status/2102683349093421365} most recent root}
+\end{frame}
+
+\begin{frame}{Message authentication codes (MAC)}
+  \pause
+  Authenticate and verify a message's integrity:
+  \begin{itemize}[<+(1)->]
+    \item authentication \emph{tag} requires a shared secret to compute
+    \item any party with the secret can create valid MACs
+    \item it should be infeasible to compute a valid MAC without the secret
+    \item if the message is tampered with, the tag should not validate
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{MAC systems}
+  A \emph{message authentication code} system is a triple of PPT algorithms:
+  \begin{itemize}[<+(1)->]
+    \item $\GEN$ is a \emph{key generation algorithm}: $k\gets\GEN()$
+    \item $\MAC$ is a \emph{MAC generation algorithm}: $t\gets\MAC_k(m)$
+    \item $\VERIF$ is a deterministic \emph{verification algorithm}: $b\gets\VERIF_k(m, t)$
+  \end{itemize}
+
+  \pause
+  Notation and terms:
+  \begin{itemize}[<+(1)->]
+    \item $k$ -- shared secret \emph{authentication} key
+    \item $b \in \{0, 1\}$ -- verification result
+    \item $t$ is a valid \emph{tag} on $m$ under $k$ if $b = 1$
+  \end{itemize}
+
+  \pause
+  The scheme is \emph{functional} if
+  $\VERIF_k\bigl(m, \MAC_k(m)\bigr) = 1$.
+\end{frame}
+
+\begin{frame}{MAC scheme}
+  \begin{center}
+    \begin{tikzpicture}
+      \node (alice) at (0,0)  {\includegraphics[height=80px]{alice}};
+      \node (bob)   at (8, 0) {\includegraphics[height=80px]{bob}};
+      \node (eve)   at (4, 0) {\includegraphics[height=80px]{eve}};
+
+      \draw[<-, thick, visible on=<3->] (eve.east) -- node[above] {$\bigl(m, t\bigr)$} (bob.west);
+      \draw[<-, thick, visible on=<4->] (alice.east) -- node[above] {$\bigl(m', t'\bigr)$} (eve.west);
+
+      \node (gen)   at (4, 2) {$\GEN$};
+
+      \node (ska) at (alice.north) [xshift=-7px,yshift=7px] {$k$};
+      \node (skb) at (bob.north) [xshift=7px,yshift=7px] {$k$};
+
+      \draw[<-,dashed,thick] (alice.north) |- (gen.west);
+      \draw[->,dashed,thick] (gen.east) -| (bob.north);
+
+      \node[anchor=west]  at (8.5, 0.25)  {$m\gets\MMM$};
+      \node[anchor=west,visible on=<2->]  at (8.5, -0.25) {$t\gets\MAC_k(m)$};
+      \node[anchor=north,visible on=<5->] at (alice.south) {$\VERIF_k(m, t)\iseq 1$};
+    \end{tikzpicture}
+  \end{center}
+
+  \onslide<6->
+  Mallory should not be able to \emph{forge} a valid tag.
+\end{frame}
+
+\begin{frame}{Security definitions}
+  Attack scenarios
+  \begin{itemize}[<+(1)->]
+    \item \emph{Known-message attack} --
+    Adversary sees some (message, tag) pairs.
+    \item \emph{Chosen-message attack} --
+    Adversary can adaptively request tags for messages of its choice.
+  \end{itemize}
+
+  \pause
+  Attack types
+  \begin{itemize}[<+(1)->]
+    \item \emph{Universal forgery} --
+    Create a valid tag for a given (any) message $m$.
+    \item \emph{Existential forgery} --
+    Create a valid tag for some message $m$.
+  \end{itemize}
+
+  \pause
+  A MAC is \emph{unforgeable} if it is EUF-CMA secure
+  \begin{itemize}[<+(1)->]
+    \item Existential unforgeability under chosen-message attack
+    \item Strong MAC: infeasible to create a different tag for a tagged message
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{MAC from CHF -- first attempt}
+  Naive construction: SHA-256 with a secret key $k$
+  \begin{itemize}[<+(1)->]
+    \item Set the tag $t = \mathsf{SHA\text{-}256}(k||m)$ for some message $m$
+    \item Recipient verifies $t$ by recomputing the hash
+  \end{itemize}
 
   \vspace*{1em}
 
   \pause
-  What we know as division on $\RR^*$ is simply the multiplicative inverse:
-  \[
-    a \cdot b = 1 \iff b = a^{-1} = \frac{1}{a}
-  \]
+  Insecure in most cases! {\scriptsize(Merkle-Damgård construction)}
+  \begin{itemize}[<+(1)->]
+    \item Insecure for variable-length messages: length extension attack
+    \item More theoretically: generally not a pseudorandom function (PRF)
+  \end{itemize}
+
+  \vspace*{1em}
 
   \pause
-  In $\ZZ_p^*$ we define multiplicative inverses through:
-  \[
-    a\cdot a^{-1} \equiv 1 \pmod{p}.
-  \]
-  \pause
-  The inverse $a^{-1}$ only exists if $\gcd(a,p) = 1$, i.e. when $a$ and $p$ are \emph{coprime}.
+  Hash functions are not random oracles!
 \end{frame}
 
-\begin{frame}{Additive and multiplicative notation}
-  \begin{center}
-  \begin{tabular}{@{}l c c c c@{}}
-    \toprule
-    Convention & Operation & Identity & \enquote{Powers} & Inverse\\
-    \cmidrule{1-5}
-    Additive & $x + y$ & $0$ & $nx$ & $-x$\\
-    \cmidrule{1-5}
-    Multiplicative & $x\cdot y$ or $xy$ & $1$ & $x^n$ & $x^{-1}$\\
-    \bottomrule
-  \end{tabular}
-  \end{center}
+\begin{frame}{Length extension attack}
+  Given $H(m_1)$ and $\lvert m_1\rvert$, an adversary can compute $H(m_1 || m_2)$ for some $m_2$.
+
+  \vspace*{1em}
 
   \pause
-  E.g. in the multiplicative group $\ZZ_p^*$ with $p$ prime:
+  Vulnerable are:
+  \begin{itemize}[<+(1)->]
+    \item Hash functions based on Merkle-Damgård construction (iterative)
+    \item E.g. MD5, SHA-1, non-truncated SHA-2
+    \begin{itemize}
+      \item SHA-256, SHA-512 but not\textsuperscript{*} SHA-384, SHA-512/256
+      \item SHA-224 is truncated, but is weak against LE (32 bits of security)
+      \item \textsuperscript{*}LE against SHA-384 and SHA-512/256 possible in theory, infeasible in practice 
+    \end{itemize}
+  \end{itemize}
 
-  \begin{tabular}{r l}
-    \pause $ab$     & $(a \cdot b) \bmod{p}$\\
-    \pause $a^b$    & $a^b \bmod{p}$\\
-    \pause $a^{-1}$ & $b$ s.t. $ab \equiv 1 \pmod{p}$
-  \end{tabular}
+  \pause
+  {\scriptsize\url{https://github.com/iagox86/hash_extender} for a PoC}
 \end{frame}
 
-\begin{frame}{Cyclic groups}
-  \pause
-  Let $\GG$ be a  group, and let $g$ be an element of $\GG$.
+\begin{frame}{MAC from CHF -- second attempt}
+  Naive construction: SHA-256 with a secret key $k$
+  \begin{itemize}
+    \item Set the tag $t = \mathsf{SHA\text{-}256}(m||k)$ for some message $m$
+    \item Recipient verifies $t$ by recomputing the hash
+  \end{itemize}
 
-  $g$ is a \emph{generator} of $\GG$, denoted $\langle g\rangle$,  if:
-  \[
-    \GG = \{g^q:q\in\ZZ\} = \{\dots, g^{-1}, 1, g, g^2, g^3, \dots\}
-  \]
+  \vspace*{1em}
 
   \pause
-  Example: $\ZZ_7^* = \langle 3\rangle$.
+  Insecure if collisions are feasible! {\scriptsize(Merkle-Damgård construction)}
+  \begin{itemize}[<+(1)->]
+    \item $H(m) = H(m') \implies H(m||k) = H(m'||k)$
+    \item Existential forgery if CR is broken
+    \item Universal forgery if 2PIR is broken
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{HMAC}
+  Hash-based message authentication code (HMAC)
+  \begin{itemize}[<+(1)->]
+    \item Used in and by KDFs
+    \par
+    \begin{itemize}
+      \item HKDF constructed on top of HMAC
+      \item PBKDF2 often used with HMAC, e.g. PBKDF2-HMAC-SHA256
+    \end{itemize}
+    \item Hash-function agnostic
+    \par
+    \begin{itemize}
+      \item E.g. HMAC-SHA256, HMAC-SHA384, HMAC-SHA3-256
+    \end{itemize}
+    \item Security level depends on: key \& output length + security of hash
+  \end{itemize}
+
+  \vspace*{1em}
+
   \pause
+  NB! Keyed hashing (HMAC) is not encryption
+  \begin{itemize}
+    \item HMAC is sometimes called \emph{keyed-hash} message authentication code
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{HMAC construction}
   \begin{columns}
-    \begin{column}{0.3\textwidth}
+    \begin{column}{0.4\textwidth}
       \begin{itemize}
-        \item $3^0 \bmod{7} = 1$
-        \item $3^1 \bmod{7} = 3$
-        \item $3^2 \bmod{7} = 2$
+        \item[] $H$ -- hash function
+        \item[] $K$ -- HMAC key
+        \vspace*{-1.25em}
+        \item[] $K^+ \begin{cases}
+          H(K) & \text{if\ } \lvert{}K\rvert > \text{block size}\\
+          K & \text{otherwise}
+        \end{cases}$
+        \item[] $\mathit{ipad}$ -- inner padding (\texttt{0x36})
+        \item[] $\mathit{opad}$ -- outer padding (\texttt{0x5c})
       \end{itemize}
+
+      \vspace*{0.5em}
+      
+      \scriptsize{K or H(K) is 0-padded right, if needed.}
     \end{column}
-    \begin{column}{0.3\textwidth}
-      \begin{itemize}
-        \item $3^3 \bmod{7} = 6$
-        \item $3^4 \bmod{7} = 4$
-        \item $3^5 \bmod{7} = 5$
-      \end{itemize}
+    \begin{column}{0.5\textwidth}
+      \begin{figure}
+    \centering
+    \begin{tikzpicture}[
+      box/.style={draw, rectangle, minimum width=1.8cm, minimum height=0.7cm, align=center, thick},
+      hashbox/.style={draw, rectangle, minimum width=1.6cm, minimum height=1.0cm, align=center, thick, font=\bfseries},
+      arrow/.style={->, thick},
+      xor/.style={minimum size=0.5cm, thick, inner sep=0pt}
+    ]
+      \node[box] (msg) at (0, 0) {$m$};
+      \node[box] (key) at (3, 0) {$K^+$};
+
+      \node[box, minimum width=1.2cm] (ipad) at (1.5, -1) {$\mathit{ipad}$};
+      \node[box, minimum width=1.2cm] (opad) at (4.5, -1) {$\mathit{opad}$};
+
+      \node[xor] (xor1) at (1.5, -2.25) {$\oplus$};
+      \node[xor] (xor2) at (4.5, -2.25) {$\oplus$};
+
+      \node[hashbox] (hash1) at (1.5, -3.5) {$H$};
+      \node[hashbox] (hash2) at (4.5, -3.5) {$H$};
+
+      %\node (hprime) at (3.2, -3.8) {$H' \leftarrow \mathit{HASH}(\overline{K_1}||M)$};
+      %\node (hdprime) at (5, -5.2) {$H'' \leftarrow \mathit{HASH}(\overline{K_2}||H')$};
+      \node[box, draw, thick] (mac) at (4.5, -5) {MAC};
+
+      \draw[arrow] (msg) -- (0, -3.5) -- (hash1.west);
+
+      \draw[arrow] (key) -- (3, -2.25) -- (xor1.east);
+      \draw[arrow] (key) -- (3, -2.25) -- (xor2.west);
+      \draw[arrow] (ipad) -- (xor1);
+      \draw[arrow] (opad) -- (xor2);
+
+      \draw[arrow] (xor1) -- (hash1);
+      \draw[arrow] (xor2) -- (hash2);
+
+      \draw[arrow] (hash1.east) -- (hash2.west);
+      \draw[arrow] (hash2.south) -- (mac.north);
+    \end{tikzpicture}
+  \end{figure}
     \end{column}
   \end{columns}
+  \pause
+  \scriptsize{You do not need to remember this construction}.
 \end{frame}
 
-\begin{frame}{Safe primes}
-  A \emph{safe} prime is a prime $p$ such that $p = 2q + 1$ with $q$ prime.
-  \begin{itemize}[<+(1)->]
-    \item Highly important in cryptography
-    \item $\ZZ_p^*$ has $p-1$ elements
-    \item $\ZZ_p^*$ has a unique subgroup of $q$ elements (subgroup of prime order)
-    \item $\ZZ_p^*$ has no \enquote{useful} small subgroups
-    \item Security for the discrete logarithm problem (DLP)
-  \end{itemize}
-
-  \vspace*{1em}
+\begin{frame}{MAC from CBC}
   \pause
-  The \emph{order} of a group, denoted $\lvert\GG\rvert$, is the number of elements in the group.
-\end{frame}
-
-\begin{frame}{Discrete logarithm problem (DLP)}
-  Setting:
-  \begin{itemize}[<+(1)->]
-    \item Let $p$ be a (large) safe prime such that $p = 2q + 1$ with $q$ prime.
-    \item Fix a generator $g$ and define $\GG = \langle g \rangle = \{g^i :0 \le i < q\}$.
-  \end{itemize}
-
-  \vspace*{1em}
-
-  \pause
-  The following is then considered \emph{intractable}:
-  \[
-    \text{Find $x$ s.t. } g^x \equiv y \pmod{p}\ ,
-  \]
-  where $g, y, p$ are known.
-
-  \pause
-  No longer intractable when quantum computers enter the market!
-\end{frame}
-
-\begin{frame}{DLP security}
-  The DLP exists in every finite cyclic group:
-  \pause
-  \begin{itemize}
-    \item Not guaranteed to be hard in a \enquote{generic} group.
-    \item Always research whether the DLP is intractable in a chosen group!
-  \end{itemize}
-
-  \vspace*{1em}
-
-  \pause
-  Two common group \enquote{types}:
-  \begin{itemize}[<+(1)->]
-    \item Group of quadratic residues modulo a safe prime
-    \begin{itemize}
-      \item \enquote{Standard} primes defined in \href{https://datatracker.ietf.org/doc/html/rfc3526}{RFC 3526} ($\ge3072$ bits recommended)
-    \end{itemize}
-    \item \enquote{Cryptographic} elliptic curve groups (slide \ref{slide:curve-ex})
-  \end{itemize}
-
-  \pause
-  {\scriptsize\url{https://en.wikipedia.org/wiki/Discrete_logarithm_records}}
-\end{frame}
-
-\begin{frame}{Weak DLP group}
-  Consider the group $(\ZZ_p^*, +)$.
-  \begin{itemize}[<+(1)->]
-    \item Not multiplicative, but great for intuition.
-    \item DLP (cursed definition): $\log(y) = x \iff xg \equiv y \pmod{p}$.
-    \item It follows that $x \equiv yg^{-1} \pmod{p}$.
-    \item This is not hard to compute.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Diffie-Hellman key exchange (DHKE)}
-  Diffie-Hellman key exchange (DHKE) was the first known key-agreement protocol:
-  \begin{itemize}[<+(1)->]
-    \item Finite field DH is the \enquote{simplest}: \href{https://datatracker.ietf.org/doc/html/rfc7919}{RFC 7919} (DLP security)
-    \item \enquote{Standard} groups in \href{https://datatracker.ietf.org/doc/html/rfc3526}{RFC 3526}
-    \item Different variants exist, e.g. ECDH on elliptic curves
-    \item Basis for more complex schemes
-    \item \href{https://csrc.nist.gov/pubs/sp/800/56/a/r3/final}{NIST SP 800-56A Rev. 3}
-  \end{itemize}
-
-  \pause
-  Easy to shoot yourself in the foot: a jumbled mess of choices. (my opinion)
-\end{frame}
-
-\begin{frame}{Finite field DH}
-  \begin{center}
+  \begin{figure}
+    \centering
     \begin{tikzpicture}
-      \node (bob)   at (0,0)     {\includegraphics[height=80px]{bob}};
-      \node (alice) at (8, 0)    {\includegraphics[height=80px]{alice}};
-      \node (eve)   at (4, -2.1) {\includegraphics[height=80px]{eve}};
+      \foreach \x in {1, 2, 3} {
+        \node (f\x) at ($\x*(2.5cm,0)$) [minimum size=1.25cm,fill=gray!20,draw] {$\ENC$};
+        \node (p\x) [above of=f\x, node distance=1.5cm, circle, draw] {};
+        \node (m\x) [above of=p\x, node distance=1cm] {$m_\x$};
+        \node (k\x) [left of=f\x, node distance=1.5cm] {$k$};
+        \node (c\x) [below of=f\x, node distance=0.77cm] {};
 
-      \node (btop) at (bob.east) [yshift=10px] {};
-      \node (atop) at (alice.west) [yshift=10px] {};
+        \draw[-] (p\x.east) -- (p\x.west);
 
-      \draw[->,thick] (btop) -- (atop);
+        \draw[-latex] (m\x) -- (f\x);
+        \draw[-latex] (k\x) -- (f\x);
+        \draw[-] (f\x) -- (c\x.center);
+      }
 
-      \node (bbot) at (bob.east) [yshift=-10px] {};
-      \node (abot) at (alice.west) [yshift=-10px] {};
-  
-      \draw[<-,thick] (bbot) -- (abot);
+      \node (iv) [left of=p1, node distance=2cm] {$0^b$};
+      \draw[-latex] (iv) -- (p1);
 
-      \path let \p1 = (btop) in node (gxt) at (4,\y1) [yshift=7px] {$g^x$};
-      \path let \p1 = (bbot) in node (gyt) at (4,\y1) [yshift=7px] {$g^y$};
+      \node (t) [below of=f3, node distance=1.5cm] {$t$};
+      \draw[-latex] (f3) -- (t);
 
-      \path let \p1 = (btop) in node (circ1) at (2,\y1) {};
-      \path let \p1 = (bbot) in node (circ2) at (6,\y1) {};
-      
-      \draw[->,thick] (circ1.center) |- (eve.west);
-      \draw[->,thick] (circ2.center) |- (eve.east);
-
-      \node[anchor=center,draw,circle,fill=white,thick,minimum size = 4px, inner sep=0pt] at (circ1) {};
-      \node[anchor=center,draw,circle,fill=white,thick,minimum size = 4px, inner sep=0pt] at (circ2) {};
-
-      \node (gx) at (eve.west) [xshift=-10px, yshift=10px] {$g^x$};
-      \node (gy) at (eve.east) [xshift=10px, yshift=10px] {$g^y$};
-
-      \node[anchor=east] (m) at (-0.5, 0.25) {$x\getsu\ZZ_q$};
-      \node[anchor=east] (enc) at (-0.5, -0.25) {$g^{xy}\gets\bigl(g^y\bigr)^x$};
-      \node[anchor=west] (m) at (8.8, 0.25) {$y\getsu\ZZ_q$};
-      \node[anchor=west] (enc) at (8.8, -0.25) {$g^{xy}\gets\bigl(g^x\bigr)^y$};
-
-      \node (enc) at (eve.south) [yshift=-10px] {$g^{xy}$?};
+      \foreach \x in {1, 2} {
+          \pgfmathtruncatemacro{\next}{\x+1}
+          \draw[-latex] (c\x.center) -| ($(p\next.west) + (-1.53cm, 0)$) -- (p\next.west);
+      }
     \end{tikzpicture}
-  \end{center}
+  \end{figure}
 
   \pause
-  How to convert the common secret $g^{xy}$ to a valid secret key $\SK\in\{0, 1\}^n$?
-\end{frame}
-
-\begin{frame}{DH colours example}
-  \begin{center}
-    \includegraphics[height=200px]{dhex}
-  \end{center}
-\end{frame}
-
-\begin{frame}{DH shortcomings}
-  \begin{itemize}[<+(1)->]
-    \item By default, DHKE is anonymous (no authentication)
-    \item Secure against sniffing/eavesdropping, but not against MITM
-    \item Easy to pick a weak group (cool \href{https://weakdh.org/imperfect-forward-secrecy-ccs15.pdf}{\textit{article}})
-    \item Susceptible\textsuperscript{*} to precomputation attacks: predefined groups/primes
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Perfect forward secrecy (PFS)}
-  \emph{Ephemeral} Diffie-Hellman (DHE, ECDHE):
-  \begin{itemize}[<+->]
-    \item Server's long-term key used only for authentication / channel setup
-    \item One-time \emph{session} keys generated for each session/transaction
-    \item Prevents decryption of past sessions if  long-term key is compromised
-    \item Prevents decryption of other sessions if session key is compromised
-  \end{itemize}
-
-  \pause
-  No absolute protection against future cryptanalysis.
   \begin{itemize}
-    \item PFS offers protection only as long as the algorithm remains unbroken.
-  \end{itemize}
-
-  \pause
-  See also: \emph{\href{https://en.wikipedia.org/wiki/Double_Ratchet_Algorithm}{double ratchet}} for post-compromise confidentiality (e.g. Signal)
-\end{frame}
-
-\iffalse
-\begin{frame}{Flavours of secrecy}
-  \pause
-  Forward secrecy (FS):
-  \begin{itemize}[<+(1)->]
-    \item Subsequent communications are secure post-corruption
-    \item Old \enquote{users} cannot read new data (after leaving)
-  \end{itemize}
-
-  \pause
-  Backward secrecy (future secrecy):
-  \begin{itemize}[<+(1)->]
-    \item Past communications are secure post-corruption
-    \item New \enquote{users} cannot read prior data (before joining)    
-  \end{itemize}
-
-  \pause
-  Forward secrecy is sometimes called perfect forward secrecy.
-  \begin{itemize}
-    \item I like to distinguish between the two
-    \item Terminology can get confusing
-  \end{itemize} 
-\end{frame}
-
-\begin{frame}{Perfect forward secrecy}
-  The terminology is confusing.
-
-  \begin{itemize}
-  \item \emph{Ephemeral} keys: ephemeral DH
-  \item Generate short-term \enquote{session} keys (v.s. long-term \emph{static} keys)
-  \end{itemize}
-
-  \pause
-  No absolute protection against future cryptanalysis.
-\end{frame}
-\fi
-
-\begin{frame}{ElGamal}
-  ElGamal is a probabilistic public-key encryption scheme based on the DLP.
-
-  \pause
-  Let $p$ be a safe prime with $p = 2q + 1$, and $\GG$ a subgroup of order $q$ with generator $g$. 
-  $(p, q, \GG, g)$ are then the public parameters.
-
-  \pause
-  Key generation:
-  \begin{itemize}[<+(1)->]
-    \item $x \getsu \ZZ_q$
-    \item $h \gets g^x \bmod{p}$
-    \item $\SK \gets x$
-    \item $\PK \gets h$
+    \item The IV is fixed (typically $0^b$ for block-length $b$)
+    \item The MAC tag is the last ciphertext block
+    \pause
+    \item Insecure for variable-length messages + other pitfalls
   \end{itemize}
 \end{frame}
 
-\begin{frame}{ElGamal}
-  Encryption:
+\begin{frame}{Construction takeaway}
+  Do not build your own MACs!
   \begin{itemize}[<+(1)->]
-    \item $m\in\GG$
-    \item $r\getsu\ZZ_q$
-    \item $\ENC_\PK(m; r) = (g^r, m\cdot \PK^r) = (u, v) = c$
-  \end{itemize}
-
-  \vspace*{2em}
-
-  \pause
-  Decryption:
-  \begin{itemize}
-    \item $\DEC_\SK(c) = \DEC_\SK((u, v)) = v \cdot u^{-\SK}$
+    \item Use special-purpose MAC algorithms
+    \item Ensure the key-length is sufficient
+    \item Use parameters suggested by reputable sources
+    \item Not all MACs are hash-based, e.g. CMAC, GMAC
   \end{itemize}
 \end{frame}
 
-\begin{frame}{ElGamal's usefulness}
-  Nifty properties:
+\begin{frame}{What to use}
+  In a standalone setting (no confidentiality), use
   \begin{itemize}[<+(1)->]
-    \item IND-CPA by construction (in a proper group)
-    \item ElGamal signature scheme exists
-    \item Can be done on elliptic curves for better performance
-    \item Multiplicatively homomorphic
-    \item Convenient for threshold cryptography
-    \item \enquote{Lifted} ElGamal has additive properties (e-voting)
+    \item HMAC: hash-based message authentication code
+    \begin{itemize}
+      \item Commonly used with SHA-2 family hashes
+      \item Usable with any CHF
+      \item \href{https://datatracker.ietf.org/doc/html/rfc2104}{RFC 2104}, \href{https://csrc.nist.gov/pubs/fips/198-1/final}{FIPS 198-1} (migration in progress to \href{https://csrc.nist.gov/pubs/sp/800/224/ipd}{SP 800-224})
+    \end{itemize}
+    \item KMAC: Keccak MAC
+    \begin{itemize}
+      \item \href{https://csrc.nist.gov/pubs/sp/800/185/final}{NIST SP 800-185} (planned \href{https://csrc.nist.gov/news/2025/decision-to-update-fips-202-and-revise-sp-800-185}{\textit{revision}})
+    \end{itemize}
   \end{itemize}
-
-  \pause
-  Way too many variations: {\scriptsize\url{https://ibm.github.io/system-security-research-updates/2021/07/20/insecurity-elgamal-pt1}}
 \end{frame}
 
-\begin{frame}{Homomorphic encryption}
-  Perform meaningful operations on a ciphertext without the secret key.
+\begin{frame}{What to use}
+  For authenticated encryption, use standard AEAD schemes:
+  \begin{itemize}[<+(1)->]
+    \item AES-GCM {\scriptsize(or AES-GCM-SIV for nonce-misuse resistance)}
+    \item (X)ChaCha20-Poly1305
+    \item {\scriptsize Other standardised/studied mechanisms, if needed (e.g. Deoxys-II, Ascon). See \href{https://competitions.cr.yp.to/caesar-submissions.html}{\textit{CAESAR}}.}
+  \end{itemize}
 
-  \vspace*{1em}
+  \vspace*{0.5em}
 
   \pause
-  If a cryptosystem is homomorphic for the relation $\circ$, then:
+  If composing encryption and MAC yourself:
   \begin{itemize}[<+(1)->]
-    \item $c_1 \circ c_2 = \ENC_\PK(m_1) \circ \ENC_\PK(m_2) = \ENC_\PK(m_1 \circ m_2) = c_3$
-    \item $\DEC_\SK(c_3) = m_1 \circ m_2$
+    \item Encrypt-then-MAC (EtM)
+    \item MAC the ciphertext \emph{and} the nonce/IV
+    \item Use separate keys for encryption and MAC
+    \item AES-CTR + HMAC-SHA2XX in EtM mode
+  \end{itemize}
+
+  \vspace*{0.5em}
+
+  \pause
+  Never reuse nonces under the same key!
+\end{frame}
+
+\begin{frame}{Recap}
+  MACs provide data authenticity and integrity
+  \begin{itemize}[<+(1)->]
+    \item Use established schemes (e.g. HMAC); do not design your own
+    \item Messages need not be confidential
+    \item Tags may leak information about the message
   \end{itemize}
 
   \vspace*{1em}
 
   \pause
-  Types of homomorphisms:
+  Symmetric encryption typically needs to be authenticated
   \begin{itemize}[<+(1)->]
-    \item Partially homomorphic: perform certain operations
-    \item Fully homomorphic: perform any computable operation
+    \item Prefer established AEAD constructions
+    \item Encrypt-then-MAC (EtM): authenticate the ciphertext and nonce/IV
+    \item Use separate keys for encryption and MAC
   \end{itemize}
-\end{frame}
-
-\begin{frame}{Homomorphisms of ElGamal}
-  \pause
-  Multiplicative homomorphism:
-  \begin{itemize}
-    \item $\ENC_\PK(m_1; r_1) \cdot \ENC_\PK(m_2; r_2) = \ENC_\PK(m_1m_2; r_1 + r_2)$
-  \end{itemize}
-
-  \vspace*{1em}
-
-  \pause
-  Re-randomisation:
-  \begin{itemize}
-    \item $\ENC_\PK(m_1; r_1) \cdot \ENC_\PK(1; r_2) = \ENC_\PK(m_1; r_1 + r_2)$
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{\enquote{Lifted} ElGamal}
-  Additive in the exponent:
-  \begin{itemize}[<+(1)->]
-    \item Encrypt $g^m$ instead of $m$: $\ENC^*_\PK(m; r) = \bigl(g^r, g^m \cdot \PK^r\bigr)$
-    \item $\ENC^*_\PK(m_1; r_1) \cdot \ENC^*_\PK(m_2; r_2) = \ENC^*_\PK(m_1 + m_2; r_1 + r_2)$
-    \item Recover $m$ by full inspection (message space must be small)
-    \begin{itemize}
-      \item Essentially DL brute-force (pre-computable)
-    \end{itemize}
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Elliptic curve cryptography}
-  $y^2 = x^3 + ax + b$
-  \vspace*{-2em}
-  \begin{center}
-    \begin{tikzpicture}
-    \begin{axis}[
-            xmin=-5,
-            xmax=5,
-            ymin=-5,
-            ymax=5,
-            ticks=none,
-            scale only axis,
-            axis lines=middle,
-            domain=-2.279018:3,      
-            samples=201,
-            smooth,   
-            clip=false,
-            % use same unit vectors on the axis
-            axis equal image=true,
-            axis line style=thick
-        ]
-    
-    \addplot[blue,thick] {sqrt(x^3-3*x+5)} node[right] {};
-    \addplot[blue,thick] {-sqrt(x^3-3*x+5)};
-    \end{axis}
-    \end{tikzpicture}
-  \end{center}
-\end{frame}
-
-\begin{frame}{ECDL}
-  Elliptic curve discrete logarithm problem:
-  \begin{center}
-    find $x$ given $\underbrace{P + P + \dots + P}_{x \text{ times}} = x\cdot P = T$
-  \end{center}
-\end{frame}
-
-\iffalse
-\begin{frame}{Elliptic curve cryptography}
-  \begin{tikzpicture}
-    \begin{axis}[
-            xmin=-4,
-            xmax=5,
-            ymin=-5,
-            ymax=5,
-            xlabel={$x$},
-            ylabel={$y$},
-            scale only axis,
-            axis lines=middle,
-            domain=-2.279018:3,      
-            samples=201,
-            smooth,   
-            clip=false,
-            % use same unit vectors on the axis
-            axis equal image=true,
-        ]
-    
-    \addplot[blue] {sqrt(x^3-3*x+5)} node[right] {$E$};
-    \addplot[blue] {-sqrt(x^3-3*x+5)};
-    \addplot[red] {2.621+0.251*(x+1.2)};
-    
-    
-    %\begin{scriptsize}
-        %== P ==
-        \draw [fill=black] (axis cs:-1.2,2.6) circle (2pt);
-        \draw[color=black] (axis cs:-1.4,2.7) node [left]{$P$};
-    %\end{scriptsize}
-    \end{axis}
-    \end{tikzpicture}
-\end{frame}
-\fi
-
-\begin{frame}{Why elliptic curves}
-  Equivalent security with better performance
-  \begin{itemize}[<+(1)->]
-    \item Large key-sizes for integer factorisation/DLP based trapdoors
-    \item Best known algorithms against EC trapdoors are less efficient
-    \item More efficient computations and optimisations
-    \item The Internet loves them (TLS)
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Why not elliptic curves}
-  Complex structure
-  \begin{itemize}[<+(1)->]
-    \item Higher bar of expertise
-    \item Supporting PK-encryption is sus (data encoding \enquote{problem})
-    \item Questionable parameter generation: are there backdoors?
-    \item Different side-channel concerns
-    \item Patents, patents, and patents
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{DualEC\_DRBG}
-  Did the NSA backdoor the DualEC\_DRBG ECC-based CSPRNG?
-  \begin{itemize}[<+(1)->]
-    \item Standardised by NIST
-    \item Pushed and promoted by the NSA
-    \item Thankfully retired in 2014
-  \end{itemize}
-
-  \pause
-  Some links:
-  \begin{itemize}
-    \item {\scriptsize\url{https://blog.cryptographyengineering.com/2015/01/14/hopefully-last-post-ill-ever-write-on/}}
-    \item {\scriptsize\url{https://www.schneier.com/blog/archives/2007/11/the_strange_sto.html}}
-    \item {\scriptsize\url{https://youtu.be/nybVFJVXbww?si=_fn6J-TD7HnvfPtA}}
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Well-known curves}
-  \label{slide:curve-ex}
-  Some popular curves include:
-  \begin{itemize}[<+(1)->]
-    \item \textbf{Curve25519} (D. J. Bernstein): good default choice
-    \begin{itemize}
-      \item Ed25519 EdDSA signatures
-      \item X25519 DH over Curve25519
-    \end{itemize}
-    \item P-256, \textbf{P-384}, P-521 (NIST): FIPS-approved
-    \begin{itemize}
-      \item secp256r1, secp384r1, secp521r1 
-    \end{itemize}
-    \item Curve448: if Curve25519 is not enough
-    \item \href{https://hackmd.io/@benjaminion/bls12-381}{BLS12-381}: for fancy crypto (e.g. ZK-SNARKs)
-    \item Brainpool Curves (\href{https://datatracker.ietf.org/doc/html/rfc5639}{RFC 5639}): German compliance or NIST paranoia
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Resources}
-  Some resources:
-  \begin{itemize}[<+(1)->]
-    \item NIST-approved curves for key establishment: \href{https://csrc.nist.gov/pubs/sp/800/186/final}{\textit{NIST SP 800-186}}
-    \item NIST-approved curves for digital signatures: \href{https://csrc.nist.gov/pubs/fips/186-5/final}{\textit{FIPS 186-5 (DSS)}}
-    \item Bernstein's \href{https://safecurves.cr.yp.to}{\emph{SafeCurves}} guide (arguably biased and a bit outdated)
-    \item \href{https://www.keylength.com/en/}{\textit{keylength.com}}
-    \item \href{https://cryptobook.nakov.com/asymmetric-key-ciphers/elliptic-curve-cryptography-ecc}{\textit{Nakov's ECC for developers}} (a high-level explanation for devs)
-    \item Jan Jancar's \href{https://neuromancer.sk/std/}{\textit{Standard curve database}}
-  \end{itemize}
-
-  \pause
-  A nice \href{https://crypto.stackexchange.com/questions/93519/why-are-nist-curves-still-used}{\textit{post}} on Crypto Stack Exchange about NIST curves.
 \end{frame}
 
 \end{document}
