@@ -6,30 +6,22 @@ import secrets
 def main():
     message = "MACs are important!"
     key = secrets.token_bytes(16)
-    mac = hmac.digest(key, message.encode(), "sha256")
+    mac = ...
 
     received = "MACs are importantǃ"
-    check_mac = hmac.digest(key, received.encode(), "sha256")
+    check_mac = ...
 
-    # Verify using constant-time comparison!
-    print(hmac.compare_digest(mac, check_mac))
-    print(hmac.compare_digest(mac, hmac.digest(key, message.encode(),
-                                               "sha256")))
+    # TODO: verify the MAC using constant-time comparison!
+    ...
 
     # TODO: encrypt the original message using authenticated chacha20
     ciphertext, tag = ...
 
-    # TODO: encrypt the received message using authenticated chacha20 using the same key and nonce
-    ct_bad = ...
+    # TODO: change the ciphertext and try to decrypt it
 
-    print(ciphertext.hex())
-    print(ct_bad.hex())
+    # TODO: change the tag and try to decrypt the AEAD ciphertext
 
-    # TODO: decrypt and authenticate the original message with the original tag
-    ...
-
-    # TODO: decrypt and authenticate the received message with the original tag
-    ...
+    # TODO: change the AAD and try to decrypt the AEAD ciphertext
 
 
 if __name__ == "__main__":
