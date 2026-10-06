@@ -713,61 +713,79 @@
   {\scriptsize \textsuperscript{*}Need for identity + authenticity on top of confidentiality.}
 \end{frame}
 
-\begin{frame}{Integrated Encryption Scheme (IES)}
-  Informally, an \emph{integrated encryption scheme} describes how to build a hybrid encryption scheme from standard primitives.
+\begin{frame}{Hybrid Public Key Encryption (HPKE)}
+  \emph{Hybrid public key encryption} (HPKE) is the modern standard for hybrid encryption (\href{https://datatracker.ietf.org/doc/html/rfc9180}{RFC 9180}).
 
   \vspace*{1em}
 
   \pause
-  Required information:
+  A cipher suite combines:
   \begin{itemize}[<+(1)->]
-    \item Public key mechanism
-    \item Key derivation function (KDF)
-    \item Symmetric encryption scheme
-    \item Message authentication code system (MAC)
-    \item Optional shared information
+    \item a KEM, e.g. DHKEM(X25519)
+    \item a KDF, e.g. HKDF-SHA256
+    \item an AEAD scheme, e.g. AES-128-GCM or ChaCha20-Poly1305
   \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  Used e.g. in TLS Encrypted Client Hello and Messaging Layer Security (MLS).
 \end{frame}
 
-\begin{frame}{ECIES}
-  The \emph{Elliptic Curve Integrated Encryption Scheme} (ECIES) is an IES instantiated with elliptic-curve Diffie-Hellman (ECDH).
-  \begin{itemize}[<+(1)->]
-    \item None of the relevant standards are freely accessible
-    \item The construction pattern is useful regardless
-    \item For elliptic curves, we use additive group notation
-    \item Convention: group elements in uppercase, scalars in lowercase
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{ECIES approach}
+\begin{frame}{HPKE approach}
   \begin{columns}[t]
     \begin{column}{0.48\textwidth}
       Encrypt $m$ knowing public key $K_B$
+
+      \vspace*{0.5em}
+
+      $(s, R)\gets\Encaps(K_B)$
       \begin{enumerate}[<+(1)->]
         \item Compute $R\gets rG$ with $r\getsu\ZZ_n^*$
         \item Derive $S\gets rK_B$
-        \item Derive $k_E, k_M \gets \KDF(S)$
-        \item Encrypt $c \gets \ENC_{k_E}(m)$
-        \item MAC $t \gets \MAC_{k_M}(c)$
-        \item Output $R||c||t$
+        \item Derive $s\gets\KDF(S, R||K_B)$
+      \end{enumerate}
+      Data encapsulation
+      \begin{enumerate}[<+(1)->]
+        \setcounter{enumi}{3}
+        \item Derive $k, \mathit{nonce}\gets\KDF(s, \mathit{info})$
+        \item Encrypt $c\gets\ENC_k(\mathit{nonce}, \mathit{aad}, m)$
+        \item Output $R||c$
       \end{enumerate}
     \end{column}
     \begin{column}{0.48\textwidth}
       \pause
-      Decrypt $R||c||t$ knowing private key $k_B$
+      Decrypt $R||c$ knowing private key $k_B$
+
+      \vspace*{0.5em}
+
+      $s\gets\Decaps(k_B, R)$
       \begin{enumerate}[<+(1)->]
         \item Derive $S\gets k_BR$
-        \item Derive $k_E, k_M \gets \KDF(S)$
-        \item Abort if $t \neq \MAC_{k_M}(c)$
-        \item Recover $m \gets \DEC_{k_E}(c)$
+        \item Derive $s\gets\KDF(S, R||K_B)$
+      \end{enumerate}
+      Data decapsulation
+      \begin{enumerate}[<+(1)->]
+        \setcounter{enumi}{2}
+        \item Derive $k, \mathit{nonce}\gets\KDF(s, \mathit{info})$
+        \item Recover $m\gets\DEC_k(\mathit{nonce}, \mathit{aad}, c)$\newline or abort
       \end{enumerate}
     \end{column}
   \end{columns}
+\end{frame}
+
+\begin{frame}{(EC)IES}
+  The same pattern was previously standardised as the \emph{(Elliptic Curve) Integrated Encryption Scheme}, (EC)IES:
+  \begin{itemize}[<+(1)->]
+    \item Encrypt-then-MAC instead of an AEAD scheme
+    \item Several incompatible standards, most of them not freely accessible
+    \item Still found in practice, e.g. Google Pay
+  \end{itemize}
 
   \vspace*{1em}
 
   \pause
-  In practice, there are additional checks on the receiver side.
+  For new designs, prefer HPKE.
 \end{frame}
 
 \end{document}
