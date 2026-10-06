@@ -4,6 +4,14 @@
 \usepackage{pgfplots}
 \usepackage{changepage}
 
+\makeatletter
+\newcommand{\slidefootnote}[1]{%
+  \begin{tikzpicture}[remember picture,overlay]
+    \node[anchor=base west,font=\scriptsize,inner sep=0pt]
+      at ([xshift=\beamer@leftmargin,yshift=5.2mm]current page.south west) {#1};
+  \end{tikzpicture}}
+\makeatother
+
 \title{ICS0036 Cryptography}
 \subtitle{Public-key cryptography: DH, ECC \& KEMs}
 \date{\today}
@@ -772,6 +780,8 @@
       \end{enumerate}
     \end{column}
   \end{columns}
+
+  \slidefootnote{$K_B = k_BG$, so both sides derive the same $S = rK_B = r(k_BG) = k_B(rG) = k_BR$.}
 \end{frame}
 
 \begin{frame}{(EC)IES}
