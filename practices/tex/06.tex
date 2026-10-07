@@ -1,12 +1,7 @@
 \documentclass{practice}
 
-\title{5}
+\title{6}
 \date{\today}
-
-%\usepackage{etoolbox}
-%\makeatletter
-%\preto{\@verbatim}{\topsep=0pt \partopsep=-2\parsep }
-%\makeatother
 
 \usepackage{crysymb}
 
@@ -26,7 +21,7 @@ breaklines=true
 
 \begin{task}{OpenSSL}
   \textit{Preface.}
-  During last week's practice we learnt about the following three OpenSSL tools:
+  For working with public-key cryptography keypairs, OpenSSL provides the following tools:
   \begin{itemize}
     \item \href{https://docs.openssl.org/master/man1/openssl-genpkey/}{\texttt{genpkey}}: utility for generating a private key (RSA, EC) or parameters (DH, DSA, EC)
     \begin{itemize}
@@ -52,115 +47,97 @@ openssl genpkey -genparam -algorithm dh \
   If you wonder what the dots, plus signs, and asterisks that appear mean, then for DH there is a nice InfoSec Stack Exchange \href{https://security.stackexchange.com/a/140639}{\textit{post}} on it.
 
   In practice, perhaps the primary use case for generating parameters in this manner with OpenSSL is to publish the parameters or share them with other entities.
-  These parameters then form the basis of subsequent procedures.
+  These parameters then form the basis of subsequent procedures\footnotemark{}.
   For example, to generate a private key with OpenSSL based on a set of parameters, you can use the \texttt{-paramfile} option.
+  \footnotetext{E.g. the frowned upon approach of generating custom Diffie-Hellman parameters for TLS 1.2.}
 
   \textit{Task.}
   For this task, familiarise yourself with the OpenSSL documentation.
-  Then, generate a password-protected $3072$-bit RSA key encrypted with AES-128 in CBC mode.
+  Then, generate a password-protected P-384 key encrypted with AES-128 in CBC mode.\footnotemark{}
+  \footnotetext{\texttt{genpkey} does not support AEAD for some reason, and AES in CTR mode has an implementation bug for this use.
+  Marvels of OpenSSL\dots{}.}
 \end{task}
 
-\begin{task}{Investigating the EC key}
+\begin{task}{HPKE}
   \textit{Preface.}
-  In class, I briefly mentioned that elliptic curve cryptography is not typically used for encryption, rather it is popular for signing and key agreement.
-  One reason for this is that to perform encryption directly with an EC-system, you somehow need to represent your plaintext on a curve.
+  In the lecture we briefly discussed IES and ECIES.
+  However, as you may recall, the various (!) ECIES specifications are not freely accessible, and IES itself does not have a single \enquote{canonical} standard.
+  The modern alternative is \emph{Hybrid Public Key Encryption} (HPKE), specified in \href{https://datatracker.ietf.org/doc/html/rfc9180}{RFC 9180}.
 
-  If you think about RSA, this was fairly straightforward: you need the integer representation of your data bytes to be smaller than the modulus, meaning that the whole range $\{0, 1, \dots, n - 1\}$ is usable (for naive RSA).
-  For elliptic curves, this does not hold, and you need more complex mapping schemes to achieve this.
-  Therefore, if you hear encryption in an EC context, it's often based on ECDH or ECIES\footnote{\url{https://en.wikipedia.org/wiki/Integrated_Encryption_Scheme}} instead of being \enquote{direct} encryption such as EC ElGamal. 
+  In its commonly used form, HPKE combines a KEM, a KDF, and an AEAD scheme.
+  To encrypt a message, the sender must know the recipient's public key -- whether long-term or ephemeral (e.g. to achieve forward secrecy).
 
-  While we will make heavier use of EC once we have learnt about digital signatures, let us for now investigate how EC can power key agreements.
-  In Python, we can generate public keys using the \href{https://pycryptodome.readthedocs.io/en/latest/src/public_key/ecc.html}{\texttt{ECC}} module of the \href{https://pycryptodome.readthedocs.io/en/latest/src/public_key/public_key.html}{\texttt{Crypto.PublicKey}} package.
+  You may then ask, should the sender be authenticated as well?
+  HPKE supports four \emph{modes}, which differ in how (and whether) the sender is authenticated:
+  \begin{itemize}
+    \item Base -- The sender generates a fresh ephemeral keypair for each message and remains anonymous (at the scheme level) to the recipient.
+    \item PSK -- \emph{Pre-shared key}.
+    A symmetric key known to both parties is incorporated into the key \enquote{schedule}.
+    This provides symmetric authenticity guarantees.
+    \item Auth -- The sender additionally uses a static (long-term) key pair to implicitly authenticate themselves to the recipient.
+    \item Auth + PSK -- Auth mode with an additional PSK mixed into the key schedule.
+  \end{itemize}
 
   \textit{Task.}
-  For this task, read through the PyCryptodome documentation and then generate a P-384 key that is \emph{not} protected by a password.
-  Next, export the key and investigate what makes up this key by dumping the ASN.1 structure.
+  pyca/cryptography provides HPKE through the \href{https://cryptography.io/en/latest/hazmat/primitives/hpke/}{\texttt{hpke}} module.
+  A ciphersuite is chosen by combining a KEM, a KDF, and an AEAD into a \texttt{Suite}, which then exposes single-shot \texttt{encrypt} and \texttt{decrypt} methods.
+  Note that pyca/cryptography only implements the base mode.
 
-  Generate now a P-384 key with explicit arguments with OpenSSL (read the documentation!).
-  Dump the ASN.1 structure of this key.
-  How does it compare to what was generated by PyCryptodome?
-
-  Finally, try to get PyCryptodome and OpenSSL to output the same private key structure.
-
-  \textit{Note.}
-  In class, I said that Curve25519 is a solid default choice.
-  The reason I have chosen P-384 here instead is that there is no convenient way to get an explicit Curve25519 key with tools we have learnt so far.
-
-  \begin{tcolorbox}[title=Warning]
-    Password protecting keyfiles is good practice (e.g. SSH or PGP keys) and you should generally do so in a real world setting.
-    If your secret key is leaked and it is not password protected, anyone can use it to perform secret key operations.
-    \tcblower
-    Exceptions of course apply, but then you need to know what you are doing.
-    Justifications similar to \enquote{but who would attack me} (as many of you have for FDE) are not reason enough.
-    Build a habit!
-  \end{tcolorbox}
-\end{task}
-
-\begin{task}{DH and symmetric ciphers}
-  \textit{Preface.}
-  For this task, we will implement a makeshift hybrid encryption scheme instead of using ECIES.
-  Recall that while this is fine for learning purposes, you should not use this in a production setting.
-
-  In class I raised the question of how should we use a key generated with DH, e.g. for encryption.
-  The answer was to use a \emph{cryptographic key derivation function} (KDF), something we also briefly covered when talking about symmetric encryption schemes (e.g. FDE, password managers).
-  Non-cryptographic KDFs exist similarly to non-cryptographic PRNGs.
-  Not using a suitable KDF can break the security of the scheme!
-
-  We will cover cryptographic and password-based KDFs in more detail next week when we talk about hash functions, but you should already have an idea of their general purpose.
-  The general rule also applies: you must not use just any function that you think satisfies some properties.
-  There are algorithms specifically designed and approved for such tasks.
-
-  I also introduced the concept of \emph{perfect forward secrecy} (PFS) which involved generating ephemeral keys used for communication sessions that must be discarded after the session.
-  That way, if the server's long-term key is compromised, the confidentiality of pre-breach communications remains intact.
-
-  PyCryptodome provides functionality to derive keys with ECDH through the \href{https://pycryptodome.readthedocs.io/en/latest/src/protocol/dh.html}{\texttt{DH}} module of the \href{https://pycryptodome.readthedocs.io/en/latest/src/protocol/protocol.html}{\texttt{Crypto.Protocol}} package.
-  The library requires you to know the other party's long term or/and ephemeral public key and to provide your own long term or/and ephemeral secret.
-
-  \textit{Task.}
-  For this task do the following:
+  For this task, read through the package documentation and then do the following:
   \begin{enumerate}
-    \item Acquire the server's (Discord bot's) long-term P-384 EC public key and ephemeral key.
-    \item Generate your own long-term P-384 public and ephemeral key.
-    \begin{itemize}
-      \item NB! In practice, the client does not need to have a static key for DHE: the server signs its ephemeral key and the static key is not used for key derivation.
-      Here we generate it to practice key management.
-    \end{itemize}
-    \item Derive the shared secret with \href{https://pycryptodome.readthedocs.io/en/latest/src/hash/shake128.html#shake128}{\texttt{SHAKE128}} as the KDF to generate an ephemeral session key.
+    \item Generate your own P-384 keypair.\footnote{In practice, X25519 is the most widely deployed HPKE KEM.}
+    \item Submit your public key to the Discord bot, and receive a ciphertext.
+    \item Decrypt the AES-128-GCM encrypted ciphertext with the context (info)
+    \begin{Verbatim}
+ICS0036 week 6
+    \end{Verbatim}
+    The server is using HPKE in base mode with HKDF-SHA384 as the KDF.
+  \end{enumerate}
+\end{task}
+
+\begin{task}{HPKE from scratch}
+  \textit{Preface.}
+  In the previous task, \texttt{Suite.encrypt} and \texttt{Suite.decrypt} were black boxes.
+  For the sake of understanding, let us implement our own HPKE encryption in base mode.
+  As in the server's ciphersuite, we use a Diffie-Hellman based KEM (DHKEM).
+
+  \textit{Task.}
+  Complete the \texttt{encrypt} function in the template.
+  Each step below corresponds to a step in the template.
+  Steps 1--3 are the DHKEM encapsulation (slide 38 of the lecture), and steps 4--6 are the generic HPKE steps (slide 37).
+  \begin{enumerate}
+    \item Compute $R \gets rG$ with $r \getsu \ZZ_n^*$.
+
+    This is the sender's half of a Diffie-Hellman key exchange.
+    The recipient's half is their public key $K_B$ which they publish in advance.
+    $R$ is the \emph{encapsulation} $\mathit{enc}$ that the recipient later needs to recover the shared secret.
+
+    \textit{Question:} if $K_B$ is a long-term key, what happens to past messages when $k_B$ leaks?
+
+    \item Compute the shared point $S \gets rK_B$.
+
+    \item Derive the shared secret $s \gets \KDF(S, R||K_B)$.
+
+    $S$ is a curve point, not a uniformly random bit string, so it cannot be used as a key directly.
     
-    To get PFS, both the server and the client must contribute to the ephemeral session key.
-    Otherwise it becomes static-ephemeral DH, which does not provide PFS.
+    Mixing in $R||K_B$ ties the shared secret to this exact exchange.
+    Without it, an attacker could modify $R$ in a way that leads to the same key, producing a different ciphertext that still decrypts correctly (i.e. the ciphertext would be \emph{malleable}).
 
-    Some more info on static-ephemeral DH \href{https://crypto.stackexchange.com/a/61760}{\emph{here}}.
+    \item Derive the AEAD key and nonce $k, \mathit{nonce} \gets \KDF(s, \mathit{info})$.
 
-    \item Encrypt a message with AES-128-CBC and send it to the server for decryption.
+    \textit{Question:} why a second KDF step instead of deriving everything from $S$ in step 3?
+    
+    Hint: is step 3 part of every KEM?
+    Compare slides 37 and 38.
+
+    \item Encrypt $c \gets \ENC_k(\mathit{nonce}, \mathit{aad}, m)$ with AES-128-GCM.
+
+    \item Output $\mathit{enc}||c$, i.e. $R||c$.
+
+    \textit{Question:} why must $R$ be sent along with the ciphertext, but not the nonce?
   \end{enumerate}
 
-  \textit{Note.}
-  There are two reasons I chose SHAKE here:
-  \begin{itemize}
-    \item given as an example in the documentation so it is easier for you,
-    \item SHAKE has extendable output, meaning that you can choose the desired output length (as opposed to most hash functions).
-  \end{itemize}
-\end{task}
-
-\begin{task}{ElGamal}
-  \textit{Preface.}
-  In class we saw that ElGamal is \emph{partially homomorphic} with respect to multiplication, often simply called \enquote{multiplicatively homomorphic}.
-  That is, if you multiply two ciphertexts $c_1$, $c_2$ and decrypt the resulting ciphertext, you will get $m_1 \cdot m_2$.
-  More mathematically,
-  \begin{align*}
-    \DEC_\SK(c_1 \cdot c_2) &= 
-    \DEC_\SK\bigl(\ENC_\PK(m_1) \cdot \ENC_\PK(m_2)\bigr)\\
-    &= \DEC_\SK\bigl(\ENC_\PK(m_1\cdot m_2)\bigr)\\
-    &= m_1 \cdot m_2
-  \end{align*}
-  holds for classic ElGamal.
-
-  \textit{Task.}
-  For this task, generate a $3072$-bit ElGamal key and encrypt two different integers.
-  Multiply the ciphertexts and decrypt the result.
-  Is the result the product of the two integers?
-
-  Then, repeat three times: \enquote{my implementation is insecure and I will not use it for actual encryption}.
+  The template decrypts your ciphertext with pyca/cryptography.
+  If your implementation is correct, you will see your original message.
 \end{task}
 \end{document}
