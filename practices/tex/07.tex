@@ -1,0 +1,125 @@
+\documentclass{practice}
+
+\title{7}
+\date{\today}
+
+%\usepackage{etoolbox}
+%\makeatletter
+%\preto{\@verbatim}{\topsep=0pt \partopsep=-2\parsep }
+%\makeatother
+
+\usepackage{crysymb}
+
+\usepackage{fancyvrb}
+\fvset{listparameters=\setlength{\topsep}{0pt}\setlength{\partopsep}{0pt}}
+
+\usepackage{listings}
+
+\lstset{
+basicstyle=\small\ttfamily,
+columns=flexible,
+breaklines=true
+}
+
+\begin{document}
+\maketitle
+
+\begin{task}{ASN.1 DER}
+  Install \texttt{dumpasn1}, generate an ECC or RSA keypair using OpenSSL, and visualise what the key files really contain.
+  Note that you must strip the PEM header and decode the base64 data before \texttt{dumpasn1} can parse the ASN.1 bytes.
+
+  Now use OpenSSL's \href{https://docs.openssl.org/master/man1/openssl-asn1parse/}{\texttt{asn1parse}} tool to do the same thing.
+  Which output do you prefer?
+\end{task}
+
+\begin{task}{ElGamal}
+  \textit{Preface.}
+  In the lecture we saw that ElGamal is \emph{partially homomorphic} with respect to multiplication, often simply called \enquote{multiplicatively homomorphic}.
+  That is, if you multiply two ciphertexts $c_1$, $c_2$ and decrypt the resulting ciphertext, you will get $m_1 \cdot m_2$.
+  More mathematically,
+  \begin{align*}
+    \DEC_\SK(c_1 \cdot c_2) &= 
+    \DEC_\SK\bigl(\ENC_\PK(m_1) \cdot \ENC_\PK(m_2)\bigr)\\
+    &= \DEC_\SK\bigl(\ENC_\PK(m_1\cdot m_2)\bigr)\\
+    &= m_1 \cdot m_2
+  \end{align*}
+  holds for classic ElGamal.
+
+  In additive notation, e.g. as for elliptic curves, multiplication becomes addition and exponentiation becomes multiplication.
+  By convention, we denote group elements (points on a curve) by capital letters and scalars (exponents in multiplicative notation) by lowercase letters.
+
+  The homomorphism then becomes:
+  \begin{align*}
+    \DEC_\SK(C_1 + C_2) &= 
+    \DEC_\SK\bigl(\ENC_\PK(M_1) + \ENC_\PK(M_2)\bigr)\\
+    &= \DEC_\SK\bigl(\ENC_\PK(M_1 + M_2)\bigr)\\
+    &= M_1 + M_2
+  \end{align*}
+
+  We now face an issue: how do we convert a message (a bytestring) into a point on the elliptic curve?
+  While there are techniques for this, let us use lifted ElGamal instead.
+  In lifted ElGamal, the message is the scalar (an integer), and the message bytes can then simply be interpreted as an integer.
+  The EC lifted ElGamal homomorphism is:
+  \begin{align*}
+    \DEC_\SK(C_1 + C_2) &= 
+    \DEC_\SK\bigl(\ENC_\PK(m_1G) + \ENC_\PK(m_2G)\bigr)\\
+    &= \DEC_\SK\bigl(\ENC_\PK((m_1 + m_2)G)\bigr)\\
+    &= (m_1 + m_2)G
+  \end{align*}
+
+  \textit{Environment.}
+  I like to use \href{https://pypi.org/project/fastecdsa/#arbitrary-elliptic-curve-arithmetic}{\texttt{fastecdsa}} to experiment with elliptic curve operations in Python.
+  Before you can install it on Linux or macOS, make sure that you have installed \href{https://gmplib.org}{\textit{GMP}}, e.g. with
+  \begin{itemize}
+    \item \texttt{apt install libgmp3-dev}
+    \item \texttt{brew install gmp}
+  \end{itemize}
+  It is not well suited for Windows, but it should work in WSL.
+  
+  On macOS you may need to install \href{https://github.com/AntonKueltz/fastecdsa/issues/74#issuecomment-932757298}{\texttt{fastecdsa}} with
+  \begin{Verbatim}
+CFLAGS=-I/opt/homebrew/opt/gmp/include \
+  LDFLAGS=-L/opt/homebrew/opt/gmp/lib \
+  pip install fastecdsa
+  \end{Verbatim}
+
+  Alternatively, for less \enquote{hassle}, you can use \href{https://pypi.org/project/tinyec/}{\texttt{tinyec}}.
+
+  \textit{Task.}
+  For this task, generate a P-384 keypair and encrypt two different integers using lifted EC ElGamal.
+  Add the ciphertexts and decrypt the result.
+  Is the result the sum of the two integers?
+
+  Then, repeat three times: \enquote{my implementation is insecure and I will not use it for actual encryption}.
+\end{task}
+
+\begin{task}{Sage RSA}
+  SageMath\footnote{\url{https://www.sagemath.org}} is a computer algebra system (CAS) which can be programmed in with a Python-based language.
+  It is free and open-source as opposed to Wolfram Mathematica and MATLAB, and is very powerful.
+  As such, it is quite popular among cryptographers for some quick computations/prototyping, and is also popular for cryptography tasks in CTFs (Capture The Flag exercises).
+
+  Check out also Sage's \href{https://doc.sagemath.org/html/en/reference/cryptography/index.html}{\enquote{cryptography reference}}.
+
+  \textit{Task.}
+  Given the following RSA public key:
+  \begin{itemize}
+    \item $e = 65537$
+    \item $n = 230624063920680065513680711198246109591$,
+  \end{itemize}
+  decipher the RSA ciphertext $c = 161670843286605628968182075437059446607$.
+  To get the final message, interpret the decrypted \enquote{message integer} as bytes and decode it as UTF-8.
+
+  Note that the RSA modulus is $128$ bits long, so \enquote{naively} brute forcing either prime is not a good approach.
+  Can you think of a more efficient approach?
+  
+  \textit{Hint 1.}
+  RSA-100 ($330$ bits) was \emph{factored} way back in 1991.
+
+  \textit{Hint 2.}
+  Recovering the message takes less than a second on my laptop with the proper Sage tools.
+
+  \textit{Addendum.}
+  Check out the RsaCtfTool\footnote{\url{https://github.com/RsaCtfTool/RsaCtfTool}}.
+  Can you solve the task using the tool?
+\end{task}
+\end{document}
