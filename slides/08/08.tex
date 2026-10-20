@@ -1,9 +1,15 @@
-\usepackage{tikz}
-
-\newlength{\offset}
+\graphicspath{ {../../images/} }
+\usetikzlibrary{external}
+\usepackage{changepage}
+\usetikzlibrary{arrows.meta}
+\tikzset{
+  invisible/.style={opacity=0},
+  visible on/.style={alt={#1{}{invisible}}},
+  alt/.code args={<#1>#2#3}{\alt<#1>{\pgfkeysalso{#2}}{\pgfkeysalso{#3}}},
+}
 
 \title{ICS0036 Cryptography}
-\subtitle{Certificate validity, eIDAS \& qualified signatures}
+\subtitle{Digital signatures \& PKI}
 \date{\today}
 \author{Taaniel Kraavi}
 \institute%
@@ -17,72 +23,676 @@
   \titlepage
 \end{frame}
 
-\begin{frame}{Refresher on PKI}
-  Hierarchical trust model:
+\begin{frame}{Authenticity of data}
+  Authenticity:
   \begin{itemize}[<+(1)->]
-    \item Root CA self-signs their own root certificate(s) (trust-anchor)
-    \item Root certificates used to certify subordinate/intermediate certificates
-    \item Subordinates issue end-entity certificates or certify other subordinates
+    \item Integrity protection: data modification can be detected
+    \item Source authenticity: data sender can be identified
+    \item Does not guarantee authorisation!
+    \item Does not guarantee the correctness of the content!
   \end{itemize}
 
   \vspace*{1em}
 
   \pause
-  A root certificate is linked to end-entity certificates through intermediate certificates.
+  MACs in the symmetric setting
   \begin{itemize}[<+(1)->]
-    \item This forms the certificate chain
+    \item Key exchange problem
+    \item \emph{Repudiation} problem
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Refresher on PKI}
-  Two main authorities:
+\begin{frame}{Digital signatures}
+  Digital signatures:
   \begin{itemize}[<+(1)->]
-    \item Certification Authority (CA): issues \& manages certificates
-    \item Registration Authority (RA): verifies applicant identities
+    \item asymmetric / public-key scheme
+    \begin{itemize}
+      \item a public \emph{verification key} known to others
+      \item a secret \emph{signing key} known to the signer
+    \end{itemize}
+    \item publicly verifiable: signatures are \emph{transferable}
+    \item identification becomes possible
+    \begin{itemize}
+      \item keys are personal $\implies$ personal link
+      \item identification is \emph{non-interactive} (NB! replay attacks)
+      \item how informative is the identity? E.g. legal identification vs entity tracing
+    \end{itemize}
+    \item \emph{non-repudiation}: you cannot deny your signature
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Getting certificates}
+\begin{frame}{Digital signature scheme}
+  A \emph{digital signature scheme} is a triple of PPT algorithms:
+  \begin{itemize}[<+(1)->]
+    \item $\GEN$ is a \emph{key generation algorithm}: $(\PK, \SK)\gets\GEN()$
+    \item $\SIGN$ is a \emph{signing algorithm}: $\sigma\gets\SIGN_\SK(m)$
+    \item $\VERIF$ is a deterministic \emph{verification algorithm}: $b\gets\VERIF_\PK(m, \sigma)$
+  \end{itemize}
+
   \pause
-  Certificate signing request (CSR):
+  Notation and terms:
   \begin{itemize}[<+(1)->]
-    \item Apply for a certificate with a CA
-    \item Must include significant information (identity data and public key)
-    \item Self-signed using applicant's private key (\href{https://datatracker.ietf.org/doc/html/rfc2986}{PKCS \#10})
-    \item CA interacts with RA and forwards it the CSR
-    \item CA returns CA-signed certificate if RA approves the applicant
+    \item $\SK$ is the private/secret key also called the \emph{signing key}
+    \item $\PK$ is the public key also called the \emph{verification key}
+    \item $b$ is the verification result (bit): $1$ meaning valid, $0$ meaning invalid
+    \item $\sigma$ is a valid \emph{signature} on $m$ by $\SK$ if $b = 1$
+  \end{itemize}
+
+  \pause
+  The signature scheme is \emph{functional} if $\VERIF_\PK(m, \SIGN_\SK(m)) = 1$.
+\end{frame}
+
+\begin{frame}{Digital signature scheme}
+  \pause
+  \begin{center}
+    \begin{tikzpicture}
+      \node (alice) at (0,0)  {\includegraphics[height=80px]{alice}};
+      \node (bob)   at (8, 0) {\includegraphics[height=80px]{bob}};
+      \node (eve)   at (4, 0) {\includegraphics[height=80px]{eve}};
+
+      \draw[<-, thick] (eve.east) -- node[above] {$(m, \sigma$)} (bob.west);
+      \draw[<-, thick] (alice.east) -- node[above] {$(\overline{m}, \overline{\sigma}$)} (eve.west);
+      
+      \node[anchor=east] (gen) at (11, 2.5) {$(\PK,\SK)\gets\GEN()$};
+      \draw[<-,dashed,thick] (alice.north) |- (gen.west);
+
+      \node (el) at (eve.north) [xshift=-5px] {};
+
+      \path let \p1 = (el) in node (circ) at (\x1,2.5) {};
+      \node at (circ.north) [yshift=5px] {$\PK$};
+
+      \node[anchor=west]  at (8.5, 0.25)  {$m\gets\MMM$};
+      \node[anchor=west]  at (8.5, -0.25) {$\sigma\gets\SIGN_\SK(m)$};
+      \node[anchor=north] at (alice.south) {$\VERIF_\PK(\overline{m},\overline{\sigma})\iseq 1$};
+
+      \draw[->,dashed,thick] (circ) -- (el);
+      \node[anchor=center,draw,circle,fill=white,thick,minimum size = 2px, inner sep=0pt] at (circ) {};
+    \end{tikzpicture}
+  \end{center}
+
+  \pause
+  Mallory should not be able to \emph{forge} a valid signature.
+\end{frame}
+
+\begin{frame}{Security concepts}
+  We consider \emph{chosen-message attacks} (CMA), which are stronger than KMA, KOA.
+
+  \vspace*{1em}
+
+  \pause
+  Forgery types:
+  \begin{itemize}[<+(1)->]
+    \item \emph{Existential:}
+    produce a valid signature for a new message
+    \item \emph{Universal:}
+    produce a valid signature for any message
   \end{itemize}
 
   \vspace*{1em}
 
   \pause
-  It would be nice to have a protocol\dots
+  A signature scheme should be \emph{EUF-CMA} secure.
+  \begin{itemize}[<+(1)->]
+    \item Strong existential unforgeability (sEUF) may sometimes be needed
+    \item sEUF: Infeasible to forge a different signature for an already signed message
+  \end{itemize}
 \end{frame}
 
-\begin{frame}{Certificate management protocols}
+\begin{frame}{What to sign?}
+  Signature schemes should handle arbitrary-length messages
   \begin{itemize}[<+(1)->]
-    \item Certificate Management Protocol (CMP)
+    \item Messages may not fit within the mathematical bounds
+    \item We need shorter message representatives
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  Hash-and-sign paradigm
+  \begin{itemize}[<+(1)->]
+    \item Cryptographic hashes are collision resistant
+    \item Sign the hash of the message
+    \item The hash is recomputed from the message during verification
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Note about hashing}
+  Do not blindly hash messages before signing
+  \begin{itemize}[<+(1)->]
+    \item Many signature schemes handle hashing internally
+    \item \enquote{Pure} mode: input the full message; hashing is part of the algorithm
+    \item \enquote{Pre-hash} mode: input an externally computed message digest
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  Prefer pure mode where possible
+  \begin{itemize}[<+(1)->]
+    \item Simpler: no need to keep track of additional parameters
+    \item Security analysis covers the full message directly
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{RSA signatures}
+  \pause
+  PKCS \#1:
+  \begin{itemize}[<+(1)->]
+    \item \texttt{RSASSA-PKCS1-v1\_5} lacks tight security proofs, but not weak per se
+    \item \texttt{RSASSA-PSS} (introduced in PKCS \#1 v2.1)
+    \item \href{https://datatracker.ietf.org/doc/html/rfc8017}{\texttt{RFC 8017}}
+  \end{itemize}
+
+  \vfill
+
+  \pause
+  PSS -- Probabilistic Signature Scheme
+  \begin{itemize}[<+(1)->]
+    \item Should be used if RSA signatures are required
+    \item Uses randomness (salt) to make signatures probabilistic
+    \item Verification requires agreed parameters (hash, MGF, salt length)
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{RSASSA-PSS parameters}
+  RSASSA-PSS: RSA Signature Scheme with Appendix with PSS padding
+  \begin{itemize}[<+(1)->]
+    \item A mask generation function (MGF, XOF) used internally like for RSAES-OAEP
+    \item By default, the MGF is MGF1 (iterative hashing with a counter)
+  \end{itemize}
+
+  \vfill
+
+  \pause
+  Hashing in RSASSA-PSS:
+  \begin{itemize}[<+(1)->]
+    \item The message is internally hashed by the algorithm (SHA1 by default)
+    \item Hashing is also used as part of MGF1 (SHA1 by default)
+    \item You \emph{should} use the same hash function for the message and MGF1
+    \item You \emph{should} use a SHA2 alternative instead of SHA1
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Determinism vs. nondeterminism}
+  \pause
+  Unlike for encryption, non-determinism is not crucial per se:
+  \begin{itemize}[<+(1)->]
+    \item no message to hide
+  \end{itemize}
+
+  \vspace*{0.5em}
+
+  \pause
+  Ephemeral randomness protects the key in many constructions:
+  \begin{itemize}[<+(1)->]
+    \item a leak might allow secret recovery
+    \item reuse might allow secret recovery
+  \end{itemize}
+
+  \vspace*{0.5em}
+
+  \pause
+  Poor randomness is catastrophic in many schemes!
+  \begin{itemize}[<+(1)->]
+    \item (EC)DSA, Schnorr signatures
+    \item Good randomness helps with uniqueness and secrecy
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{DSA \& ECDSA}
+  \pause
+  Digital Signature Algorithm (DSA):
+  \begin{itemize}[<+(1)->]
+    \item Hardness of the DLP
+    \item Inspired by Schnorr signatures (historical patent reasons)
+    \item Part of DSS versions 1--4, removed in version 5 (2023)
+    \item \href{https://datatracker.ietf.org/doc/html/rfc6979}{\texttt{RFC 6979}}: deterministic DSA \& ECDSA
+  \end{itemize}
+
+  \pause
+  Sony 2010 PS3 attack:
+  \begin{itemize}
+    \item ECDSA software signing-key recovered
+    \item Caused by randomness reuse (Sony implementation issue)
+  \end{itemize}
+ 
+  \pause
+  Do not use DSA! Do not default to \enquote{standard} ECDSA.
+\end{frame}
+
+\begin{frame}{EdDSA}
+  Edwards-curve Digital Signature Algorithm (\href{https://datatracker.ietf.org/doc/html/rfc8032}{\texttt{RFC 8032}}):
+  \begin{itemize}[<+(1)->]
+    \item Not to be confused with DSA \& ECDSA: different algorithm entirely
+    \item Designed by \alert{Bernstein} et al.
+    \item Deterministic
+    \item Based on twisted Edwards Curves (a model of ECs)
+    \item High performance
+    \item Designed with side-channel safety in mind
+    \item Ed25519 (Curve25519 with SHA512) \& Ed448 (Curve448 with SHAKE256)
+  \end{itemize}
+
+  \pause
+  Unless you have a good reason not to, use EdDSA!
+\end{frame}
+
+\begin{frame}{DSS (pt. 1)}
+  NIST Digital Signature Standard (\href{https://csrc.nist.gov/pubs/fips/186-5/final}{FIPS 186-5}):
+  \begin{itemize}[<+(1)->]
+    \item No longer allows DSA for issuing signatures
     \begin{itemize}
-      \item Highly flexible but quite complex
-      \item Self-contained / transport-agnostic
+      \item Prior signature verification still allowed
     \end{itemize}
-    \item Simple Certificate Enrolment Protocol (SCEP)
+    \item ECDSA is allowed
     \begin{itemize}
-      \item Often used in enterprise device management (e.g. Intune)
-      \item Legacy versions are limited, e.g. no ECC support
+      \item Forbidden to use it for non-signing purposes (e.g. key establishment)
+      \item Deterministic \& nondeterministic variants
     \end{itemize}
-    \item Enrolment over Secure Transport (EST)
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{DSS (pt. 2)}
+  NIST Digital Signature Standard (\href{https://csrc.nist.gov/pubs/fips/186-5/final}{FIPS 186-5}):
+  \begin{itemize}[<+(1)->]
+    \item EdDSA is allowed
     \begin{itemize}
-      \item Successor to SCEP
-      \item Leverages TLS for authentication
+      \item Both Ed25519 and Ed448 variants
+      \item Variants differ a bit from the RFC
     \end{itemize}
-    \item Automated Certificate Management Environment (ACME)
+    \item RSA signatures as defined in PKCS \#1 v2.2 are allowed
     \begin{itemize}
-      \item Automated certificate issuance and renewal for web servers
+      \item Additional restrictions apply
+      \item No textbook RSA!
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Quantum-safe signature schemes}
+  Quantum-safe schemes standardised by NIST:
+  \begin{table}
+  \small
+  \begin{tabular}{@{}llll@{}}
+    \toprule
+    Name & Publication & Principle & When to pick?\\
+    \midrule
+    ML-DSA  & \href{https://csrc.nist.gov/pubs/fips/204/final}{FIPS 204} & Lattice & General purpose \\
+    SLH-DSA & \href{https://csrc.nist.gov/pubs/fips/205/final}{FIPS 205} & Hash    & Conservative fallback \\
+    FN-DSA  & FIPS 206 (draft)                                           & Lattice & Small signatures \\
+    \bottomrule
+  \end{tabular}
+  \end{table}
+
+  \vspace{0.5em}
+
+  \pause
+  PQ schemes are not yet widely used
+  \begin{itemize}
+    \item long keys and/or signatures
+    \item slower\textsuperscript{*} than classical counterparts
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Long term signatures}
+  How to archive digitally signed documents?
+  \begin{itemize}[<+(1)->]
+    \item In 20 years, how to check if a signature was valid today?
+    \item Long-term validation (LTV)
+    \item We will see formats and legality next week
+  \end{itemize}
+
+  \vspace*{0.5em}
+
+  \pause
+  Extended signature life-times by re-signing:
+  \begin{itemize}[<+(1)->]
+    \item Sign it with a new scheme before the old one is broken
+    \item Timestamp the new signature for temporal order
+  \end{itemize}
+
+  \pause
+  We will see timestamping also next week.
+\end{frame}
+
+\begin{frame}{Long term signatures after Q-day}
+  \centering
+  \begin{tikzpicture}[x=1pt, y=1pt, font=\small,
+      lbl/.style={text=mDarkTeal, inner sep=0pt},
+      bar/.style={line width=4pt},
+      ts/.style={line width=1.6pt, -{Stealth[length=6pt, width=7pt]}}]
+    % shared trunk: document signed (classical), then either left as is (upper)
+    % or extended with a quantum-safe signature (lower)
+    \draw[bar, mDarkTeal] (20,19) -- (130,19)
+      .. controls (150,19) and (150,44) .. (170,44) -- (285,44);
+    % until Q-day the signature stays valid: solid to the end; from Q-day on
+    % its second half is replaced by the faded, dashed line
+    \draw[bar, mDarkTeal, -{Stealth[length=9pt, width=11pt]},
+          visible on=<1| handout:0>] (285,44) -- (402,44);
+    \begin{scope}[visible on=<2->]
+      \draw[bar, mDarkTeal!25, dash pattern=on 6pt off 4pt,
+            -{Stealth[length=9pt, width=11pt]}] (285,44) -- (402,44);
+      \node[lbl, anchor=south, text=mDarkTeal!60] at (343,52) {\footnotesize retroactively forgeable};
+    \end{scope}
+    \begin{scope}[visible on=<3->]
+      \draw[bar, mDarkTeal] (130,19)
+        .. controls (150,19) and (150,-6) .. (170,-6) -- (195,-6);
+      \draw[bar, mLightGreen, -{Stealth[length=9pt, width=11pt]}] (195,-6) -- (402,-6);
+      \node[lbl, anchor=south] at (343,2) {\footnotesize remains valid};
+      \draw[ts, mLightGreen] (195,-24) -- (195,-10);
+    \end{scope}
+    \fill[mDarkTeal] (20,19) circle (3.2pt);
+    \draw[ts, mDarkTeal] (60,1) -- (60,15);
+    % Q-day (drawn over the lines)
+    \begin{scope}[visible on=<2->]
+      \draw[mLightBrown, line width=0.8pt, dash pattern=on 3pt off 2.5pt] (285,-36) -- (285,76);
+      \node[lbl, text=mLightBrown, anchor=south, align=center] at (285,80)
+        {\textbf{\textit{Q-day}}};
+    \end{scope}
+    % events (below the lines)
+    \node[lbl, anchor=north] at (20,9) {Document};
+    % the + (centred under its arrow) shares a baseline with the first line
+    \node[lbl, anchor=north west, align=left] at (65,-1)
+      {\llap{\makebox[10pt]{\bfseries +}}classical\\signature};
+    \node[lbl, anchor=north west, align=left, visible on=<3->] at (200,-26)
+      {\llap{\makebox[10pt]{\bfseries +}}quantum-safe\\signature};
+  \end{tikzpicture}
+\end{frame}
+
+\begin{frame}{Cool constructions}
+  \pause
+  Group signatures:
+  \begin{itemize}
+    \item Anonymously sign on behalf of a group
+    \item The public cannot learn who this is
+    \item The group \enquote{manager} can (unforgeably) trace and de-anonymise a signer
+    \item Signatures are unlinkable (multiple signatures by the same issuer?)
+  \end{itemize}
+
+  \pause
+  Ring signatures:
+  \begin{itemize}
+    \item Group signatures without a manager/trusted setup
+    \item Traceable/linkable variants exist
+  \end{itemize}
+
+  \pause
+  Blind signatures
+  \begin{itemize}
+    \item Sign some data without knowing the exact contents
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Cool constructions}
+  \pause
+  Threshold signatures:
+  \begin{itemize}
+    \item Can only produce a valid signature in a quorum
+  \end{itemize}
+
+  \pause
+  Multisignatures:
+  \begin{itemize}
+    \item Combine multiple signatures into a single succinct signature
+    \item All signatories are evident from the multisignature
+  \end{itemize}
+
+  \pause
+  Identity escrow:
+  \begin{itemize}
+    \item Party $A$ gives information to party $B$
+    \item This information does not allow $B$ to identify $A$
+    \item A 3\textsuperscript{rd} party $C$ can use this info to identify $A$
+    \item $B$ receives a guarantee that $C$ can identify $A$
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Trust models}
+  How do we establish trust?
+  \begin{itemize}[<+(1)->]
+    \item Hierarchical trust (CAs)
+    \item Web of trust (WoT)
+    \item Trust on First Use (TOFU)
+    \item Dual control model
+    \item \dots
+  \end{itemize}
+
+  \pause
+  Someone somewhere has to trust something sometime.
+\end{frame}
+
+\begin{frame}{Whomst'd've}
+  How does Alice know that $\PK$ belongs to Bob?
+  \begin{center}
+    \begin{tikzpicture}
+      \node (alice) at (0,0)  {\includegraphics[height=80px]{alice}};
+      \node (bob)   at (8, 0) {\includegraphics[height=80px]{bob}};
+      \node (eve)   at (4, 0) {\includegraphics[height=80px]{eve}};
+
+      \draw[<-, thick] (eve.east) -- node[above] {$(m, \sigma$)} (bob.west);
+      \draw[<-, thick] (alice.east) -- node[above] {$(\overline{m}, \overline{\sigma}$)} (eve.west);
+      
+      \node[anchor=east] (gen) at (11, 2.5) {$(\PK,\SK)\gets\GEN()$};
+      \draw[<-,dashed,thick] (alice.north) |- (gen.west);
+
+      \node (el) at (eve.north) [xshift=-5px] {};
+
+      \path let \p1 = (el) in node (circ) at (\x1,2.5) {};
+      \node at (circ.north) [yshift=5px] {$\PK$};
+
+      \node[anchor=west]  at (8.5, 0.25)  {$m\gets\MMM$};
+      \node[anchor=west]  at (8.5, -0.25) {$\sigma\gets\SIGN_\SK(m)$};
+      \node[anchor=north] at (alice.south) {$\VERIF_\PK(\overline{m},\overline{\sigma})\iseq 1$};
+
+      \draw[->,dashed,thick] (circ) -- (el);
+      \node[anchor=center,draw,circle,fill=white,thick,minimum size = 2px, inner sep=0pt] at (circ) {};
+    \end{tikzpicture}
+  \end{center}
+\end{frame}
+
+\begin{frame}{Transitive trust}
+  Consider the following:
+  \begin{itemize}[<+(1)->]
+    \item Carol is friends with both Alice and Bob
+    \item Alice does not yet know Bob
+    \item Friends know each other's public keys
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  Carol gives Bob her signature $\sigma_{C_B}$ on the message
+  \begin{center}
+    $C_B = $ \enquote{$\PK_B$ is Bob's public key}
+  \end{center}
+\end{frame}
+
+\begin{frame}{Transitive trust}
+  \begin{figure}
+    \centering
+    \begin{tikzpicture}
+      \node (alice) at (0,0)  {\includegraphics[height=80px]{alice}};
+      \node (bob)   at (8, 0) {\includegraphics[height=80px]{bob}};
+
+      \draw[<-, thick] (alice.east) -- node[above] {$(m, \sigma),\ \bigl(C_B, \sigma_{C_B}\bigr)$} (bob.west);
+
+      \node[anchor=west]  at (8.5, 0.25)  {$m\gets\MMM$};
+      \node[anchor=west]  at (8.5, -0.25) {$\sigma\gets\SIGN_{\SK_B}(m)$};
+      \node[anchor=north] at (alice.south) {\small$\VERIF_{\PK_C}(\PK_B,\sigma_{\PK_B})\iseq 1$};
+      \node[anchor=north] at (alice.south) [yshift=-1.5em] {\small$\VERIF_{\PK_B}(m,\sigma)\iseq 1$};
+
+      \node (alice-left) at (-2, 2) {};
+      \draw[->,dashed,thick] (alice-left) -- node[above] {$\PK_C$} (alice-left -| alice.north) -- (alice.north);
+
+      \node (bob-right) at (10, 2) {};
+      \draw[->,dashed,thick] (bob-right) -- node[above] {$C_B,\ \sigma_{C_B}$} (bob-right -| bob.north) -- (bob.north);
+    \end{tikzpicture}
+  \end{figure}
+
+  \pause
+  $C_B$ can be viewed as a \emph{certificate} by Carol linking Bob's public key to him.
+\end{frame}
+
+\begin{frame}{Digital certificates}
+  A \emph{certificate} binds a public key to an identity (e.g.\ name, domain)
+  \begin{itemize}[<+(1)->]
+    \item The identified entity is the \emph{subject}
+    \item The certificate is created and signed by the \emph{issuer}
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  If you trust the issuer, you can trust the certificate's contents
+  \begin{itemize}[<+(1)->]
+    \item The certificate is genuine if the issuer's signature verifies
+    \item Verifying the certificate requires the issuer's public key
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Issuing at a glance}
+  Informally, certificates are issued as follows:
+  \begin{enumerate}[<+(1)->]
+    \item The subject sends their public key and identity attributes to the issuer
+    \item The issuer validates the subject's identity
+    \par
+    \begin{itemize}
+      \item The issuer confirms the attributes somehow
+      \item Otherwise, the subject can claim to be someone else
+    \end{itemize}
+    \item The issuer verifies the subject's proof of possession
+    \par
+    \begin{itemize}
+      \item The subject must prove possession of the corresponding private key
+      \item Otherwise, the subject can present someone else's public key
+    \end{itemize}
+    \item The issuer bundles the key and attributes, and signs the bundle
+  \end{enumerate}
+
+  \vspace*{0.5em}
+
+  \pause
+  The signed bundle is the certificate.
+\end{frame}
+
+\begin{frame}{Role of the issuer}
+  The issuer acts like a notary.
+  \begin{itemize}[<+(1)->]
+    \item You \enquote{simply} trust the notary
+    \item Trust the notary $\implies$ trust their issued certificate
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  Verification requirements vary
+  \begin{itemize}[<+(1)->]
+    \item e.g.\ internal company use vs cross-border trust
+    \item e.g.\ bank transaction vs git commit
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Public Key Infrastructure (PKI)}
+  A public key infrastructure consists of a:
+  \begin{itemize}[<+(1)->]
+    \item certificate authority (CA): stores, issues \& signs certificates
+    \item registration authority (RA): verifies the identity of certificate requesters
+    \item central directory: indexing of keys
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  Entities need not all be separate, e.g. CA \& RA could be one.
+  \begin{itemize}
+    \item The term \emph{trusted third party} (TTP) often used
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{PKI (extended)}
+  \pause
+  There is also usually a:
+  \begin{itemize}[<+(1)->]
+    \item certificate policy: defines parties' roles and procedures
+    \item certificate management system
+  \end{itemize}
+
+  \pause
+  These are less critical for understanding how the PKI works.
+\end{frame}
+
+\begin{frame}{Root CAs}
+  \emph{Root CAs} are trust anchors:
+  \begin{itemize}[<+(1)->]
+    \item \emph{Root certificates}: self-signed certificates issued by a root CA
+    \item Root certificates must be obtained from trusted sources
+    \par
+    \begin{itemize}
+      \item Root certificates are often bundled with software, e.g.\ OS and browsers
+      \item Users may manually add root certificates to their certificate store
     \end{itemize}
   \end{itemize}
 
-  You need not recall these
+  \vspace*{1em}
+
+  \pause
+  Root private keys must be well protected and are often kept offline.
+  \begin{itemize}[<+(1)->]
+    \item Not used to issue \emph{end-entity certificates} directly
+    \item Key change/rotation $\implies$ new trust anchor must be distributed
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Intermediate CAs}
+    Trust is extended through \emph{intermediate CAs}:
+    \begin{itemize}[<+(1)->]
+      \item Certified by a root CA or another intermediate CA
+      \item Can issue certificates to other intermediates or end entities
+      \item Handle day-to-day issuance to better handle risk
+    \end{itemize}
+
+    \vspace*{1em}
+
+    \pause
+    If an intermediate key is compromised:
+    \begin{itemize}[<+(1)->]
+      \item \enquote{Only} its subtree of certificates is affected
+      \item The issuer can revoke and replace the intermediate
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{End-Entities}
+  \emph{End-entity certificates} terminate the trust chain:
+  \begin{itemize}[<+(1)->]
+    \item End-entities: a user, device, service, \dots
+    \par
+    \begin{itemize}
+      \item e.g.\ website, digital signature author, software packager
+    \end{itemize}
+    \item Also called \emph{leaf} certificates
+    \item Certified by an intermediate CA
+    \item Cannot issue further certificates
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  End-entity key compromise does not affect the rest of the chain.
+\end{frame}
+
+\begin{frame}{Chain of Trust}
+  Certificate chain:
+  \begin{center}
+    root cert $\to$ intermediate cert(s) $\to$ end-entity cert
+  \end{center}
+
+  \vspace*{1em}
+
+  \pause
+  To verify a certificate, verify the chain up to a trusted root
+  \begin{itemize}[<+(1)->]
+    \item Both signatures and certificate properties must be checked
+    \item Root certificates must be obtained from trusted sources
+    \item If a private key leaks, all certificates chaining to it become untrustworthy
+  \end{itemize}
 \end{frame}
 
 \begin{frame}{X.509 certificates}
@@ -102,16 +712,16 @@
     \item Certificate
     \begin{itemize}
       \item Version \& serial number
-      \item Issuer Name
-      \item Subject name
+      \item Issuer
+      \item Subject
       \item Validity period: not before \& not after
       \item Subject Public Key Info: algorithm \& public key
       \item Signature Algorithm ID
       \item Issuer and/or Subject Unique Identifier (optional)
       \item Extensions (optional)
     \end{itemize}
-    \item Certificate Signature Algorithm
-    \item Certificate Signature
+    \item Signature Algorithm
+    \item Signature Value (of the certificate by the issuer)
   \end{itemize}
 
   \pause
@@ -123,6 +733,7 @@
   \begin{itemize}[<+(1)->]
     \item Uniquely identified by an Object Identifier (OID)
     \item Labelled \enquote{critical} or \enquote{non-critical}
+    \par
     \begin{itemize}
       \item Must reject certificate if unrecognised critical extension
       \item May ignore an unrecognised non-critical extension
@@ -161,598 +772,25 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Certificate validity}
-  \pause
-  Certificate path validation (\href{https://datatracker.ietf.org/doc/html/rfc5280}{RFC 5280} for X.509):
+\begin{frame}{Web of Trust}
+  An alternative to the PKI chain of trust:
   \begin{itemize}[<+(1)->]
-    \item Start from the leaf certificate
-    \item Check certificate validity time against current time
-    \item Check revocation status (not blacklisted/cancelled)
-    \item Verify constraints (e.g. name and policy) and extensions
+    \item Most widely used with PGP
+    \item Not centralised unlike CA-based systems (PKIs in general)
     \begin{itemize}
-      \item Is the chain \enquote{approved}? (subordinate cert approved by parent)
-      \item Are all intermediate certificates CA certificates? (no end-entities allowed)
-      \item Are CAs allowed to sign subordinate certificates? (approval for delegation)
-      \item \dots
+      \item LinkedIn for public keys
+      \item Upload your keys to key-servers on the web (no deletion possible usually)
+      \item Maintain a local database of others' public keys (the \emph{keyring})
     \end{itemize}
-    \item Successful only if all checks pass for all nodes until the root
-  \end{itemize}
-
-  \pause
-  Very tricky, do not implement yourself!
-\end{frame}
-
-\begin{frame}{Certification Revocation Lists (CRL)}
-  List of \emph{unexpired} certificates revoked by a CA:
-  \begin{itemize}[<+(1)->]
-    \item Two states: revoked (definitive) \& hold (might be reinstated)
+    \item You \emph{vet} a user by signing their keys
     \begin{itemize}
-      \item Revocation reason optional
-    \end{itemize}
-    \item List must be periodically published by the CA
-    \begin{itemize}
-      \item Can be delegated to another trusted and authorised authority
-      \item Signed by the publisher
-      \item Lifetime? (e.g. CA/Browser Forum requirements)
-    \end{itemize}
-    \item Certificate field: CRL Distribution Points
-    \item \emph{Relying party} must parse the entire list
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Liability and CRLs}
-  \pause
-  Who is liable during the \enquote{grace period}?
-  \begin{itemize}[<+(1)->]
-    \item Certificate revoked but not in the public CRL yet
-    \item Complex question with no clear laws/answers
-  \end{itemize}
-
-  \pause
-  Revocation should be checked before use for critical certs
-  \begin{itemize}[<+(1)->]
-    \item Danger: DoS attacks
-    \item Browsers do not do it for leaf certs\textsuperscript{*}
-    \item Browsers use mechanisms for validating intermediate certs
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Online Certificate Status Protocol (OCSP)}
-  Online Certificate Status Protocol (OCSP):
-  \begin{itemize}[<+(1)->]
-    \item \href{https://datatracker.ietf.org/doc/html/rfc6960}{RFC 6960}
-    \item Protocol to obtain the revocation status of a certificate
-    \item OCSP \emph{responders}: endpoints for OCSP requests
-    \item Responders: either CA or CA-authorised (delegated) responders
-    \item Certificate field: Authority Information Access
-    \item OCSP response status: \enquote{good}, \enquote{revoked}, \enquote{unknown}
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{OCSP vs. CRL}
-  \begin{itemize}[<+(1)->]
-    \item Responses are concrete and small: better for clients to parse
-    \item Cheaper for clients, but expensive for CAs
-    \item Asserts the validity at the specific time\textsuperscript{*}
-    \begin{itemize}
-      \item Trip delay error margin
-      \item Caching of OCSP responses
-    \end{itemize}
-    \item DoS possible for both
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Issues with OCSP}  
-  \pause
-  Replay attacks:
-  \begin{itemize}[<+(1)->]
-    \item For efficiency, OCSP responses are often pre-signed
-    \item Check the OCSP issuing time (thisUpdate \& nextUpdate fields)
-    \item OCSP nonce extension: random nonce for the request
-  \end{itemize}
-
-  \pause
-  Privacy concerns:
-  \begin{itemize}[<+(1)->]
-    \item Requires third-party contact
-    \item Leaks query information (e.g. websites browsed)
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{OCSP stapling}
-  \pause
-  Include an OCSP response with the data responses:
-  \begin{itemize}[<+(1)->]
-    \item Server periodically makes OCSP requests to the CA itself
-    \item Server sends the requests back with the requested data
-    \item OCSP response still signed by the responder
-    \item E.g. website serving the OCSP response alongside the HTTPS certificates
-  \end{itemize}
-
-  \pause
-  Formally known as the \enquote{TLS Certificate Status Request} extension.
-\end{frame}
-
-\begin{frame}{OCSP stapling}
-  \begin{figure}
-    \centering
-    \begin{tikzpicture}
-      \draw[rounded corners,thick] (0, 0) rectangle  ++(1,-2.5);
-      \draw[rounded corners,thick] (5, 0) rectangle ++(1,-2.5);
-      \draw[rounded corners,thick] (10, 0) rectangle ++(1,-2.5);
-
-      \node[label={[align=center]Certificate\\subscriber}] at (5.5, 0) {};
-
-      % Set the picture size to everything drawn so far.
-      % This ignores the label sizes for centering.
-      \useasboundingbox (current bounding box);
-    
-      \node[label={[align=center]OCSP\\responder}] at (0.5, 0) {};
-      \node[label={[align=center]Relying\\party}] at (10.5, 0) {};
-    
-      \draw[<-,thick] (6, -0.5) -- (10, -0.5) node[midway,above] {Certificate request};
-      \draw[<-,thick] (1, -1) -- (5, -1) node[midway,above] {OCSP request};
-      \draw[->,thick] (1, -1.5) -- (5, -1.5) node[midway,below] {OCSP response};
-      \draw[->,thick] (6, -2) -- (10, -2) node[midway,below] {Cert., OCSP resp.};
-    \end{tikzpicture}
-  \end{figure}
-\end{frame}
-
-\begin{frame}{Missing staple}
-  \pause
-  What to do if the cert is not stapled?
-  \begin{itemize}[<+(1)->]
-    \item Query the responder directly
-    \item What if an attacker drops the requests?
-  \end{itemize}
-  
-  \pause
-  OCSP must staple extension
-  \begin{itemize}[<+(1)->]
-    \item Fail the task if no OCSP response provided
-    \item Prevents some downgrade attacks
-  \end{itemize}
-
-  \pause
-  CAs do not typically like OCSP, and stapling is not very popular
-\end{frame}
-
-\begin{frame}{TLS Certificate Status Request}
-  OCSP and TLS:
-  \begin{itemize}[<+(1)->]
-    \pause \item \href{https://datatracker.ietf.org/doc/html/rfc6066}{RFC 6066}: TLS extensions
-    \begin{itemize}
-      \item For TLS 1.2 only a single OCSP response could be sent
-      \item Cert chain cannot thus be validated
-      \item \href{https://datatracker.ietf.org/doc/html/rfc6961}{RFC 6961} added support for multiple responses
-    \end{itemize}
-    \pause \item \href{https://datatracker.ietf.org/doc/html/rfc8446}{RFC 8446}: TLS 1.3
-    \begin{itemize}
-      \item Fixes the single OCSP-response problem of TLS 1.2
-      \item Obsoletes RFC 6961
-    \end{itemize}
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Disclaimer}
-  Everything that follows is grossly oversimplified.
-  \pause
-  \begin{itemize}
-    \item Legal rather than cryptographic topics
-    \item Numerical identity vs. legal identity
-    \item Laws attach legal validity to technical validity
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{eIDAS}
-  Electronic Identification, Authentication and Trust Services
-  \begin{itemize}[<+(1)->]
-    \item EU regulation: directly applicable to all member states
-    \item Interoperability of electronic identification (eID) \& trust services
-    \item Legal validity
-    \item National identity providers (IdP)
-  \end{itemize}
-
-  \vfill
-
-  \pause
-  eIDAS \enquote{2.0} amends the original regulation.
-  \begin{itemize}[<+(1)->]
-    \item \href{https://eur-lex.europa.eu/eli/reg/2024/1183/oj}{Regulation (EU) 2024/1183}
-    \item Introduces digital identity wallets
-    \item The amendments are out of our scope
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{eIDAS eID}
-  eIDAS eID online service access:
-  \begin{enumerate}[<+(1)->]
-    \item A citizen requests an on-line service in another Member State.
-    \item The citizen is requested to authenticate themselves by the on-line service.
-    \item The citizen chooses to authenticate with an eIDAS eID.
-    \item The authentication request is sent to the citizen's country for authentication.
-    \item The authentication result is returned to the service provider.
-    \item Authentication is complete and the citizen can proceed.
-  \end{enumerate}
-
-  \pause
-  {\scriptsize Source: \href{https://ec.europa.eu/digital-building-blocks/sites/display/DIGITAL/eID}{\textit{Digital Europe Programme eID FAQ}}}
-
-  \pause
-  See also: \href{https://www.eid.as/tsp-map/}{eIDAS eID map}
-\end{frame}
-
-\begin{frame}{Trust services}
-  Electronic services that help various parties make \emph{binding} decisions.
-  \begin{itemize}[<+(1)->]
-    \item Timestamping
-    \item E-signing
-    \item Digital authentication
-    \item Validity confirmation
-    \item \dots
-  \end{itemize}
-
-  \pause
-  EU/EEA Trusted List Browser
-  \begin{itemize}[<+(1)->]
-    \item Qualified status granted by supervisory body
-    \item Member states maintain their own trusted lists
-    \item EU maintains the list of trusted lists (EU-level PKI)
-    \item {\scriptsize \url{https://eidas.ec.europa.eu/efda/tl-browser/}}
-    \item {\scriptsize \url{https://ec.europa.eu/tools/lotl/eu-lotl.xml}}
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{eIDAS signature levels}
-  Article 3:
-  \settowidth{\offset}{10}
-  \addtolength{\leftmargini}{\offset}
-  \begin{itemize}[<+(1)->]
-    \item[(10)] \enquote{electronic signature (ES)}
-    \item[(11)] \enquote{advanced electronic signature (AdES)}
-    \item[(12)] \enquote{qualified electronic signature (QES)}
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Electronic signature (ES)}
-  \enquote{electronic signature (ES)} means data in electronic form which is attached to or logically associated with other data in electronic form and which is used by the signatory to sign;
-\end{frame}
-
-\begin{frame}{Advanced electronic signature (AdES)}
-  \enquote{advanced electronic signature (AdES)} means an electronic signature which meets the requirements set out in Article 26;
-  \settowidth{\offset}{26.1}
-  \addtolength{\leftmargini}{\offset}
-  \begin{enumerate}[<+(1)->]
-    \item[(26.a)] it is uniquely linked to the signatory;
-    \item[(26.b)] it is capable of identifying the signatory;
-    \item[(26.c)] it is created [\dots] under his sole control; and
-    \item[(26.d)] [\dots] any subsequent change in the data is detectable.
-  \end{enumerate}
-\end{frame}
-
-\begin{frame}{Qualified electronic signature (QES)}
-  \enquote{qualified electronic signature (QES)} means an \emph{advanced electronic signature} that is created by a \emph{qualified electronic signature creation device}, and which is based on a \emph{qualified certificate} for electronic signatures;
-  \begin{itemize}[<+(1)->]
-    \item qualified certificate: certificate issued by a qualified trust service provider
-  \end{itemize}
-
-  \vfill
-
-  \pause
-  AdES/QC: advanced electronic signature (AdES) based on a qualified certificate.
-\end{frame}
-
-\begin{frame}{Signature levels simplified}
-  \pause
-  Electronic signatures (ES):
-  \begin{itemize}[<+(1)->]
-    \item Data used by a signatory to express signing \emph{intent}
-    \item E.g. signing an email with your name
-  \end{itemize}
-
-  \pause
-  Advanced electronic signature (AdES):
-  \begin{itemize}[<+(1)->]
-    \item Electronic signature \emph{uniquely} linked to an \emph{identifiable} entity
-    \item Must assert the \emph{integrity} of signed data
-    \item E.g. signature issued with OpenSSL for a published certificate
-    \item If the certificate is qualified: AdES/QC
-  \end{itemize}
-
-  \pause
-  Qualified electronic signature
-  \begin{itemize}[<+(1)->]
-    \item AdES where the certificate and signing device are qualified
-    \item E.g. digital signatures issued with an Estonian ID card
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Qualified Signature Creation Devices (QSCD)}
-  \pause
-  eIDAS Annex II:
-  \settowidth{\offset}{1.a}
-  \addtolength{\leftmargini}{\offset}
-  \begin{enumerate}[<+(1)->]
-    \item[(1.a)] the confidentiality of the electronic signature creation data [\dots] is reasonably assured;
-    \item[(1.b)] the [\dots] data [\dots] can practically occur only once;
-    \item[(1.c)] the [\dots] data [\dots] cannot [\dots] be derived and the electronic signature is reliably protected against forgery [\dots];
-    \item[(1.d)] the [\dots] data [\dots] can be reliably protected by the legitimate signatory against use by others.
-  \end{enumerate}
-
-  \pause
-  TL;DR: It should only be possible to issue signatures when possessing the device, and its use should be restricted (e.g. protected by a PIN).
-\end{frame}
-
-\begin{frame}{Validating Qualified Electronic Sigantures}
-  How to validate QES signatures?
-  \begin{itemize}[<+(1)->]
-    \item \href{https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX\%3A32014R0910\#d1e2594-73-1}{Article 32}
-    \item Quite tricky!
-  \end{itemize}
-
-  \pause
-  Qualified Validation Service:
-  \begin{itemize}
-    \item \href{https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32014R0910\#d1e2664-73-1}{Article 33}
-    \item Automated validation process
-    \item Use over self-implementation whenever possible
-    \begin{itemize}
-      \item If nothing else, check for libraries
+      \item Others who trust you can then trust the keys you have signed
+      \item This is done by configuring key trust levels
     \end{itemize}
   \end{itemize}
 
   \pause
-  (\href{https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=OJ:L\_202401183\#d1e3370-1-1}{\textit{eIDAS 2.0 amendments}})
-\end{frame}
-
-\begin{frame}{Trusted timestamping}
-  \pause
-  Article 3:
-  \settowidth{\offset}{33}
-  \addtolength{\leftmargini}{\offset}
-  \begin{enumerate}
-    \item[(33)] \enquote{electronic time stamp} means data in electronic form which binds other data in electronic form to a particular time establishing evidence that the latter data existed at that time;
-  \end{enumerate}
-
-  \pause
-  Article 41:
-  \begin{itemize}
-    \setcounter{enumi}{1}
-    \item A qualified electronic time stamp shall enjoy the presumption of the accuracy of the date and the time it indicates and the integrity of the data to which the date and time are bound.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Trusted timestamping}
-  \pause
-  Signed statement by a Time Stamping Authority (TSA):
-  \begin{itemize}[<+(1)->]
-    \item TSAs must use an accurate time source
-    \item TSAs must log issued timestamps
-  \end{itemize}
-
-  \pause
-  \href{https://datatracker.ietf.org/doc/html/rfc3161}{RFC 3161}:
-  \begin{itemize}[<+(1)->]
-    \item Internet X.509 Public Key Infrastructure Time-Stamp Protocol
-  \end{itemize}
-
-  \pause
-  Time does not exist in cryptography:
-  \begin{itemize}[<+(1)->]
-    \item Relative temporal ordering is the best we can achieve
-    \begin{itemize}
-      \item E.g. which document was signed earlier (earlier in a chain)
-    \end{itemize}
-    \item Even chain-based TSAs require \enquote{trust} (e.g. Guardtime)
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Legal effects of electronic signatures}
-  \pause
-  Article 25:
-  \begin{enumerate}
-    \setcounter{enumi}{1}
-    \item A qualified electronic signature shall have the equivalent legal effect of a handwritten signature.
-  \end{enumerate}
-
-  \vspace*{1em}
-
-  \pause
-  Legal implication:
-  \begin{itemize}[<+(1)->]
-    \item Accusing party needs not prove that an entity issued the signature.
-    \item Issuer has to prove that they did not issue the signature.
-    \item $\implies$ legal non-repudiation
-    \item Article 13, paragraph 1
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Digital vs. electronic signature}
-  Digital signature:
-  \begin{itemize}[<+(1)->]
-    \item Cryptographic concept
-    \item A tool to prove integrity and provenance
-  \end{itemize}
-
-  \vspace*{1em}
-
-  \pause
-  Electronic signature:
-  \begin{itemize}[<+(1)->]
-    \item Legal concept defined in eIDAS
-    \item Signature on some data: intent of signatory to associate with this data
-    \item Not necessarily cryptographic (e.g. name on an email)
-  \end{itemize}
-
-  \vspace*{1em}
-
-  \pause
-  Not all electronic signatures are digital signatures!
-\end{frame}
-
-\begin{frame}{ETSI signature standards (eIDAS versions)}
-  ETSI specifies three formats for AdES+\dots
-  \begin{itemize}[<+(1)->]
-    \item XML advanced electronic signature (XAdES)
-    \begin{itemize}
-      \item \href{http://www.etsi.org/deliver/etsi_ts/103100_103199/103171/02.01.01_60/ts_103171v020101p.pdf}{ETSI TS 103 171 v.2.1.1}
-    \end{itemize}
-    \item CMS advanced electronic signature (CAdES)
-    \begin{itemize}
-      \item \href{http://www.etsi.org/deliver/etsi_ts/103100_103199/103173/02.02.01_60/ts_103173v020201p.pdf}{ETSI TS 103 173 v.2.2.1}
-    \end{itemize}
-    \item PDF advanced electronic signature (PAdES)
-    \begin{itemize}
-      \item \href{http://www.etsi.org/deliver/etsi_ts/103100_103199/103172/02.02.02_60/ts_103172v020202p.pdf}{ETSI TS 103 172 v.2.2.2}
-    \end{itemize}
-  \end{itemize}
-
-  \pause
-  \dots and one container format
-  \pause
-  \begin{itemize}
-    \item Associated Signature Container (ASiC)
-    \item \href{http://www.etsi.org/deliver/etsi_ts/103100_103199/103174/02.02.01_60/ts_103174v020201p.pdf}{ETSI TS 103 174 v.2.2.1}
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{ETSI conformance levels}
-  \pause
-  Incremental requirements for long-term signature validity:
-  \begin{enumerate}[<+(1)->]
-    \item B-B: valid until the signature certificate is valid
-    \begin{itemize}
-      \item \enquote{Short-term} signatures
-    \end{itemize}
-    \item B-T: prove that the signature existed at a certain time
-    \begin{itemize}
-      \item Trusted token: TSA-signed time-stamp and signature digest
-    \end{itemize}
-    \item B-LT: long-term availability of validation material
-    \begin{itemize}
-      \item Include also the OCSP/CLR status + chain at the time
-    \end{itemize}
-    \item B-LTA: long-term availability and integrity of validation material
-    \begin{itemize}
-      \item Include a \enquote{document-time-stamp} token
-      \item Encompasses also the validation material
-      \item Tokens can be subsequently added to prolong validity
-    \end{itemize}
-  \end{enumerate}
-\end{frame}
-
-\begin{frame}{XAdES}
-  XML advanced electronic signature
-  \begin{itemize}[<+(1)->]
-    \item Based on XML digital signatures (XMLDSig)
-    \item W3C recommendation: XML Signature Syntax and Processing
-    \item Human and machine readable
-    \item Signs any document/data (including binary data)
-    \item Can sign multiple files with one signature
-  \end{itemize}    
-\end{frame}
-
-\begin{frame}{CAdES}
-  CMS advanced electronic signature
-    \begin{itemize}[<+(1)->]
-      \item Cryptographic Message Syntax (CMS)
-      \item Signs only binary data, signatures not human readable
-      \item Lacks XAdES features (e.g. multi-document signing), and offers none more
-    \end{itemize}
-\end{frame}
-
-\begin{frame}{PAdES}
-  PDF advanced electronic signature
-  \begin{itemize}[<+(1)->]
-    \item Signatures embedded within the PDF
-    \item Included in the ISO PDF standard
-    \item Signing and verification included in PDF software\textsuperscript{*}
-  \end{itemize}
-
-  \vspace*{1em}
-
-  \pause
-  PAdES is much more limited than X/CAdES, but is more \enquote{portable}.
-\end{frame}
-
-\begin{frame}{XAdES signing modes}
-  Two signing modes:
-  \begin{itemize}[<+(1)->]
-    \item Detached: data is separate from the signature
-    \begin{itemize}
-      \item The original data is not modified
-    \end{itemize}
-    \item Encapsulated: XML file encapsulating the data
-    \begin{itemize}
-      \item Not usable/practical with all types of data
-      \item Signature and data in the same file
-    \end{itemize}
-  \end{itemize}
-
-  \vspace*{1em}
-
-  \pause
-  How to prevent signature/data loss for detached signatures?
-\end{frame}
-
-\begin{frame}{Associated Signature Containers (ASiC)}
-  Data container grouping data objects with signatures and/or timestamps.
-  \begin{itemize}[<+(1)->]
-    \item Associates detached signatures with referenced data
-    \begin{itemize}
-      \item Aims to prevent the loss of signatures/data
-      \item Can group signatures of multiple signatories
-    \end{itemize}
-    \item ZIP format
-    \item Developed by ETSI
-    \begin{itemize}
-      \item \href{http://www.etsi.org/deliver/etsi_ts/103100_103199/103174/02.02.01_60/ts_103174v020201p.pdf}{ETSI TS 103 174 V2.2.1 (2013-06)}
-      \item \href{http://www.etsi.org/deliver/etsi_en/319100_319199/31916202/01.01.01_60/en_31916202v010101p.pdf}{ETSI EN 319 162-1 V1.1.1 (2016-04)}
-    \end{itemize}
-    \item 2013 version required by eIDAS
-    \item Usable with XAdES and CAdES, but not PAdES
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Two types of ASiC}
-  Two main types:
-  \begin{itemize}[<+(1)->]
-    \item Simple (ASiC-S)
-    \begin{itemize}
-      \item Signature(s) must reference only a single file
-    \end{itemize}
-    \item Extended (ASiC-E)
-    \begin{itemize}
-      \item Signature(s) may reference multiple files
-      \item Used in Estonia
-    \end{itemize}
-  \end{itemize}
-
-  \vspace*{1em}
-
-  \pause
-  There are more details \& subtleties.
-\end{frame}
-
-\begin{frame}{ASiC structure}
-  Two folders:
-  \begin{itemize}[<+(1)->]
-    \item \enquote{root} folder: contains the file and all other content
-    \item \texttt{META-INF} folder: contains content metadata and signatures
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Estonia and containers}
-  A short history/summary of the Estonian digital signature (articles):
-  \begin{itemize}
-    \item \href{https://www.id.ee/en/article/bdoc2-1-new-estonian-digital-signature-standard-format/}{BDOC2.1 --- New Estonian digital signature standard format}
-    \item \href{https://www.id.ee/en/article/digidoc-container-format-life-cycle-2/}{DigiDoc container format life cycle}
-  \end{itemize}
-
-  \vspace*{1em}
-
-  \pause
-  DigiDoc is the software used in Estonia for interacting with signed and/or encrypted containers.
+  It's a mess, especially the key management.
 \end{frame}
 
 \end{document}
