@@ -1,48 +1,47 @@
 \documentclass{homework}
 
-\title{03}
-\date{\DTMdate{2025-11-15}}
+\usepackage{enumitem}
+\usepackage{tcolorbox}
 
-\usepackage{crysymb}
+\usepackage{tikz}
+\usetikzlibrary{positioning,calc}
+
+\usepackage{listings}
+
+\lstset{
+basicstyle=\small\ttfamily,
+columns=flexible,
+breaklines=true
+}
+
 \usepackage{fancyvrb}
 \fvset{listparameters=\setlength{\topsep}{0pt}\setlength{\partopsep}{0pt}}
+
+\title{03}
 
 \begin{document}
 \maketitle
 
-\textbf{Reminders}
+\textbf{Organisational details}
 
 \begin{itemize}
-  \item I will give you feedback on GitLab and Discord.
-  Check them after receiving your (preliminary) grade.
-  \item Read through task descriptions carefully.
-  \item You may request deadline extensions until 12.11.25 23:59 EET.
-  \item You can submit up to one week after the deadline with a 50\% point penalty.
-  0 afterwards.
-  \item Grace clause:
+  \item Include in your report approximately how long the assignment took you.
+  \item You must follow the submission instructions outlined on GitLab.
+  The theory part must be formatted as Markdown.
+  \item The GitLab pipeline must succeed, or I will not grade your assignment (you will receive 0).
+  \item I will provide feedback on GitLab and/or Discord.
+  Check both after receiving your grade.
   \begin{itemize}
-    \item If you submit your assignment by the deadline, you have the opportunity to fix (some) mistakes I point out to gain back up to half of the lost points.
-    \item You cannot get any points back for a task that is entirely missing or broken, e.g. code that does not run at all or does nothing.
-    If your code does not pass the assertions/test script (if available), include that info in your report.
-    Otherwise I will consider your code to be broken, i.e. no grace.
-    Test your code!
-    \item The grace clause does not apply if you requested an extension or missed the original deadline.
+    \item My initial feedback may be quite minimal as there are so many of you.
+    However, you can request additional feedback.
+    Specific questions are also welcome.
+    \item Do not share the feedback you receive, as this may give others an unfair advantage.
   \end{itemize}
-  \item You may share hints with each-other, but no answers/code.
-  Ask questions in the server if they could be useful for everyone.
-  \item You may---and I encourage you to---ask me questions (preferably during practices).
-  \item You may use AI as help, but not to solve the tasks themselves.
-  \begin{itemize}
-    \item Acceptable: e.g. checking your understanding, asking how to loop in Python
-    \item Not acceptable: e.g. generating any code logic or cryptographic operations
-    \item If you use AI in any form, include in your report what you used it for
-    \item I recommend that you ask in the server/me instead of using AI
-  \end{itemize}
-  \item If I catch you plagiarising, copying, or using AI for theory answers or code logic, I will report you to the faculty and fail you for the course.
-  \begin{itemize}
-    \item If during the midterm/exam you completely fumble stuff that you got points for in homework tasks, you will have to orally explain why it is so.
-    \item If you do not convince me of homework authorship, I will report you for cheating and fail you.
-  \end{itemize}
+  \item You may share hints with each other, but not answers or code.
+  Ask questions in the Discord server if they could benefit everyone.
+  \item You may -- and I encourage you to -- ask me questions.
+  \item If I ask, you must be able to convince me that the homework is your own work.
+  Otherwise, I will report you to the faculty and fail you.
 \end{itemize}
 
 \newpage
@@ -54,105 +53,72 @@
 \textbf{Additional instructions}
 
 \begin{itemize}
-  \item The report file should preferably use the Markdown format, and make use of Markdown syntax for headings, code blocks, etc.
-  I shall accept no formats other than markdown and PDF.
-  \item Call the file \texttt{report.md} (or \texttt{report.pdf} if you must use PDF) and include it in the \texttt{hw3} folder root.
-  \item Your homework must contain the following information at the start:
-\begin{Verbatim}
-- Name: <your full name>
-- Discord username: <your discord username>
-- Feedback language: <EE or EN>
-- Homework took me:
-  - Theory: <time taken for the theory>
-  - Practical: <time taken for the practical tasks>
-\end{Verbatim}
+  \item \textbf{Please do not use AI for the theoretical part.}
+  Challenge your understanding and look for additional written sources if the lecture and provided materials are not enough.
+  Critical thinking and clear communication are skills -- use them or lose them.
+  \item You must reference all external materials you rely on, including AI tools, if you choose to use them anyway.
 \end{itemize}
 
-\begin{task}{GPG}
-  We briefly covered the web-of-trust approach and the existence of PGP, however, we did not go in depth on what PGP is.
+\begin{task}{ROCA}
+  Read \href{https://crocs.fi.muni.cz/public/papers/rsa_ccs17}{\emph{this blog post}} by the researchers who discovered ROCA.
+  More than 750 000 Estonian ID cards were impacted by this vulnerability.
 
-  PGP stands for \emph{Pretty Good Privacy} and is a cryptographic toolset which can be used for encryption and signing of data.
-  However, PGP is proprietary software (its history is quite complex) which therefore limits its use by the open source community and the general public.
-
-  Since the functionality provided by the PGP was useful, eventually the \emph{OpenPGP standard} was developed (\href{https://datatracker.ietf.org/doc/html/rfc4880}{RFC 4880}).
-  In July of 2024, \href{https://datatracker.ietf.org/doc/html/rfc9580}{RFC 9580} was published to supersede RFC 4880, but the state of implementations is muddy.
-  If you are interested in tech drama, see:
+  Answer the following:
   \begin{itemize}
-    \item \href{https://lwn.net/Articles/953797/}{A schism in the OpenPGP world},
-    \item \href{https://blog.pgpkeys.eu/critique-critique.html}{A Critique on \enquote{A Critique on the OpenPGP Updates}}.
-  \end{itemize}
-
-  A complete and free implementation of the OpenPGP standard is the \emph{GNU Privacy Guard}, abbreviated as GPG (or GnuPG, or GPG2).
-  GPG has many uses, but the most \enquote{mainstream}\footnote{This is from my own experience, and is likely not a global truth.} are email encryption and signing\footnote{A nice resource: \url{https://emailselfdefense.fsf.org/en/}}, SSH access (SSH can work with GPG, but should it?), and signing git commits\footnotemark{}.
-  \footnotetext{\url{https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits}}
-
-  \begin{tcolorbox}
-    I believe, for various reasons, e.g. the lack of forward secrecy and allowing users and lack of sensible safeguards\footnote{It is particularly easy to do stupid things with PGP due to the abundance of settings.}, that GPG (and PGP) is legacy tooling and should be deprecated for most purposes.
-    While not all of the community would agree with me, I recommend that you avoid PGP unless there are no better alternatives for a specific purpose.
-  \end{tcolorbox}
-
-  \begin{tcolorbox}
-    Git commits can nowadays also be signed with SSH keys.
-    GitHub, GitLab and BitBucket all support it.
-    SSH signing was added to Git version 2.34.0 in 2021.
-    \href{https://github.com/git/git/blob/master/Documentation/RelNotes/2.34.0.txt}{(changelog)}
-  \end{tcolorbox}
-
-  GPG is a command-line tool, however different frontends exist\footnote{\url{https://gnupg.org/software/frontends.html}}.
-  The GUI which I have seen used the most is Kleopatra, which is available on Windows, macOS and Linux.
-  For Windows, the Kleopatra GUI comes with \href{https://gpg4win.org/index.html}{Gpg4win}.
-  Still, I typically use the CLI instead of a GUI (in the rare cases when I have to use GPG).
-
-  For this task, read through the following three articles:
-  \begin{itemize}
-    \item \href{https://www.digitalocean.com/community/tutorials/how-to-use-gpg-to-encrypt-and-sign-messages}{\textit{How To Use GPG to Encrypt and Sign Messages}} (DigitalOcean)
-    \begin{itemize}
-      \item Pay special attention to the \enquote{Create a Revocation Certificate} section!
-      \item Summarise in a few sentences how public keys are typically shared and made available to other parties.
-      
-      If you make your key available using this method, can you later make it so that the keys can no longer be searched for / obtained by others?
-    \end{itemize}
-    \item \href{https://www.gnupg.org/gph/en/manual/x135.html}{\textit{Making and verifying signatures}} (The GNU Privacy Handbook)
-    \begin{itemize}
-      \item For each of the different signature methods, explain their usefulness and describe a use-case where that specific method is suitable, but the others are not.
-    \end{itemize}
-
-    \item \href{https://www.gnupg.org/gph/en/manual/x334.html}{\textit{Validating other keys on your public keyring}}
-    \begin{itemize}
-      \item Answer the following: what is the difference between \enquote{trust} and \enquote{validity} when speaking about trust in GPG keys and their owners?
-    \end{itemize}
-  \end{itemize}
-
-  All three articles will help you with the practical tasks.
-
-  \textit{Addendum.}
-  If you have to use GPG and want to use it with a YubiKey, check out the article \href{https://support.yubico.com/hc/en-us/articles/360013790259-Using-Your-YubiKey-with-OpenPGP}{\textit{Using Your YubiKey with OpenPGP}}.
-\end{task}
-
-\begin{task}{Certificate ToS}
-  Read through the short summary on \href{https://www.id.ee/en/article/compete-information-about-the-terms-of-use-of-certificates/\#what-you-need_2}{\textit{What you need to know about the terms and conditions for the use of ID-card certificates}}.
-
-  Then, answer the following questions:
-  \begin{itemize}
-    \item What must you do when you lose your document or it is stolen?
-    \item How can you prevent the unauthorised use of your document?
-    \item What is the difference between suspending certificates and declaring them invalid?
-    \item Can you anonymously use your document digitally?
-    \item Does the ID card serve any purpose after its certificates have been invalidated?
+    \item What caused the vulnerability?
+    Was it a weak random number generator?
+    \item Did the researchers break 2048-bit RSA in general?
+    What was the cost of breaking a single vulnerable 2048-bit key?\footnote{Note that it would likely be more affordable today.}
+    \item How can you check whether your key is affected?
+    \item Estonia's response was to switch ID card keys from RSA to ECC.
+    Why did this work?
+    \item The researchers also suggest generating the key outside the device and importing it.
+    Why is this a poor option for an ID card?
+    (Hint: look up why the PPA sued Gemalto in 2018.)
   \end{itemize}
 \end{task}
 
-\begin{task}{ASiC-E containers}
-  Task file: \texttt{pubkey.asice}
-
-  Investigate the signature container, then answer the following questions:
+\begin{task}{Padding oracles and Bleichenbacher}
+  Read the introduction of \href{https://en.wikipedia.org/wiki/Padding_oracle_attack}{\textit{Padding oracle attack}} and skim the rest of the article.
+  Then read through \href{https://www.shysecurity.com/post/20160622-Bleichenbacher%20Attack}{\textit{Bleichenbacher Chosen Ciphertext Attack}}.
+  Supporting materials (optional):
   \begin{itemize}
-    \item What was the time on my computer at the moment of singing (Estonian local time)?
-    \item What is the signing time reported by DigiDoc (Estonian local time)?
-    \item Do these times differ? Why yes/why not?
-    \item What eID \enquote{device} did I use to issue the signature?
-    How do you know which?
+    \item \url{https://crypto.stackexchange.com/a/37480}
+    \item \href{https://wiki.elvis.science/index.php?title=Bleichenbacher_Attack#Steps_of_the_Attack}{\textit{Bleichenbacher Attack}} by the ELVIS project -- steps of Bleichenbacher's attack
+    \item \href{https://robertheaton.com/2013/07/29/padding-oracle-attack/}{\textit{The padding oracle attack}} by Robert Heaton -- description of the CBC padding oracle
   \end{itemize}
+
+  Answer the following:
+  \begin{itemize}
+    \item What is a padding oracle attack in general, i.e. not specific to RSA?
+    Does the attacker need the capabilities of an IND-CCA1 or an IND-CCA2 adversary?
+    Why?
+    \item Without going into the mathematical details, how do the oracle's answers enable plaintext recovery in Bleichenbacher's attack?
+    \item RSAES-OAEP is proven IND-CCA2 secure\footnote{In the random oracle model (ROM).}.
+    Does that mean that in practice, RSAES-OAEP implementations cannot be vulnerable to such attacks?
+    Explain why or why not.
+  \end{itemize}
+\end{task}
+
+\begin{task}{Opening up}
+  Recall that for some secret $x\getsu\ZZ_q$ and a generator $G$, the ElGamal public key is $H\gets xG$.
+  Encryption is then carried out with:
+  \[
+    r \getsu \ZZ_q, \ENC_H(M; r) = (rG, M + rH) = (U, V) = c
+  \]
+  where $r$ is the randomness which makes ElGamal a probabilistic encryption scheme.
+
+  Suppose now that $r$ is leaked, meaning that you know the $r$ used during encryption.
+  Are you then able to recover $M$ from $c$ without the secret key?
+  If yes, how so?
+
+  Can you also decrypt other messages (without gaining access to new values of $r$)?
+\end{task}
+
+\begin{task}{Following up}
+  Regardless of the public-key encryption scheme, the encryption randomness must always be freshly sampled, kept secret, and discarded after encryption.
+
+  Explain how, if the encryption randomness leaks and the set of possible messages is known (e.g. the choices \enquote{yes} or \enquote{no} in a referendum), an adversary can recover the message, regardless of the public-key encryption scheme used (e.g. RSAES-OAEP or lifted ElGamal).
 \end{task}
 
 \newpage
@@ -165,155 +131,93 @@
 \textbf{Additional instructions}
 
 \begin{itemize}
-  \item I must be able to run your program with GnuPG v2.4.8 and OpenSSL v3.5.1\footnotemark{}.
-  \footnotetext{You may use older versions of GnuPG and OpenSSL as long as you do not use deprecated functionality.}
-  \item You can use whichever tools or programming language to solve the following tasks.
-  However, you must provide code comments to explain what you are doing and why, and reference all used tools in your report.
-  \item Your repository must contain at least the following:
-  \begin{Verbatim}
-hw3/
-├── report.md
-├── revocation.cdoc2
-├── <studentid>.asice
-├── spurious.asice
-├── ed25519.pub
-└── message.sig
-  \end{Verbatim}
-  where \enquote{<studentid>} is your student identifier (\enquote{takraa} for me).
-  Add your additional code files to the hw3 directory as well, if any.
+  \item I must be able to run your program with Python 3.14 and OpenSSL 4.0.3\footnotemark{}.
+  \footnotetext{You may use older versions of Python and OpenSSL as long as they are interoperable with mine.}
+  \item You may not import any third-party module.
+  You are free to import any built-in module.
+  If you feel the need to import a third-party module, please check with me beforehand!
+  \item All errors must be handled: print a descriptive message starting with \enquote{Handled:} and exit with error code \texttt{1}.
+  \item You must identify potential edge cases yourself.
+  \item You may use AI as assistance, e.g. to check your understanding or to ask how to loop in Python.
+  You may not use AI to generate code logic, library calls, or cryptographic operations, nor to identify or implement edge cases.
+  If you use AI in any form, state in your report where and what you used it for.
+  \item You may change anything in the template files, unless specified otherwise, as long as the GitLab pipeline succeeds.
 \end{itemize}
 
-\begin{task}{GPG keys}
-  Generate a GPG primary key that can only certify other keys, but not sign or encrypt, and which is valid for two months.
-  Then, generate a subkey for it which can only sign data, but not encrypt, and which is valid for one month.
-  Please do not publish your key to any keyserver online!
+\begin{task}{RSA interop}
+  Homework template file: \texttt{ossl\_rsa\_template.py}
 
-  Both keys must use Ed25519.
-  For the key metadata, use your real name and your TalTech email.
-  For the comment, use \enquote{Assignment 3}.
-  \autoref{fig:gpg} displays what your key should look like on the command line.
-  You can also find my GPG public key in \texttt{pubkey.asice}.
-  Pay attention to the \texttt{[C]} and \texttt{[S]} markers.
+  Create a Python 3 program that performs RSAES-OAEP encryption and decryption by calling OpenSSL.
+  Recall that RSA needs padding for probabilistic encryption, and that OAEP in particular prevents attacks such as Bleichenbacher's.
+  Use SHA-256 as the OAEP hash function.
 
-  \begin{figure}[h!]
-    \center
-    \includegraphics[width=\textwidth]{../images/gpg_pubkey}
-    \caption{Example metadata for a key with the required parameters.}
-    \label{fig:gpg}
-  \end{figure}
-
-  Include a screenshot showing that the key is in your keyring in your report (CLI and GUI are both fine).
-
-  Then, generate a revocation certificate for the primary key.
-
-  \begin{tcolorbox}
-    If you ever have to generate a GPG key, make sure to always also generate a revocation certificate!
-    Make sure to store this certificate in a safe but available (for you) manner.
-    This allows you to revoke a key should you lose it or should it become compromised.
-    \tcblower
-    Proper key management with GPG is quite complex, e.g. due to the subkey system and the usual complexity of rotating keys.
-    As such, revocation certificates become especially important for potential damage control.
-  \end{tcolorbox}
-
-  Encrypt the revocation certificate to my ID code using DigiDoc.
-  You can get my ID code from the signed container.
-  \begin{tcolorbox}
-    In practice, you should of course never leak your revocation certificate, as anyone can permanently revoke your key with it.
-  \end{tcolorbox}
-
-  Include the file as \texttt{revocation.cdoc2} in your repository.
-\end{task}
-
-\begin{task}{Propagating trust}
-  Task file: \texttt{pubkey.asice}
-
-  Export your GPG public key from the previous task into a file in armored format and sign it with an Estonian digital signature (ID-card, Mobile-ID, Smart-ID, digi-ID, \dots) with DigiDoc.
-  
-  Include thee file as \texttt{studentid.asice} in your repo, where \enquote{studentid} is your student identifier (\enquote{takraa} for me).
-  \begin{tcolorbox}
-    If you are living in Estonia, you are required by law to have either an Estonian ID card, an Estonian ID card for a EU citizen, or a residence permit card.
-    If you do not have one, I strongly suggest applying for one.
-    \tcblower
-    If you do not have such a document\footnote{I will not report you, do not worry. Also, do encrypt your message to my ID code using DigiDoc.}, or do not have any currently valid certificates, please write me an email.
-  \end{tcolorbox}
-
-  Then, import my public key from the \texttt{pubkey.asice} container into your keyring.
-  Assign it a trust level of 4, i.e. \enquote{I trust fully}.
-  Then, sign it with your own key, so that my key has a validity of \enquote{full} in your keyring.
-
-  Include a screenshot showing that the key is in your keyring with the appropriate trust level in your report (CLI and GUI are both fine).
-\end{task}
-
-\newpage
-
-\begin{task}{Are we the bad guys?}
-  Task file: \texttt{pubkey.asice}
-
-  Your task is to modify the signature container in such a way that DigiDoc4 displays the string \enquote{Signature is not valid} (\autoref{fig:digidoc}).
-  Explain what you did to make it so and include commands/screenshots.
-
-  \begin{figure}[h!]
-    \center
-    \includegraphics[width=\textwidth]{../images/invalid_sig}
-    \caption{Expected signature status displayed by DigiDoc.}
-    \label{fig:digidoc}
-  \end{figure}
-
-  Include the file as \texttt{spurious.asice} in your repository.
-
-  \textit{Hint.}
-  The \href{https://www.id.ee/wp-content/uploads/2021/06/bdoc-spec212-eng.pdf}{BDOC 2.1} reference can help you if you are unable to re-assemble the container in a way such that DigiDoc actually opens it.
-  You can also compare the \href{https://man.freebsd.org/cgi/man.cgi?query=zipinfo}{\texttt{zipinfo}} output of the original container with the container you have assembled if you are having issues.
-\end{task}
-
-\begin{task}{\$\%@!}
-  Generate an Ed25519 signing key with OpenSSL.
-  Use it to sign the file \texttt{message.txt} and save the signature as \texttt{message.sig}.
-  Export the public key into a file called \texttt{ed25519.pub}.
-  Include the generation and signing commands in your report, and include the signature and public key in your repository.
-\end{task}
-
-\newpage
-
-\begin{task}{A bit of everything}
-  Homework challenge file: \texttt{challenges.txt}
-
-  In the homework challenge file, you will find two columns of data: the first column includes salted hashes of student usernames (e.g. takraa) while the second column includes SHA-256 hashes of registration codes of Estonian organisations.
-  Each student is assigned a different organisation.
-
-  Your task is then to:
-  \begin{enumerate}
-    \item Find which entry corresponds to you (i.e. hashes your student username).
-    \item Find the company your challenge is for (i.e. find the SHA-256 pre-image).
-    \begin{itemize}
-      \item The pre-image is an ASCII string of the form \texttt{ics0036-XXXXXXXX}, where each \texttt{X} represents a decimal digit.
-      \item Registration codes in Estonia are 8 decimal digits long.
-            The following should help you narrow the search space:
-            \begin{itemize}
-              \item Registry codes of companies (AS/OÜ) begin with a \enquote{1}.
-              \item Registry codes of public institutions begin with a \enquote{7}.
-              \item Registry codes of nonprofit organisations (MTÜ) begin with an \enquote{8}.
-              \item Registry codes of foundations (sihtasutus) begin with a \enquote{9}.
-            \end{itemize}
-    \end{itemize}
-    \item Find the certificate serial number of any e-Seal certificate of that company.
-    \begin{itemize}
-      \item Certificates are issued by SK ID Solutions.
-      \item I say \enquote{any}, since an organisation might have multiple e-Seal certificates.
-      \item NB! Not all certificates are for e-Seals (e.g. some are for encryption).
-      \item Do not confuse the certificate serial number with the subject serial (the subject serial is likely the same as the registry code).
-      \item The certificate serial has at least 20 decimal digits (in our case).
-    \end{itemize}
-  \end{enumerate}
-
-  Include in your report:
+  Your program must provide three separate tools:
   \begin{itemize}
-    \item The registration code of the company/organisation.
-    \item The name of the company.
-    \item The certificate serial as a base10 integer.
+    \item \texttt{genpkey} -- generate an RSA private key
+
+    Your program must generate a $3072$-bit RSA private key with OpenSSL and export it into a file in PEM format.
+    Your program \emph{must not} print the key-generation progress bar to the console.
+
+    The private key must be password protected according to the following:
+    \begin{itemize}
+      \item The key derivation function for obtaining the encryption key must be PBKDF2, and the parameters must be:
+      \begin{itemize}
+        \item \texttt{HMAC-SHA512} for the PRF,
+        \item an iteration count of $210000$ (OWASP recommendation).
+      \end{itemize}
+      \item The key must be encrypted with AES-256 in CBC mode and use the PKCS\#8 format.
+      \item At no point should the private key be written unencrypted to the disk.
+    \end{itemize}
+
+    \begin{tcolorbox}[title=Note]
+      Since version 3.0, OpenSSL uses PKCS\#8 by default when exporting an encrypted private key in PEM, but \texttt{genpkey} and \texttt{pkey} do not allow for the fine-grained control needed for this task.
+
+      Hint: can you find a tool in the OpenSSL documentation which allows more fine-grained control over PKCS\#8 encrypted private keys?
+    \end{tcolorbox}
+
+    You can see what the expected private key structure looks like by dumping the ASN.1 structure of the example private key \texttt{rsa.demo.priv.pem}.
+
+    Example invocation:
+    \begin{Verbatim}
+ossl_rsa.py genpkey --out key.pem --pass secret
+    \end{Verbatim}
+
+    \item \texttt{pkey} -- public key derivation
+    
+    Your program must extract the public key from a private key and export it into a file in PEM format by using OpenSSL.
+
+    Example invocation:
+    \begin{Verbatim}
+ossl_rsa.py pkey --in key.pem \
+    --out pub.pem --pass secret
+    \end{Verbatim}
+
+    \item \texttt{pkeyutl} -- file encryption and decryption
+    
+    Your program must output the encryption or decryption of the specified input file with the specified key to the specified output file using OpenSSL.
+
+    Example invocation for encryption:
+    \begin{Verbatim}
+ossl_rsa.py pkeyutl --encrypt \
+    --inkey pub.pem --in message.txt --out data.enc
+    \end{Verbatim}
+
+    Example invocation for decryption:
+    \begin{Verbatim}
+ossl_rsa.py pkeyutl \
+    --inkey key.pem --in data.enc --out data.dec \
+    --pass secret
+    \end{Verbatim}
   \end{itemize}
 
-  Push any code you used to solve the task into GitLab.
-  Provide commands and/or screenshots for any steps you performed manually, i.e. that were not solved by your code (if any).
+  Your program must not crash if parameters are missing, the wrong password is provided, OpenSSL fails, etc.
+  Some error handling and hints are part of the template, but not all of it.
+
+  You do not have to (but you may) handle file I/O errors, i.e. you may assume that input files exist and output files can be written to.
+
+  \begin{tcolorbox}[title=Reminder]
+    In practice, providing secrets (e.g. keys, passwords, etc.) directly on the CLI as an argument to a program is a terrible idea, since they typically get logged into your terminal history!
+  \end{tcolorbox}
 \end{task}
+
 \end{document}
