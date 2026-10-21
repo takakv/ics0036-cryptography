@@ -8,7 +8,25 @@
 \RequirePackage{amsthm}
 
 \RequirePackage{tcolorbox}
+\tcbuselibrary{listings,skins,breakable}
 \RequirePackage{fancyvrb}
+
+\newtcblisting{cmdblock}{
+  colback=black!5,
+  colframe=black!20,
+  listing only,
+  listing options={
+    basicstyle=\small\ttfamily,
+    columns=flexible,
+    breaklines=true,
+    breakindent=1em,
+    aboveskip=0pt,
+    belowskip=0pt,
+  },
+  left=3pt, right=3pt, top=3pt, bottom=3pt,
+  arc=3pt,
+  boxrule=0.5pt,
+}
 
 \RequirePackage[hidelinks]{hyperref}
 
@@ -37,7 +55,7 @@
 \def\@maketitle{%
   \newpage
   \begin{center}%
-    {Practice session \@title{} -- \@date\par}%
+    {Practice session \@title{} --- \@date\par}%
   \end{center}%
   \par}
 \makeatother
@@ -46,7 +64,16 @@
 \newenvironment*{task}[1]{%
   \refstepcounter{task}%
   \vspace*{1em}
-  \textbf{Task~\thetask{} -- {#1}}\par}{}
+  \textbf{Task~\thetask{} --- {#1}}\par}{}
+
+\newenvironment*{demo}[1]{%
+  \refstepcounter{task}%
+  \vspace*{1em}
+  \textbf{Demo~\thetask{} --- {#1}}\par}{}
+
+\newenvironment*{challenge}[1]{%
+  \vspace*{1em}
+  \textbf{Challenge --- {#1}}\par}{}
 
 %\makeatletter
 %\newcommand\task{\@startsection {task}{1}{\z@}%

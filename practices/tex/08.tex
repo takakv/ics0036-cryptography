@@ -1,0 +1,294 @@
+\documentclass{practice}
+
+\title{8}
+\date{\today}
+
+\usepackage{crysymb}
+
+\begin{document}
+\maketitle
+
+\begin{task}{OpenSSL, why are you like this?}
+  OpenSSL has two different tools for creating and verifying digital signatures:
+  \begin{itemize}
+    \item \href{https://docs.openssl.org/master/man1/openssl-pkeyutl/}{\texttt{pkeyutl}}
+    \item \href{https://docs.openssl.org/master/man1/openssl-dgst/}{\texttt{dgst}}
+  \end{itemize}
+
+  I personally prefer the \texttt{pkeyutl} tool.
+  The interface is a bit clearer, and semantically it makes more sense: signatures are an asymmetric primitive, and not a feature of hashing.
+  However, many would disagree with me here, and the \texttt{dgst} tool does seem to be more popular in the wild, likely because it predates the existence of \texttt{pkeyutl}.
+
+  For \texttt{pkeyutl} take note of the \texttt{-rawin} and \texttt{-digest} options.
+  Observe also the following notice for the \texttt{-digest} option:
+  \begin{quotation}
+    At this time, HashEdDSA (the ph or "prehash" variant of EdDSA) is not supported, so the -digest option cannot be used with EdDSA.
+  \end{quotation}
+
+  Read also the following info/warnings for \texttt{pkeyutl}:
+  \begin{itemize}
+    \item \href{https://docs.openssl.org/master/man1/openssl-pkeyutl/#ed25519-and-ed448-algorithms}{Note about Ed25519 and Ed448}
+    \item \href{https://docs.openssl.org/master/man1/openssl-pkeyutl/#ec-algorithm}{Note about EC (applies to ECDSA)}
+    \item \href{https://docs.openssl.org/master/man1/openssl-pkeyutl/#rsa-pss-algorithm}{Note about RSA-PSS}
+  \end{itemize}
+
+  For \texttt{dgst}, the \texttt{-sign} option has the following notice:
+  \begin{quotation}
+    Note that for algorithms that only support one-shot signing (such as Ed25519, ED448, ML-DSA-44, ML-DSA-65 and ML-DSA-87) the digest must not be set. For these algorithms the input is buffered (and not digested) before signing. For these algorithms, if the input is larger than 16MB an error will occur.
+  \end{quotation}
+\end{task}
+
+\begin{task}{Signing with \texttt{pkeyutl}}
+  Generate a P-384 keypair for ECDSA, a keypair for Ed25519, a keypair for RSA, and a keypair for ML-DSA-65.
+
+  \begin{cmdblock}
+openssl genpkey -algorithm ed25519 \
+  -out ed.priv.pem -outpubkey ed.pem
+  \end{cmdblock}
+  \begin{cmdblock}
+openssl genpkey -algorithm EC \
+  -pkeyopt ec_paramgen_curve:P-384 \
+  -out ec.priv.pem -outpubkey ec.pem
+  \end{cmdblock}
+  \begin{cmdblock}
+openssl genpkey -algorithm RSA \
+  -pkeyopt rsa_keygen_bits:3072 -quiet \
+  -out rsa.priv.pem -outpubkey rsa.pem
+  \end{cmdblock}
+  \begin{cmdblock}
+openssl genpkey -algorithm ML-DSA-65 \
+  -out mldsa.priv.pem -outpubkey mldsa.pem
+  \end{cmdblock}
+
+  Create a message file
+  \begin{cmdblock}
+echo "Message" > message.txt
+  \end{cmdblock}
+
+  Sign the message twice with each of the following:
+  \begin{itemize}
+    \item Ed25519 in pure mode
+    \begin{cmdblock}
+openssl pkeyutl -sign \
+  -in message.txt -inkey ed.priv.pem -out ed1.sig
+
+openssl pkeyutl -sign \
+  -in message.txt -inkey ed.priv.pem -out ed2.sig
+    \end{cmdblock}
+    and use \texttt{sha256sum ed*.sig} to verify that EdDSA is deterministic.
+
+    \item ECDSA with the SHA-384 hash (since P-384 also provides 192 bits of security)
+    \begin{cmdblock}
+openssl pkeyutl -sign \
+  -digest sha384 \
+  -in message.txt -inkey ec.priv.pem -out ec1.sig
+
+openssl pkeyutl -sign \
+  -digest sha384 \
+  -in message.txt -inkey ec.priv.pem -out ec2.sig
+    \end{cmdblock}
+    and use \texttt{sha256sum ec*.sig} to verify that ECDSA is probabilistic by default.
+
+    Note that prior to OpenSSL v3.5, the \texttt{-rawin} parameter must be specified, if \texttt{-digest} is used.
+
+    \item Deterministic ECDSA with the SHA-384 hash
+    \begin{cmdblock}
+openssl pkeyutl -sign \
+  -digest sha384 -pkeyopt nonce-type:1 \
+  -in message.txt -inkey ec.priv.pem -out detec1.sig
+
+openssl pkeyutl -sign \
+  -digest sha384 -pkeyopt nonce-type:1 \
+  -in message.txt -inkey ec.priv.pem -out detec2.sig
+    \end{cmdblock}
+    and use \texttt{sha256sum detec*.sig} to verify that signing is deterministic.
+
+    Deterministic ECDSA support was added to OpenSSL in \href{https://openssl-library.org/news/openssl-3.2-notes\#major-changes-between-openssl-31-and-openssl-320-23-nov-2023}{v3.2}.
+    The parameter to enable it is obscure, and the documentation does not help you find it either\dots.
+
+    \item RSASSA-PSS with the SHA-256 hash (3072-bit RSA keys provide 128 bits of security)
+    \begin{cmdblock}
+openssl pkeyutl -sign \
+  -digest sha256 \
+  -pkeyopt rsa_padding_mode:pss \
+  -pkeyopt rsa_pss_saltlen:digest \
+  -pkeyopt rsa_mgf1_md:sha256 \
+  -in message.txt -inkey rsa.priv.pem -out pss1.sig
+
+openssl pkeyutl -sign \
+  -digest sha256 \
+  -pkeyopt rsa_padding_mode:pss \
+  -pkeyopt rsa_pss_saltlen:digest \
+  -pkeyopt rsa_mgf1_md:sha256 \
+  -in message.txt -inkey rsa.priv.pem -out pss2.sig
+    \end{cmdblock}
+    and use \texttt{sha256sum pss*.sig} to verify that PSS is probabilistic.
+
+    \item RSASSA-PKCS1-v1\_5 with the SHA256 hash
+    \begin{cmdblock}
+openssl pkeyutl -sign \
+  -digest sha256 \
+  -pkeyopt rsa_padding_mode:pkcs1 \
+  -in message.txt -inkey rsa.priv.pem -out pkcs1-1.sig
+
+openssl pkeyutl -sign \
+  -digest sha256 \
+  -pkeyopt rsa_padding_mode:pkcs1 \
+  -in message.txt -inkey rsa.priv.pem -out pkcs1-2.sig
+    \end{cmdblock}
+
+    and use \texttt{sha256sum pkcs1*.sig} to verify that PKCS\#1 v1.5 is deterministic.
+
+    \item ML-DSA-65 (in pure mode, since ML-DSA does not support pre-hashing with \texttt{-digest})
+    \begin{cmdblock}
+openssl pkeyutl -sign \
+  -in message.txt -inkey mldsa.priv.pem -out mldsa1.sig
+
+openssl pkeyutl -sign \
+  -in message.txt -inkey mldsa.priv.pem -out mldsa2.sig
+    \end{cmdblock}
+    and use \texttt{sha256sum mldsa*.sig} to verify that ML-DSA is probabilistic (\enquote{hedged}) by default.
+
+    \item Deterministic ML-DSA-65
+    \begin{cmdblock}
+openssl pkeyutl -sign -pkeyopt deterministic:1 \
+  -in message.txt -inkey mldsa.priv.pem -out detmldsa1.sig
+
+openssl pkeyutl -sign -pkeyopt deterministic:1 \
+  -in message.txt -inkey mldsa.priv.pem -out detmldsa2.sig
+    \end{cmdblock}
+    and use \texttt{sha256sum detmldsa*.sig} to verify that signing is deterministic.
+  \end{itemize}
+
+  Finally, compare the sizes of the signatures (e.g. with \texttt{wc -c *.sig}) and of the public keys.
+  How does ML-DSA compare to the classical schemes?
+\end{task}
+
+\begin{task}{Verifying signatures with \texttt{pkeyutl}}
+  Using the keys and signatures generated in the previous task, verify them with \texttt{pkeyutl}.
+  Note that the \texttt{-pubin} parameter is necessary if you are using a public key file.
+  For private key files, the tool automatically uses its public part for verification.
+
+  \begin{itemize}
+    \item Ed25519
+    \begin{cmdblock}
+openssl pkeyutl -verify \
+  -in message.txt -pubin -inkey ed.pem -sigfile ed1.sig
+    \end{cmdblock}
+
+    \item ECDSA, both probabilistic and deterministic
+    \begin{cmdblock}
+openssl pkeyutl -verify -digest sha384 \
+  -in message.txt -pubin -inkey ec.pem -sigfile ec1.sig
+    \end{cmdblock}
+
+    Note that you must specify the digest, since OpenSSL defaults to SHA-256.
+
+    \item RSASSA-PSS
+    \begin{cmdblock}
+openssl pkeyutl -verify -digest sha256 \
+  -pkeyopt rsa_padding_mode:pss \
+  -pkeyopt rsa_pss_saltlen:digest \
+  -pkeyopt rsa_mgf1_md:sha256 \
+  -in message.txt -pubin -inkey rsa.pem -sigfile pss1.sig
+    \end{cmdblock}
+
+    \item RSASSA-PKCS1-v1\_5
+    \begin{cmdblock}
+openssl pkeyutl -verify -digest sha256 \
+  -pkeyopt rsa_padding_mode:pkcs1 \
+  -in message.txt -pubin -inkey rsa.pem -sigfile pkcs1-1.sig
+    \end{cmdblock}
+
+    \item ML-DSA-65
+    \begin{cmdblock}
+openssl pkeyutl -verify \
+  -in message.txt -pubin -inkey mldsa.pem -sigfile mldsa1.sig
+    \end{cmdblock}
+  \end{itemize}
+\end{task}
+
+\begin{task}{\texttt{dgst} and \texttt{pkeyutl}}
+  Template file: \texttt{rsa.sh}
+
+  Complete the OpenSSL commands in the template.
+  The script creates RSASSA-PSS and RSASSA-PKCS1-v1\_5 signatures with SHA-256 on a random file, and should:
+  \begin{itemize}
+    \item sign and verify with \texttt{dgst},
+    \item verify the \texttt{dgst} signatures with \texttt{pkeyutl}, both on the original file and on its precomputed SHA-256 hash,
+    \item sign with \texttt{pkeyutl}, again both on the original file and on the hash.
+  \end{itemize}
+
+  \textit{Hint.}
+  You should be taking deep breaths when reading the OpenSSL documentation.
+\end{task}
+
+\begin{task}{Exploring certificates}
+  Download the certificates \texttt{ee.pem}, \texttt{int.pem}, and \texttt{root.pem} from the course GitHub.
+
+  We can inspect (and create) X.509 certificates with OpenSSL's \href{https://docs.openssl.org/master/man1/openssl-x509/}{\texttt{x509}} tool.
+  To print a certificate in human-readable form:
+  \begin{cmdblock}
+openssl x509 -in ee.pem -noout -text
+  \end{cmdblock}
+  where \texttt{-noout} suppresses the PEM output, which the tool prints by default.
+
+  Inspect all three certificates, compare them, and try to get a feel for the structure of an X.509 (v3) certificate.
+  Some general comments:
+  \begin{itemize}
+    \item \texttt{Subject} identifies the entity the certificate was issued to
+    \item \texttt{Subject Public Key Info} contains the public key of the subject
+    \item \texttt{Issuer} contains information about who issued the certificate
+  \end{itemize}
+
+  Hierarchy comments:
+  \begin{itemize}
+    \item Basic Constraints extension:
+    \begin{itemize}
+      \item \texttt{CA:FALSE} for \texttt{ee.pem}, which indicates that this is an end-entity certificate.
+      In \texttt{int.pem} and \texttt{root.pem} we have \texttt{CA:TRUE}.
+      \item In \texttt{int.pem}, the field also contains \texttt{pathlen:0} which indicates that this CA cannot further issue CA certificates, only leaf certificates.
+    \end{itemize}
+    \item Key Usage extension:
+    \begin{tcolorbox}[title={Abuse of terminology}]
+      For simplicity, I may attribute properties to a public key that are technically properties of its certificate.
+      E.g. I may say \enquote{this public key may only be used for X} instead of \enquote{the certificate restricts this key's usage to X}.
+    \end{tcolorbox}
+    \begin{itemize}
+      \item Recall that a CA issues certificates by signing them.
+      \texttt{int.pem} and \texttt{root.pem} are CA certificates and thus have the \texttt{Certificate Sign} capability.
+      \texttt{ee.pem} is an end-entity certificate, and thus does not have this capability.
+
+      More specifically, the following is crucial:
+      \begin{itemize}
+        \item When verifying an issuer's signature on an entity's certificate, the issuer's public key must have the \texttt{Certificate Sign} capability.
+
+        A CA must have it; an end-entity must not.
+        \item When verifying a signature on a CRL (next week's topic), the signer's public key must have the \texttt{CRL Sign} capability.
+        \item When verifying any other signature, the signer's public key must have the \texttt{Digital Signature} or/and \texttt{Non Repudiation} capability.
+        Neither of those capabilities encompasses the certificate and CRL signing capabilities.
+
+        The difference between the DS and NR capabilities is not clear-cut.
+        We will talk about this later.
+      \end{itemize}
+      Note that these conditions are standardised conventions/policies, and are not cryptographic in nature.
+      In the real world, if these conditions are not satisfied, you must not accept the signature, even if it is cryptographically correct.
+    \end{itemize}
+
+    \item Subject and Authority Key Identifier extensions:
+    \begin{itemize}
+      \item The Subject Key Identifier is a value that should uniquely identify\footnotemark{} the subject's public key.
+      \footnotetext{While it should therefore be derived from the public key, it is not required by \href{https://datatracker.ietf.org/doc/html/rfc5280\#section-4.2.1.2}{RFC 5280}.}
+      If a public key has multiple certificates, the SKI should be the same in all of them.
+      \item The Authority Key Identifier identifies the public key of the certificate signer, i.e. the issuer.
+      \item Notice that the AKI of \texttt{ee.pem} is the SKI of \texttt{int.pem}, and the AKI of \texttt{int.pem} is the SKI of \texttt{root.pem}.
+      \item Observe also that the AKI of \texttt{root.pem} is the SKI of \texttt{root.pem} and that the Issuer and Subject are also the same.
+      Indeed, since this is a root certificate, the issuer is the subject and the certificate is self-signed.
+    \end{itemize}
+  \end{itemize}
+\end{task}
+
+\begin{task}{Verifying certificates}
+  We will cover how certificates and the certificate chain should be verified next week, as there are additional aspects to PKI that we have not yet learned about.
+\end{task}
+\end{document}
