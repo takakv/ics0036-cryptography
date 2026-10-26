@@ -76,36 +76,52 @@
     \item Signature (of the subject) on the certification request info
   \end{itemize}
 
-  \vspace*{1em}
+  \vspace*{0.5em}
 
   \pause
   PKCS\#10 does not specify how the CA verifies the requester.
+  \begin{itemize}[<+(1)->]
+    \item Proof of private key possession $\neq$ proof of applicant's identity
+  \end{itemize}
 \end{frame}
 
 \begin{frame}{Certificate management protocols (pt. 1)}
+  Beyond the CSR, certificate management protocols handle authentication, automation and lifecycle management.
+
+  \vspace*{1em}
+
+  \pause
   Certificate Management Protocol (CMP)
   \begin{itemize}[<+(1)->]
     \item Full certificate lifecycle: enrolment, renewal, revocation
     \item Transport agnostic; flexible but complex
-    \item Use when full lifecycle control is needed (e.g.\ enterprise PKI)
-  \end{itemize}
-
-  \vspace{1em}
-
-  \pause
-  Enrolment over Secure Transport (EST) {\scriptsize successor to SCEP (considered legacy, except by Microsoft\dots)}
-  \begin{itemize}[<+(1)->]
-    \item Certificate enrolment and renewal, but not revocation
-    \item TLS transport; mTLS or enrolment code authentication
-    \item Use when provisioning is enough; popular for MDM, IoT
+    \item Use when full lifecycle control is needed (e.g.\ enterprise PKI, telecom)
   \end{itemize}
 \end{frame}
 
 \begin{frame}{Certificate management protocols (pt. 2)}
+  Enrolment over Secure Transport (EST)
+  \begin{itemize}[<+(1)->]
+    \item \enquote{PKI over HTTPS}
+    \item Authentication with enrolment codes or mTLS (renewal)
+    \item Certificate enrolment and renewal, but not revocation
+    \item Use when provisioning is enough; popular for MDM, IoT
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  EST is the successor to SCEP, which is now considered legacy.
+  \begin{itemize}
+    \item Still used by Microsoft NDES/Intune\dots.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Certificate management protocols (pt. 3)}
   Automated Certificate Management Environment (ACME)
   \begin{itemize}[<+(1)->]
     \item Automated certificate issuance and renewal for web servers
-    \item Challenge-response authentication
+    \item Challenge-response: proves control of a domain, not organisational identity
     \item Use for TLS certificates
   \end{itemize}
 
@@ -153,7 +169,6 @@
     \end{itemize}
     \item Periodically issued by the CA
     \begin{itemize}
-      \item May be issued by a delegated CRL issuer
       \item \texttt{thisUpdate} field: when the CRL was published
       \item \texttt{nextUpdate} field: CRL is considered stale after this time
     \end{itemize}
@@ -187,7 +202,6 @@
   \begin{itemize}[<+(1)->]
     \item Endpoint(s) specified in the certificate (Authority Information Access extension)
     \item Either CA or CA-authorised (delegated) responders
-    \item Delegated responder certificate must have the OCSP Signing EKU
   \end{itemize}
 
   \vspace*{0.5em}
@@ -196,6 +210,52 @@
   Response status: \enquote{good}, \enquote{revoked}, \enquote{unknown}
   \begin{itemize}[<+(1)->]
     \item Unknown: the responder does not recognise the certificate
+    \item Responses are signed and valid from \texttt{thisUpdate} until \texttt{nextUpdate}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Why do we trust CRLs and OCSP responses?}
+  Revocation data is signed
+  \begin{itemize}[<+(1)->]
+    \item CRLs and OCSP responses are signed by the issuing CA
+    \item The relying party verifies the signature with the CA's public key
+    \item Status can be served e.g. over plain HTTP
+  \end{itemize}
+
+  \vspace*{0.5em}
+
+  \pause
+  Delegated responders:
+  \begin{itemize}[<+(1)->]
+    \item OCSP responders may get high traffic
+    \item Dedicated and approved responder(s) separate from the issuing system
+    \item Responder certificate is issued by the same CA, with the OCSP Signing EKU
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Root distrust}
+  Roots are self-signed
+  \begin{itemize}[<+(1)->]
+    \item Suppose the root key leaks
+    \item A status signed by the root itself then proves nothing
+  \end{itemize}
+
+  \vspace*{0.5em}
+
+  \pause
+  Trust in a root is a local decision:
+  \begin{itemize}[<+(1)->]
+    \item Distrusting a root means removing it from the trust store
+    \item Done out-of-band: OS, browser or application updates
+  \end{itemize}
+
+  \vspace*{0.5em}
+
+  \pause
+  Compromised intermediates may still lead to root distrust in some stores
+  \begin{itemize}
+    \item Live revocation not possible in many systems
+    \item eMudhra example (Oct. 2026)
   \end{itemize}
 \end{frame}
 
@@ -290,9 +350,9 @@
   \vspace*{0.5em}
   
   \pause
-  OCSP \enquote{must staple} extension
+  OCSP \enquote{must staple} (TLS Feature extension, \href{https://datatracker.ietf.org/doc/html/rfc7633}{RFC 7633})
   \begin{itemize}[<+(1)->]
-    \item Fail the task if no OCSP response provided
+    \item Fail the connection if no OCSP response is provided
     \item Prevents some downgrade attacks
   \end{itemize}
 
@@ -358,7 +418,6 @@
     \item E-signing
     \item Digital authentication
     \item Validity confirmation
-    \item \dots
   \end{itemize}
 \end{frame}
 
@@ -404,12 +463,24 @@
   \enquote{qualified electronic signature (QES)} means an \emph{advanced electronic signature} that is created by a \emph{qualified electronic signature creation device}, and which is based on a \emph{qualified certificate} for electronic signatures;
   \begin{itemize}[<+(1)->]
     \item qualified certificate: certificate issued by a qualified trust service provider
+    \item qualified signature creation device: device that meets certain requirements
   \end{itemize}
+\end{frame}
 
-  \vfill
+\begin{frame}{Qualified Signature Creation Devices (QSCD)}
+  \pause
+  eIDAS Annex II:
+  \settowidth{\offset}{1.a}
+  \addtolength{\leftmargini}{\offset}
+  \begin{enumerate}[<+(1)->]
+    \item[(1.a)] the confidentiality of the electronic signature creation data [\dots] is reasonably assured;
+    \item[(1.b)] the [\dots] data [\dots] can practically occur only once;
+    \item[(1.c)] the [\dots] data [\dots] cannot [\dots] be derived and the electronic signature is reliably protected against forgery [\dots];
+    \item[(1.d)] the [\dots] data [\dots] can be reliably protected by the legitimate signatory against use by others.
+  \end{enumerate}
 
   \pause
-  AdES/QC: advanced electronic signature (AdES) based on a qualified certificate.
+  TL;DR: It should only be possible to issue signatures when possessing the device, and its use should be restricted (e.g. protected by a PIN).
 \end{frame}
 
 \begin{frame}{Signature levels simplified (pt. 1)}
@@ -448,26 +519,11 @@
   The term for a cryptographic digital signature is \enquote{(digi)signatuur}.
 \end{frame}
 
-\begin{frame}{Qualified Signature Creation Devices (QSCD)}
-  \pause
-  eIDAS Annex II:
-  \settowidth{\offset}{1.a}
-  \addtolength{\leftmargini}{\offset}
-  \begin{enumerate}[<+(1)->]
-    \item[(1.a)] the confidentiality of the electronic signature creation data [\dots] is reasonably assured;
-    \item[(1.b)] the [\dots] data [\dots] can practically occur only once;
-    \item[(1.c)] the [\dots] data [\dots] cannot [\dots] be derived and the electronic signature is reliably protected against forgery [\dots];
-    \item[(1.d)] the [\dots] data [\dots] can be reliably protected by the legitimate signatory against use by others.
-  \end{enumerate}
-
-  \pause
-  TL;DR: It should only be possible to issue signatures when possessing the device, and its use should be restricted (e.g. protected by a PIN).
-\end{frame}
-
 \begin{frame}{Validating Qualified Electronic Signatures}
   \href{https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX\%3A32014R0910\#d1e2594-73-1}{Article 32} specifies how to validate QES signatures.
   \begin{itemize}[<+(1)->]
     \item Quite tricky!
+    \item Certificate extension (\texttt{qcStatements}) must be confirmed by the Trusted List
   \end{itemize}
 
   \vspace*{1em}
@@ -490,19 +546,19 @@
   \pause
   Article 25:
   \begin{enumerate}
-    \setcounter{enumi}{1}
+    \item An electronic signature shall not be denied legal effect [\dots] solely because it is in an electronic form [\dots].
     \item A qualified electronic signature shall have the equivalent legal effect of a handwritten signature.
   \end{enumerate}
 
-  \vspace*{1em}
+  \vspace*{0.5em}
 
   \pause
   Legal implication:
   \begin{itemize}[<+(1)->]
-    \item Accusing party needs not prove that an entity issued the signature.
-    \item Issuer has to prove that they did not issue the signature.
+    \item A QES is treated like a handwritten signature
+    \item Typically, the party disputing the signature must show it is not theirs
     \item $\implies$ legal non-repudiation
-    \item Article 13, paragraph 1
+    \item Burden of proof depends on national procedural law
   \end{itemize}
 \end{frame}
 
@@ -546,18 +602,30 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Trusted timestamping}
+\begin{frame}{Time-Stamp Protocol (RFC 3161)}
+  \href{https://datatracker.ietf.org/doc/html/rfc3161}{RFC 3161}: Internet X.509 PKI Time-Stamp Protocol (TSP)
+  \begin{enumerate}[<+(1)->]
+    \item Client hashes the data and sends the hash to the TSA
+    \begin{itemize}
+      \item The data itself never leaves the client
+      \item Optional nonce for freshness
+    \end{itemize}
+    \item TSA builds a bundle: hash, time (\texttt{genTime}) + metadata
+    \item TSA signs it with a private key
+    \item Client receives the token and verifies it
+  \end{enumerate}
+
   \pause
-  Signed statement by a Time Stamping Authority (TSA):
+  The token proves that the hash existed at \texttt{genTime}.
+\end{frame}
+
+\begin{frame}{Limits of timestamping}
+  \pause
+  Trusting a TSA:
   \begin{itemize}[<+(1)->]
     \item TSAs must use an accurate time source
     \item TSAs must log issued timestamps
   \end{itemize}
-
-  \vspace*{0.5em}
-
-  \pause
-  \href{https://datatracker.ietf.org/doc/html/rfc3161}{RFC 3161}: Internet X.509 Public Key Infrastructure Time-Stamp Protocol
 
   \vspace*{0.5em}
 
@@ -596,54 +664,22 @@
   \end{enumerate}
 \end{frame}
 
-\begin{frame}{ETSI signature standards (eIDAS versions)}
-  ETSI specifies three formats for AdES+\dots
+\begin{frame}{ETSI signature formats}
+  ETSI specifies five formats for AdES
   \begin{itemize}[<+(1)->]
-    \item XML advanced electronic signature (XAdES)
-    \begin{itemize}
-      \item \href{http://www.etsi.org/deliver/etsi_ts/103100_103199/103171/02.01.01_60/ts_103171v020101p.pdf}{ETSI TS 103 171 v.2.1.1}
-    \end{itemize}
-    \item CMS advanced electronic signature (CAdES)
-    \begin{itemize}
-      \item \href{http://www.etsi.org/deliver/etsi_ts/103100_103199/103173/02.02.01_60/ts_103173v020201p.pdf}{ETSI TS 103 173 v.2.2.1}
-    \end{itemize}
-    \item PDF advanced electronic signature (PAdES)
-    \begin{itemize}
-      \item \href{http://www.etsi.org/deliver/etsi_ts/103100_103199/103172/02.02.02_60/ts_103172v020202p.pdf}{ETSI TS 103 172 v.2.2.2}
-    \end{itemize}
+    \item XML: XAdES
+    \item CMS: CAdES {\scriptsize (Cryptographic Message Syntax, RFC 5652)}
+    \item PDF: PAdES
+    \item JSON: JAdES
+    \item CBOR: CB-AdES {\scriptsize (Concise Binary Object Representation, RFC 8949)}
   \end{itemize}
 
   \pause
-  \dots and one container format
-  \pause
-  \begin{itemize}
-    \item Associated Signature Container (ASiC)
-    \item \href{http://www.etsi.org/deliver/etsi_ts/103100_103199/103174/02.02.01_60/ts_103174v020201p.pdf}{ETSI TS 103 174 v.2.2.1}
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{XAdES}
-  XML advanced electronic signature
-  \begin{itemize}[<+(1)->]
-    \item Based on XML digital signatures (XMLDSig)
-    \item W3C recommendation: XML Signature Syntax and Processing
-    \item Human and machine readable
-    \item Signs any document/data (including binary data)
-    \item Can sign multiple files with one signature
-  \end{itemize}    
-\end{frame}
-
-\begin{frame}{CAdES}
-  CMS advanced electronic signature
-    \begin{itemize}[<+(1)->]
-      \item Cryptographic Message Syntax (CMS)
-      \item Signs only binary data, signatures not human readable
-      \item Lacks XAdES features (e.g. multi-document signing), and offers none more
-    \end{itemize}
+  and the Associated Signature Container (ASiC) format for signature containers.
 \end{frame}
 
 \begin{frame}{PAdES}
-  PDF advanced electronic signature
+  PDF Advanced Electronic Signature
   \begin{itemize}[<+(1)->]
     \item Signatures embedded within the PDF
     \item Included in the ISO PDF standard
@@ -653,7 +689,17 @@
   \vspace*{1em}
 
   \pause
-  PAdES is much more limited than X/CAdES, but is more \enquote{portable}.
+  PAdES is \enquote{portable} but does not allow signing data other than PDF.
+\end{frame}
+
+\begin{frame}{XAdES}
+  XML advanced electronic signature
+  \begin{itemize}[<+(1)->]
+    \item Based on XML digital signatures (XMLDSig by W3C)
+    \item Human and machine readable
+    \item Signs any document/data (including binary data)
+    \item Can sign multiple files with one signature
+  \end{itemize}    
 \end{frame}
 
 \begin{frame}{XAdES signing modes}
@@ -663,9 +709,9 @@
     \begin{itemize}
       \item The original data is not modified
     \end{itemize}
-    \item Encapsulated: XML file encapsulating the data
+    \item Enveloped: signature placed inside the signed XML document
     \begin{itemize}
-      \item Not usable/practical with all types of data
+      \item Only practical for XML data
       \item Signature and data in the same file
     \end{itemize}
   \end{itemize}
@@ -684,38 +730,21 @@
       \item Aims to prevent the loss of signatures/data
       \item Can group signatures of multiple signatories
     \end{itemize}
-    \item ZIP format
-    \item Developed by ETSI
-    \begin{itemize}
-      \item \href{http://www.etsi.org/deliver/etsi_ts/103100_103199/103174/02.02.01_60/ts_103174v020201p.pdf}{ETSI TS 103 174 V2.2.1 (2013-06)}
-      \item \href{http://www.etsi.org/deliver/etsi_en/319100_319199/31916202/01.01.01_60/en_31916202v010101p.pdf}{ETSI EN 319 162-1 V1.1.1 (2016-04)}
-    \end{itemize}
-    \item 2013 version required by eIDAS
-    \item Usable with XAdES and CAdES, but not PAdES
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Two types of ASiC}
-  Two main types:
-  \begin{itemize}[<+(1)->]
-    \item Simple (ASiC-S)
-    \begin{itemize}
-      \item Signature(s) must reference only a single file
-    \end{itemize}
-    \item Extended (ASiC-E)
-    \begin{itemize}
-      \item Signature(s) may reference multiple files
-      \item Used in Estonia
-    \end{itemize}
+    \item Based on the ZIP format
+    \item Usable with XAdES and CAdES, but not the other formats
   \end{itemize}
 
   \vspace*{1em}
 
   \pause
-  There are more details \& subtleties.
+  Two main types:
+  \begin{itemize}[<+(1)->]
+    \item Simple (ASiC-S): signature(s) must reference only a single file
+    \item Extended (ASiC-E): signature(s) may reference multiple files
+  \end{itemize}
 \end{frame}
 
-\begin{frame}{ASiC-E structure}
+\begin{frame}{ASiC structure}
   Two folders:
   \begin{itemize}[<+(1)->]
     \item \enquote{root} folder: contains the signed files and all other content
@@ -726,7 +755,7 @@
 \begin{frame}{Estonia and containers}
   A short history/summary of the Estonian digital signature (articles):
   \begin{itemize}
-    \item \href{https://www.id.ee/en/article/bdoc2-1-new-estonian-digital-signature-standard-format/}{BDOC2.1 --- New Estonian digital signature standard format}
+    \item \href{https://www.id.ee/en/article/bdoc2-1-new-estonian-digital-signature-standard-format/}{BDOC2.1 -- New Estonian digital signature standard format}
     \item \href{https://www.id.ee/en/article/digidoc-container-format-life-cycle-2/}{DigiDoc container format life cycle}
   \end{itemize}
 
@@ -734,6 +763,10 @@
 
   \pause
   DigiDoc is the software used in Estonia for interacting with signed and/or encrypted containers.
+  \begin{itemize}
+    \item For signatures, we use ASiC-E, but some uses cases still use BDOC.
+    \item Encryption uses the (local) CDOC2 format, or legacy CDOC.
+  \end{itemize}
 \end{frame}
 
 \begin{frame}{Open-source tooling}
