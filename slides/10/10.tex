@@ -1,5 +1,8 @@
+\usepackage{tikz}
+\usetikzlibrary{positioning,calc,external}
+
 \title{ICS0036 Cryptography}
-\subtitle{Hardware security \& side channels}
+\subtitle{TLS, CT and CAA}
 \date{\today}
 \author{Taaniel Kraavi}
 \institute%
@@ -13,487 +16,517 @@
   \titlepage
 \end{frame}
 
-\begin{frame}{A need for physical security}
-  Access is the bane of security
+\begin{frame}{Securing traffic on the web}
+  How do we create a secure communication channel over a network?
+
+  \vspace*{1em}
+
+  \pause
+  What do we protect against?
   \begin{itemize}[<+(1)->]
-    \item Client-side tampering
-    \item Malicious access
-    \item Data exfiltration / leakage
+    \item Eavesdropping
+    \begin{itemize}
+      \item $\implies$ Confidentiality
+    \end{itemize}
+    \item Tampering
+    \begin{itemize}
+      \item $\implies$ Integrity \& authenticity
+      \item Integrity must be authenticated (accidental vs. malicious modifications)
+    \end{itemize}
+    \item Impersonation/forgery
+    \begin{itemize}
+      \item $\implies$ Authenticity
+    \end{itemize}
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  We need a \emph{protocol} satisfying these requirements.
+\end{frame}
+
+\begin{frame}{SSL \& TLS}
+  Secure Sockets Layer (SSL) by Netscape
+  \begin{itemize}[<+(1)->]
+    \item SSL 1.0 never released (security flaws)
+    \item SSL 2.0 (1995) deprecated in 2011 (\href{https://datatracker.ietf.org/doc/html/rfc6176}{RFC 6176})
+    \item SSL 3.0 (1996) deprecated in 2015 (\href{https://datatracker.ietf.org/doc/html/rfc7568}{RFC 7568}) 
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  Transport Layer Security (TLS)
+  \begin{itemize}[<+(1)->]
+    \item Born out of SSL 3.0 with interop.-breaking changes
+    \item TLS 1.0 (1999) \& TLS 1.1 (2006), deprecated in 2021 (\href{https://datatracker.ietf.org/doc/html/rfc8996}{RFC 8996})
+    \item TLS 1.2 (2008, \href{https://datatracker.ietf.org/doc/html/rfc5246}{RFC 5246}) feature-frozen (\href{https://datatracker.ietf.org/doc/html/rfc9851}{RFC 9851}), (sadly) not yet deprecated
+    \item TLS 1.3 (2018, \href{https://datatracker.ietf.org/doc/html/rfc8446}{RFC 8446}) obsoletes RFC 5246
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Transport Layer Security (TLS)}
+  TLS is a cryptographic \emph{protocol}.
+  \begin{itemize}[<+(1)->]
+    \item Used for securing HTTPS, email, VoIP, instant messaging, \dots
+    \item Assumes a reliable transport protocol (e.g. TCP)
+    \par
+    \begin{itemize}
+      \item Datagram TLS (DTLS) for unreliable transport (e.g. UDP)
+    \end{itemize}
+    \item TLS 1.3 is designed following formal security models
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  Connections are negotiated with the \emph{TLS handshake}.
+  \begin{itemize}[<+(1)->]
+    \item Parties agree upon and validate various parameters
+    \item The subsequent \enquote{secure} connection is stateful
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{TLS handshake overview}
+  The client and server agree on the following:
+  \begin{itemize}[<+(1)->]
+    \item TLS version to use (1.2 or 1.3)
+    \begin{itemize}
+      \item No support for older versions = no downgrade risk\textsuperscript{*}
+    \end{itemize}
+    \item Cipher suite to use
+    \begin{itemize}
+      \item Set of algorithms for establishing the secure connection
+      \item Client and server agree on what they both support
+    \end{itemize}
+    \item Authenticate the server's identity
+    \begin{itemize}
+      \item Server's public key \& certificate chain\textsuperscript{*}
+      \item Optionally also the client's identity: mutual TLS (mTLS)
+    \end{itemize}
+    \item Create session keys
+    \begin{itemize}
+      \item These protect the actual communication session
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{TLS 1.3 handshake with DH}
+  \noindent\makebox[\linewidth]{%
+    \begin{tikzpicture}
+      \node[draw,minimum height=2.5cm,fill=gray!20] (client) at (0,0)   {Client};
+      \node[draw,minimum height=2.5cm,fill=gray!20] (server) at (12, 0) {Server};
+
+      \node (A) at (client.east) [yshift=30px] {};
+      \node (B) at (server.west) [yshift=30px] {};
+      \node (C) at (client.east) [yshift=10px] {};
+      \node (D) at (server.west) [yshift=10px] {};
+      \node (E) at (client.east) [yshift=-10px] {};
+      \node (F) at (server.west) [yshift=-10px] {};
+      \node (G) at (client.east) [yshift=-30px] {};
+      \node (H) at (server.west) [yshift=-30px] {};
+
+      \draw[->,thick]  (A) -- (B) node[midway,above] {\scriptsize\texttt{ClientHello}};
+      \draw[<-,thick]  (C) -- (D) node[midway,above] {\scriptsize\texttt{ServerHello,\{Certificate,CertificateVerify,Finished\}}};
+      \draw[->,thick]  (E) -- (F) node[midway,above] {\scriptsize\texttt{\{Finished\}}};
+      \draw[<->,thick] (G) -- (H) node[midway,above] {\scriptsize\texttt{[Application Data]}};
+    \end{tikzpicture}%
+  }
+
+  \begin{itemize}[<+(1)->]
+    \item {\small\texttt{ClientHello}}: nonce, client's DH share, and supported parameters
+    \item {\small\texttt{ServerHello}}: negotiated connection parameters, server's DH share
+    \item {\small\texttt{Certificate}}: server's certificate (and the cert. chain)
+    \item {\small\texttt{CertificateVerify}}: signature over the handshake so far
+    \item {\small\texttt{Finished}}: MAC over the handshake so far
+  \end{itemize}
+
+  \pause
+  {\small \texttt{\{\dots\}} = encrypted.
+  \pause
+  Other variants exist (e.g. 0-RTT with a PSK, 2-RTT with HRR, mTLS).}
+\end{frame}
+
+\begin{frame}{Improvements of TLS 1.3}
+  \begin{itemize}[<+(1)->]
+    \item Legacy symmetric encryption algorithms pruned
+    \begin{itemize}
+      \item Only AEAD schemes remain
+    \end{itemize}
+    \item Various crypto improvements
+    \par
+    \begin{itemize}
+      \item RSA-PSS instead of PKCS\#1 v1.5 for handshake signatures
+      \item Removed DSA, custom DHE groups \& EC point compression
+    \end{itemize}
+    \item Static RSA and static DH key exchange removed
+    \par
+    \begin{itemize}
+      \item Always has perfect forward secrecy (PFS)
+      \item Exception: when only pre-shared keys (PSK) are used
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Perfect forward secrecy (PFS)}
+  A hybrid problem:
+  \begin{itemize}[<+(1)->]
+    \item Servers have long-term keys, e.g. signing and encryption
+    \item Client encrypts a symmetric key and sends it to the server (static RSA)
+    \item If the server key is compromised, all previous shared keys could be recovered
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  PFS prevents past sessions from being decrypted if long-term keys leak.
+  \begin{itemize}[<+(1)->]
+    \item Generate a new key for each communication session (ephemeral key)
+    \item Discard the keys after the session
+    \item Only meaningful if the cryptosystem has not been broken
+    \item TLS 1.3 always has PFS (except for PSK-only)
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Quantum-safe handshake}
+  PFS breaks if the key-exchange algorithm breaks.
+  \begin{itemize}[<+(1)->]
+    \item harvest-now/decrypt-later (HNDL) attacks
+    \item Hybrid key exchange (\href{https://datatracker.ietf.org/doc/html/rfc9954}{RFC 9954}), e.g.\ X25519MLKEM768 (\href{https://datatracker.ietf.org/doc/html/rfc10024}{RFC 10024})
+    \item On by default in browsers and OpenSSL 3.5+
+    \item Statistics on \href{https://radar.cloudflare.com/post-quantum}{Cloudflare Radar}
+    \item Handshake explained \href{https://www.ria.ee/blogi/tls-13-votme-kvantkindel-hubriidkehtestus-x25519mlkem768}{\textit{in Estonian}}, \href{https://blog.cloudflare.com/post-quantum-for-all/}{\textit{in English}}, \href{https://www.pqctoday.com/learn/tls-basics/}{\textit{\enquote{simulator}}}
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  Eventually we need quantum-safe certificates, but this is less urgent.
+  \begin{itemize}
+    \item Problem: PQ signatures are large, and a handshake carries several
+    \item \href{https://blog.cloudflare.com/pq-ca-with-mtcs}{Merkle Tree Certificates} are likely the solution
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Improvements of TLS 1.3 (cont.)}
+  \begin{itemize}[<+(1)->]
+    \item Encryption of handshake messages after the Server Hello
+    \begin{itemize}
+      \item Good for privacy, e.g. encrypted client certificate for mTLS
+      \item Hostname (SNI) still visible, unless Encrypted Client Hello (\href{https://datatracker.ietf.org/doc/html/rfc9849}{RFC 9849}) is used
+    \end{itemize}
+    \item Simplified handshake in general
+    \item Dropped renegotiation support
+    \begin{itemize}
+      \item New session must be established to change parameters
+    \end{itemize}
     \item \dots
   \end{itemize}
-
-  \vspace*{1em}
-
-  \pause
-  Physical measures provide some tamper resistance.
-  \begin{itemize}[<+(1)->]
-    \item Trusted components in a BYOD world
-    \item Trusted hardware $\neq$ trusted perimeter
-    \item Not invulnerable to attack
-  \end{itemize}
 \end{frame}
 
-\begin{frame}{Secure cryptoprocessors}
-  Processors for cryptographic operations with physical security measures.
-  \begin{itemize}[<+(1)->]
-    \item Hardware security modules (HSM)
-    \item Trusted platform modules (TPM)
-    \item Smart cards (e.g. bank card, EstEID)
-    \item Security tokens (e.g. Yubikey)
-  \end{itemize}
-
-  \vspace*{1em}
-
+\begin{frame}{TLS 1.3 cipher suites}
+  The TLS v1.3 RFC specifies 3 principal cipher suites:
   \pause
-  Varying degree of physical security.
-  \begin{itemize}[<+(1)->]
-    \item E.g. smartcards typically more vulnerable than HSMs
-    \item Uneven difficulty of reverse engineering/probing the chip
-    \item What attacks does the device protect against?
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Trusted Platform Module (TPM)}
-  \pause
-  The Trusted Platform Module (TPM) is a standard\dots
-  \begin{itemize}[<+(1)->]
-    \item Maintained \& published by the Trusted Computing Group (TCG)
-    \item TPM Main Specification Version 1.2 (2009)
-    \item TPM Library Specification Version 2.0 (2014)
-    \begin{itemize}
-      \item Latest version available \href{https://trustedcomputinggroup.org/resource/tpm-library-specification/}{\textit{here}}
-      \item \enquote{Library approach} for flexibility
-    \end{itemize}
-    \item Official standard: ISO/IEC 11889:2015
-  \end{itemize}
-
-  \pause
-  \dots{}but chips implementing it are also commonly called TPMs.
   \begin{itemize}
-    \item Reference implementation: {\small\url{https://github.com/Microsoft/ms-tpm-20-ref}}
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{TPM types}
-  \begin{center}
-    \href{https://trustedcomputinggroup.org/wp-content/uploads/TPM-2.0-A-Brief-Introduction.pdf}{TCG's introduction to TPM 2.0}
-  \end{center}
-
-  \begin{itemize}[<+(1)->]
-    \item Discrete TPM
-    \begin{itemize}
-      \item Hardware-level TPM
-      \item Potential advanced tamper-resistance capabilities
-    \end{itemize}
-    \item Integrated TMP (e.g. chipset)
-    \begin{itemize}
-      \item Separate, but not dedicated hardware
-      \item Chip provides more than just TPM functionality
-    \end{itemize}
-    \item Firmware TPM (e.g. CPU)
-    \begin{itemize}
-      \item Implemented in protected software
-      \item Software and virtual TPMs exist\textsuperscript{*}
-    \end{itemize}
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{TPM goal}
-  The TPM provides a \enquote{root of trust}:
-  \begin{itemize}
-    \item Secure storage of authentication artefacts
-    \begin{itemize}
-      \item e.g. cryptographic keys, fingerprints, passwords, \dots
-    \end{itemize}
-    \item Platform configuration registers (PCRs)
-    \begin{itemize}
-      \item e.g. hardware configuration, firmware versions, \dots
-      \item useful for sealing \& attestation
-    \end{itemize}
+    \item {\small\texttt{TLS\_AES\_128\_GCM\_SHA256}} (must)
+    \item {\small\texttt{TLS\_AES\_256\_GCM\_SHA384}} (should)
+    \item {\small\texttt{TLS\_CHACHA20\_POLY1305\_SHA256}} (should)
   \end{itemize}
 
   \vspace*{1em}
 
   \pause
-  TPMs can be considered \enquote{passive}.
+  Also specified, but often not enabled by default:
   \begin{itemize}
-    \item Not suited for running arbitrary code
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{TPM use cases}
-  %Example functionality:
-  %\begin{itemize}[<+(1)->]
-  %  \item Cryptographic RNG
-  %  \item Cryptographic key generation, binding/wrapping, and sealing
-  %  \item Remote attestation \& other trusted computing (TC) functionality
-  %\end{itemize}
-
-  %\vspace*{1em}
-
-  Example use cases:
-  \begin{columns}[T,onlytextwidth]
-    \begin{column}{0.5\textwidth}
-      \begin{itemize}[<+(1)->]
-        \item Platform integrity \& secure boot
-        \item Disk encryption
-        \item Virtual smart cards\\(e.g. Windows Hello)
-      \end{itemize}
-    \end{column}
-    \begin{column}{0.5\textwidth}
-      \begin{itemize}[<+(1)->]
-        \item Remote device attestation
-        \item Kernel-level anti cheat
-        \item Anti-hammering\\(brute force protection)
-      \end{itemize}
-    \end{column}
-  \end{columns}
-\end{frame}
-
-\begin{frame}{TPM sniffing attack}
-  A discrete TPM must communicate with the CPU.
-  \begin{itemize}[<+(1)->]
-    \item TPM is tamper resistant
-    \item Communication with CPU might not be encrypted
-    \item Steal secrets by sniffing the bus
-    \item Example: \href{https://pulsesecurity.co.nz/articles/TPM-sniffing}{BitLocker key recovery}
+    \item {\small\texttt{TLS\_AES\_128\_CCM\_8\_SHA256}}
+    \item {\small\texttt{TLS\_AES\_128\_CCM\_SHA256}}
   \end{itemize}
 
   \vspace*{1em}
 
   \pause
-  Much harder to perform on a firmware TPM, although other attacks may exist.
+  Key exchange and signature algorithms are negotiated separately.
 \end{frame}
 
-\begin{frame}{Trusted Execution Environment (TEE)}
-  A Trusted Execution Environment is a secure area of a CPU.
-  \begin{itemize}[<+(1)->]
-    \item Virtual subsystem or powered by a coprocessor
-    \item Code and data is protected: confidentiality \& integrity
-    \item Encrypted (and isolated) memory regions often called \emph{enclaves}
-    \item Code runs within these regions
-    \item Computation result returned to the calling process
-    \item Remote verification can enable TEE in the cloud
-    \begin{itemize}
-      \item predefined hardware attestation 
-    \end{itemize}
-  \end{itemize}  
+\begin{frame}{TLS 1.2 cipher suites}
+  TLS 1.2 specified 37 in the original RFC\dots
+  \begin{itemize}
+    \item Confusing nomenclature
+    \item e.g. {\small\texttt{TLS\_ECDHE\_RSA\_WITH\_AES\_128\_GCM\_SHA256}}
+  \end{itemize}
 \end{frame}
 
-\begin{frame}{Name dropping just in case}
-  TEE and related things:
-  \begin{itemize}[<+(1)->]
-    \item AMD
-    \begin{itemize}
-      \item Platform Security Processor (PSP) -- secure co-processor
-      \item Secure Encrypted Virtualization (SEV) -- TEE (VM-level)
-    \end{itemize}
-    \item Intel
-    \begin{itemize}
-      \item Management Engine (ME) -- secure system services (separate microcontroller)
-      \item Software Guard Extensions (SGX) -- TEE (CPU enclaves)
-    \end{itemize}
-    \item Apple Secure Enclave Processor (SEP) -- secure co-processor
-    \item ARM TrustZone -- TEE (secure vs. regular \enquote{world})
+\begin{frame}{Some resources}
+  Checking TLS 1.3 support:
+  \begin{itemize}
+    \item {\small\url{https://caniuse.com/tls1-3}} for browser support
+    \item \href{https://support.globalsign.com/ssl/general-ssl/tls-protocol-compatibility}{GlobalSign's reference}
+    \item \href{https://learn.microsoft.com/en-us/windows/win32/secauthn/protocols-in-tls-ssl--schannel-ssp-}{Windows support table}
   \end{itemize}
 
-  \vspace*{1em}
+  \pause
+  Testing a website's configuration:
+  \begin{itemize}
+    \item {\small\url{https://www.ssllabs.com/ssltest/}}
+    \item {\small\url{https://www.hardenize.com}}
+  \end{itemize}
+
+  \pause
+  Some cipher suite recommendations (for TLS 1.2 support)
+  \begin{itemize}
+    \item \href{https://configurator.tlsref.org}{TLSRef TLS Configurator} {\footnotesize (NB! pasted configs do not pick up new library defaults)}
+    \item \href{https://developers.cloudflare.com/ssl/reference/cipher-suites/recommendations/}{Cloudflare} and \href{https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml\#tls-parameters-4}{IANA} recommendations
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Root programs}
+  \pause
+  Which CAs to trust by default?
+  \begin{itemize}[<+(1)->]
+    \item \href{https://aka.ms/RootCert}{Microsoft Trusted Root Program}
+    \item \href{https://github.com/apple/apple-root-program/blob/main/policy.md}{Apple Root Certificate Program}
+    \item \href{https://wiki.mozilla.org/CA}{Mozilla's CA Certificate Program}
+    \item \href{https://g.co/chrome/root-policy}{Chrome Root Program}
+    \item \dots
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Some CAs}
+  Popular CAs for TLS certificates:
+  \begin{itemize}[<+(1)->]
+    \item Let's Encrypt\textsuperscript{*}
+    \item \href{https://www.globalsign.com/en}{GlobalSign}
+    \item \href{https://www.sectigo.com}{Sectigo}
+    \item \href{https://www.digicert.com}{DigiCert}
+    \item \href{https://www.actalis.com}{Actalis}
+  \end{itemize}
   
+  \vfill
+
   \pause
-  NB! These technologies are very different.
+  Market share yearly trends for TLS certificate authorities:
+
+  {\scriptsize\url{https://w3techs.com/technologies/history_overview/ssl_certificate/ms/y}}
 \end{frame}
 
-\begin{frame}{Hardware Security Module (HSM)}
-  Hardware Security Modules (HSM)
+\begin{frame}{Web certificate types}
+  Domain validated (DV)
   \begin{itemize}[<+(1)->]
-    \item physical devices
-    \item attach to computers/servers
-    \item safeguard keys and perform cryptographic/confidential operations
-    \item may contain multiple cryptoprocessor chips
+    \item Proof of control over domain records
+    \item Typical confirmation: HTTP challenge, DNS record, email contact\textsuperscript{*}
+    \item Free these days (e.g. Let's Encrypt)
+  \end{itemize}
+
+  \pause
+  Organisation validated (OV)
+  \begin{itemize}[<+(1)->]
+    \item Verification of org's name and registration status
+  \end{itemize}
+
+  \pause
+  Extended Validation (EV)
+  \begin{itemize}[<+(1)->]
+    \item Selected CAs, verification of legal identities, physical presence, \dots
+    \item {\scriptsize\url{https://cabforum.org/working-groups/server/extended-validation/documents/}}
+  \end{itemize}
+
+  \pause
+  Menu options instead of address bar distinction in modern browsers.
+\end{frame}
+
+\begin{frame}{Let's Encrypt}
+  \pause
+  \textit{Let's Encrypt is a free, automated, and open certificate authority brought to you by the nonprofit Internet Security Research Group (ISRG).} ({\scriptsize\url{https://letsencrypt.org}})
+  \begin{itemize}[<+(1)->]
+    \item Provides DV TLS certificates to any compatible client
     \begin{itemize}
-      \item e.g. specialised + general purpose
+      \item Verifies domain ownership via unique tokens
+      \item Tokens validated with HTTP/DNS requests
+    \end{itemize}
+    \item Automated using ACME (Automatic Certificate Management Environment)
+    \item \href{https://certbot.eff.org}{Certbot}
+    \begin{itemize}
+      \item Convenient ACME client
+      \item Automatic TLS configuration on Nginx/Apache
+      \item Other ACME clients exist
     \end{itemize}
   \end{itemize}
+
+  \pause
+  No excuse to have a non-HTTPS website.
 \end{frame}
 
-\begin{frame}{HSMs (cont.)}
+\begin{frame}{Browsers and active revocation}
+  Browsers often skip revocation checks due to connectivity, performance, and privacy reasons.
+
+  \vspace*{1em}
+
   \pause
-  Fancier features (e.g. banking, CAs):
+  In \href{https://cabforum.org/2023/07/14/ballot-sc063v4-make-ocsp-optional-require-crls-and-incentivize-automation/}{2023}, the CA/B forum made CRLs mandatory, and OCSP optional for TLS certificates.
   \begin{itemize}[<+(1)->]
-    \item tamper resistance \& responsiveness (e.g. sleep or destruction)
-    \item high performance (e.g. live certificate signing)
-    \item high availability modes (e.g. failover mechanisms)
-    \item certified (e.g. Common Criteria, FIPS)
+    \item Some CAs, including Let's Encrypt, dropped OCSP support as a result
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Smart cards \& EMV}
-  Smart cards:
+\begin{frame}{Browsers and active revocation (cont.)}
+  Chrome-based:
   \begin{itemize}[<+(1)->]
-    \item Cards with an integrated circuit chip
-    \item Can be used for cryptographic operations (e.g. EstEID, SIM cards)
-    \item Complex cards may have additional components (e.g. display, buttons)
-    \item NFC for contactless: operation still performed by microchip
-    \item Java Card technology: \enquote{applets} written in Java
+    \item OCSP staples are checked, but no live OCSP checks
+    \item \href{https://www.chromium.org/Home/chromium-security/crlsets/}{CRLSets} contain \enquote{important} revocations
   \end{itemize}
 
   \vspace*{1em}
 
   \pause
-  EMV:
+  Firefox:
   \begin{itemize}[<+(1)->]
-    \item Europay MasterCard Visa
-    \item Smart payment cards \& terminals
-    \item Enables cryptographic validations
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Common Criteria (CC)}
-  Hardware security is often closed source.
-  \begin{itemize}[<+(1)->]
-    \item Backdoors?
+    \item Staples are checked, but no live checks for DV-certificates (since FF 142)
+    \item \href{https://hacks.mozilla.org/2025/08/crlite-fast-private-and-comprehensive-certificate-revocation-checking-in-firefox/}{CRLite}, comprehensive(-ish) CRL using efficient lookup (since FF 137)
+    \par
+    \begin{itemize}
+      \item \href{https://wiki.mozilla.org/CA/Revocation_Checking_in_Firefox\#OneCRL}{OneCRL}: older solution, revoked intermediate and high-profile leaf certificates
+    \end{itemize}
   \end{itemize}
 
   \vspace*{1em}
 
   \pause
-  Common Criteria (CC) certification:
-  \begin{itemize}[<+(1)->]
-    \item Certification bodies (e.g. ANSSI, BSI) and testing labs must be approved
-    \item Evaluation Assurance Level (EAL): 1--7 + augmentation
-    \item Target of Evaluation (TOE): product being evaluated
-    \item Security Target (ST): security properties of the TOE
-    \item Protection Profile (PP): security requirements for a device class
-    \begin{itemize}
-      \item Often a template for the ST
-    \end{itemize}
-  \end{itemize}
+  Apple does some weird OS-level revocation aggregation, which extends to Safari.
 \end{frame}
 
-\begin{frame}{FIPS certification}
+\begin{frame}{TLS certificate lifetimes}
+  Instead of active revocation, automation and short-lived certificates are the future.
   \begin{itemize}
-    \item \href{https://csrc.nist.gov/pubs/fips/140-3/final}{FIPS 140-3} --- Security requirements for cryptographic modules
-    \begin{itemize}
-      \item 4 levels, with level 4 being the highest
-      \item \href{https://www.keyfactor.com/blog/a-guide-to-fips-140-3/}{\textit{A Guide to FIPS 140-3 (Keyfactor)}}
-    \end{itemize}
-    \item \href{https://csrc.nist.gov/projects/cryptographic-module-validation-program}{NIST CMVP} --- Cryptographic Module Validation Program
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Yubikeys}
-  Yubikeys are hardware authentication devices.
-  \begin{itemize}[<+(1)->]
-    \item Not the only ones, but a popular choice
-    \item FIDO2, Personal Identity Verification (PIV) and OpenPGP
-    \item FIDO2 support: resident \& non-resident keys (e.g. SSH)
+    \item CA/B ballot \href{https://cabforum.org/2025/04/11/ballot-sc081v3-introduce-schedule-of-reducing-validity-and-data-reuse-periods/}{SC081v3}, April 2025
   \end{itemize}
 
   \vspace*{1em}
 
   \pause
-  If you work in security, you should have at least two.
-  \begin{itemize}[<+(1)->]
-    \item Can be another reputable brand, e.g. Google Titan
-    \item At least two, with one as a backup (all 2FA is not equal)
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Side channels}
-  Side channels leaks are leaks of information through the non-primary communication channel, i.e. the \emph{side channel}.
-  \begin{itemize}[<+(1)->]
-    \item E.g. fat envelope for uni admittance, slim envelope for rejection
-    \item Unintentional leak of \enquote{physical} information
-    \item Do not confuse with covert channels (intentional)
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Side channels (cont.)}
-  Side channels are the bane of implementation.
-  \begin{itemize}[<+(1)->]
-    \item \enquote{unknown unknowns}
-    \item Software \& hardware problem
-    \item Broken implementations of theoretically secure primitives
-    \item Can be considered during theoretical design
-    \begin{itemize}
-      \item Easier/harder to implement in a side-channel mitigating way
-      \item Point out which parts must be side-channel resistant
-      \item E.g. \href{https://ed25519.cr.yp.to/ed25519-20110926.pdf}{EdDSA}
-    \end{itemize}
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Side channel classes}
-  \begin{columns}[T,onlytextwidth]
-    \begin{column}{0.5\textwidth}
-      \pause
-      Logical:
-      \begin{itemize}[<+(1)->]
-        \item Timing analysis
-        \item Behavioural patterns (e.g. size)
-      \end{itemize}
-
-      \pause
-      Processor shenanigans:
-      \begin{itemize}[<+(1)->]
-        \item Power analysis
-        \item Fault analysis/injection (active)
-        \item Cache-based (access, timing)
-        \item Frequency analysis (\href{https://www.hertzbleed.com}{Hertzbleed})
-      \end{itemize}
-      \end{column}
-    \begin{column}{0.4\textwidth}
-      \pause
-      Electromagnetic:
-      \begin{itemize}[<+(1)->]
-        \item Leakage from cables
-        \item RF radiation
-      \end{itemize}
-
-      \pause
-      Environmental:
-      \begin{itemize}[<+(1)->]
-        \item Acoustic, optical
-      \end{itemize}
-
-      \pause
-      Social side channels:
-      \begin{itemize}[<+(1)->]
-        \item Human bias
-        \item \enquote{The Pizza Meter}
-      \end{itemize}
-    \end{column}
-  \end{columns}
-
-  \vspace*{2em}
-
-  \pause
-  The list is not exhaustive\dots
-\end{frame}
-
-\begin{frame}{Examples}
-  Some cool \& scary examples\dots
-  \begin{itemize}[<+(1)->]
-    \item {\small\url{http://people.csail.mit.edu/mrub/VisualMic/}} (and that was a while ago...)
-    \item {\small\url{https://youtu.be/BpNP9b3aIfY}}
-  \end{itemize}
-
-  \vspace*{1em}
-
-  \pause
-  \dots{}and names you should know.
-  \begin{itemize}[<+(1)->]
-    \item Meltdown and Spectre: {\small\url{https://meltdownattack.com}}
-    \item Hertzbleed: {\small\url{https://hertzbleed.com}}
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{What can be done?}
-  Some approaches:
-  \begin{itemize}[<+(1)->]
-    \item General chip design with side-channels in mind
-    \item Dedicated hardware implementations (e.g. some cryptoprocessors)
-    \item Electromagnetic and/or acoustic shielding
-    \item Randomisation of operations (masking and noise)
-    \item Design algorithms with side-channels in mind
-    \item Constant time operations
-  \end{itemize}
-
-  \vspace*{1em}
-
-  \pause
-  Side-channel protection can likely never be absolute.
-  \begin{itemize}[<+(1)->]
-    \item Protect multiple levels: transistor, program, algorithm, and protocol level
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Intel's recommendations}
-  Intel offers some guidance:
+  The maximum TLS certificate lifetime is:
   \begin{itemize}
-    \item \href{https://www.intel.com/content/www/us/en/developer/articles/technical/software-security-guidance/secure-coding/security-best-practices-side-channel-resistance.html}{\textit{Security Best Practices for Side Channel Resistance}}
-    \item \href{https://www.intel.com/content/www/us/en/developer/articles/technical/software-security-guidance/secure-coding/mitigate-timing-side-channel-crypto-implementation.html}{\textit{Guidelines for Mitigating Timing Side Channels Against Cryptographic Implementations}}
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Library mitigations}
-  What do general purpose libraries do?
-  \begin{itemize}[<+(1)->]
-    \item Libraries cannot usually rely on secure hardware
-    \item Attempt to mitigate timing and access issues in software
-    \item Some articles/examples:
-    \begin{itemize}
-    \item \href{https://botan.randombit.net/handbook/side_channels.html}{Botan's side channels handbook}
-    \item \href{https://www.bearssl.org/constanttime.html}{Why Constant-Time Crypto? (BearSSL)}
-    \item \href{https://cryspen.com/post/ml-kem-implementation/}{Verified ML-KEM (Kyber) in Rust (Cryspen)}
+    \item 200 days as of March 15, 2026
+    \item 100 days as of March 15, 2027
+    \item 47 days as of March 15, 2029
+    \par
+    \begin{itemize}[<+(1)->]
+      \item Domain validation data may only be reused for 10 days
     \end{itemize}
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Constant time cryptography}
-  \pause
-  Execution should not depend on secret data:
+\begin{frame}{Certificate transparency (CT)}
+  Certificate transparency (\href{https://datatracker.ietf.org/doc/html/rfc6962}{RFC 6962}) helps us identify mis-issued certificates.
   \begin{itemize}[<+(1)->]
-    \item No branching on secret data
-    \item No memory access based on secret data
-    \item No variable time instructions with secret data (e.g. DIV on x86)
-  \end{itemize}
-
-  \vspace*{1em}
-  
-  \pause
-  Cryptographer's will $\neq$ compiler's will.
-  \begin{itemize}[<+(1)->]
-    \item Compiler optimisations can foil constant-timeness
-    \item Constant time languages/compilers attempted
-    \item Speculative constant time? (Spectre)
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Issue of unknowns}
-  Constant time crypto is easier for fixed parameters.
-  \begin{itemize}[<+(1)->]
-    \item Constant-time optimised operations for known values (e.g. fixed finite fields)
-  \end{itemize}
-
-  \vspace*{1em}
-
-  \pause
-  What if parameters are variable?
-  \begin{itemize}[<+(1)->]
-    \item New RSA modulus for each keypair
-    \item Constant time RSA is error prone
-    \item One of the reasons why RSA is not recommended
-    \item \emph{Blinding} is typically used with RSA as an additional measure
+    \item Public log of certificates issued by trusted CAs
+    \par
+    \begin{itemize}
+      \item Append-only logs
+      \item Operated by browser vendors and CAs themselves
+    \end{itemize}
+    \item Signed certificate timestamp (SCT)
+    \begin{itemize}
+      \item The log's signed promise to publish the certificate within 24h
+      \item Browsers require SCTs from multiple independent logs
+    \end{itemize}
+    \item Monitor your domains to check for unapproved issuance
+    \begin{itemize}
+      \item {\scriptsize{\url{https://certificate.transparency.dev/monitors/}}}
+      \item {\scriptsize{\url{https://crt.sh}}}
+    \end{itemize}
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Constant-timeness verification tools}
+\begin{frame}{Certificate pinning}
+  Certificates and keys can be \emph{pinned}.
+  \begin{itemize}[<+(1)->]
+    \item Client device contains a list of approved certificates
+    \par
+    \begin{itemize}
+      \item e.g. Estonian i-voting client (I think)
+    \end{itemize}
+    \item Earlier web defence against mis-issued certificates
+    \par
+    \begin{itemize}
+      \item Chrome's built-in pins detected the DigiNotar attack (2011)
+      \item HTTP Public Key Pinning -- HTTP header with public key hashes
+      \item Obsoleted in favour of CT
+    \end{itemize}
+    \item Generally not practical:
+    \par
+    \begin{itemize}
+      \item Lack of flexibility and scalability
+      \item Complex and risky (e.g. DoS in case of issues)
+    \end{itemize}
+  \end{itemize}
+
+  \pause
+  Pinning typically invites more trouble than it is worth.
+\end{frame}
+
+\begin{frame}{Certification Authority Authorization (CAA)}
+  CAA (\href{https://datatracker.ietf.org/doc/html/rfc8659}{RFC 8659}) is a type of DNS record that lets us specify:
+  \begin{itemize}[<+(1)->]
+    \item which CAs can issue certificates for our domain,
+    \item which validation methods they may use (\href{https://datatracker.ietf.org/doc/html/rfc8657}{RFC 8657}, not all CAs support it).
+  \end{itemize}
+
+  \vspace*{0.5em}
+
+  \pause
+  Publicly trusted CAs must check CAA and must not issue if not allowed.
+  \begin{itemize}[<+(1)->]
+    \item Mitigates malicious requests to CAs not in the record
+    \item Not retroactive: checked only during issuing
+    \item Relying parties (e.g. browser) must not use CAA info for validation
+  \end{itemize}
+
+  \vspace*{0.5em}
+
+  \pause
+  CAA prevents mis-issuance while CT detects it.
+\end{frame}
+
+\begin{frame}{SSL stripping}
+  MITM attacks can undermine proper HTTPS configurations.
+
+  \vspace*{1em}
+
+  \pause
+  SSL stripping (HTTP downgrade) attacks:
+  \begin{enumerate}[<+(1)->]
+    \item Intercept a user's initial HTTP request (before HTTPS upgrade/redirect)
+    \item Establish an HTTPS session with the server
+    \item Serve the site to the user over HTTP
+    \item Steal the user-provided data
+  \end{enumerate}
+\end{frame}
+
+\begin{frame}{HTTP Strict Transport Security (HSTS)}
+  HSTS helps prevent SSL stripping attacks.
+
+  \pause
+  An HSTS policy:
+  \begin{itemize}[<+(1)->]
+    \item Specifies that only HTTPS access should be used (during a period)
+    \item Requires trust on first use (TOFU) for the client to store the preference
+    \item HSTS preloading avoids TOFU ({\small\url{https://hstspreload.org}})
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  Similar logic to the OCSP Must-Staple certificate extension.
+  \begin{itemize}[<+(1)->]
+    \item Similar risks too: DoS if misconfigured
+    \item Unlike OCSP stapling, you should use HSTS on your websites
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{A glimpse into the timeline}
   \begin{center}
-    \url{https://crocs-muni.github.io/ct-tools/}
+    \url{https://www.feistyduck.com/ssl-tls-and-pki-history/}
   \end{center}
-\end{frame}
-
-\begin{frame}{Key takeaways}
-  Do not roll your own cryptography!
-  \begin{itemize}[<+(1)->]
-    \item Knowing the mathematics is not enough
-    \item General purpose math and bignum libraries are not crypto-safe
-    \item Even professionals can mess up (e.g. ROCA)
-    \item Certification is not foolproof, but is better than nothing
-    \item Tools exist to help you validate others' work
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Additional reading}
-  \begin{itemize}
-    \item \url{https://github.com/veorq/cryptocoding}
-    \item \url{https://gotchas.salusa.dev}
-    \item \url{https://timing.attacks.cr.yp.to/programming.html}
-    \begin{itemize}
-      \item Contains more links at the end
-    \end{itemize}
-  \end{itemize}
 \end{frame}
 
 \end{document}
