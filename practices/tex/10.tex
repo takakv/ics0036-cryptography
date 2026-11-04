@@ -1,0 +1,199 @@
+\documentclass{practice}
+
+\title{10}
+\date{\today}
+
+\usepackage{crysymb}
+
+\begin{document}
+\maketitle
+
+\begin{task}{Browsers and revocation}
+  Check out \url{https://badssl.com} and the various invalid certificate options on your main browser.
+  Test them on other browsers as well for comparison.
+  What do you notice?
+
+  Check also \url{https://emudhra.we-have-a-problem.com/#check}.
+\end{task}
+
+\begin{task}{Certificate Signing Requests}
+  OpenSSL creates and inspects CSRs with the \href{https://docs.openssl.org/master/man1/openssl-req/}{\texttt{req}} tool.
+  CSRs are created with the \texttt{-new} option.
+  For example, we can generate a P-256 keypair and a CSR with the following command:
+  \begin{cmdblock}
+openssl req -new -newkey ec -pkeyopt ec_paramgen_curve:P-256 \
+  -keyout key.pem \
+  -subj "/CN=Jaak-Kristjan Jõeorg/" \
+  -out cert.csr \
+  -noenc -utf8
+  \end{cmdblock}
+  \begin{itemize}
+    \item \texttt{-newkey} generates a new private key, which is written to the \texttt{-keyout} file.
+    If you already have a key, use \texttt{-key} instead.
+    \texttt{-noenc} stores the private key unencrypted (not recommended in practice).
+    \item \texttt{-utf8} interprets the field values as UTF-8, so that names such as \enquote{Jaak-Kristjan Jõeorg} are encoded correctly.
+  \end{itemize}
+
+  If \texttt{-subj} is omitted, OpenSSL prompts for the subject fields interactively.
+
+  \textit{Task.}
+  Create a CSR for a P-256 key.
+  The subject name must contain exactly the following fields, in this order:
+  \begin{itemize}
+    \item \texttt{C} (country): \texttt{EE}
+    \item \texttt{O} (organisation): \texttt{TalTech}
+    \item \texttt{OU} (organisational unit): \texttt{ICS0036}
+    \item \texttt{CN} (common name): your full name
+    \item \texttt{emailAddress}: your university email address, \texttt{<uni-id>@taltech.ee}
+  \end{itemize}
+
+  Submit the CSR to the Discord bot using \texttt{/req}.
+\end{task}
+
+\begin{task}{PKCS\#12}
+  A certificate on its own is not very useful to its owner: to sign or decrypt, you also need the private key.
+  PKCS\#12 (\href{https://datatracker.ietf.org/doc/html/rfc7292}{RFC 7292}) is a container format that bundles a private key, its certificate, and optionally the CA certificates of the chain into a single password-protected file.
+  The files usually have the extension \texttt{.p12} or \texttt{.pfx}.
+
+  OpenSSL handles PKCS\#12 files with the \href{https://docs.openssl.org/master/man1/openssl-pkcs12/}{\texttt{pkcs12}} tool.
+  To bundle your key and certificate:
+  \begin{cmdblock}
+openssl pkcs12 -export \
+  -inkey key.pem -in cert.pem \
+  -name "Friendly name" \
+  -out bundle.p12 \
+  -iter 600000
+  \end{cmdblock}
+  where \texttt{-name} optionally sets the \enquote{friendly name} that applications display for the entry.
+  CA certificates can be included with \texttt{-certfile chain.pem}.
+  By default, OpenSSL only uses 2048 PBKDF2 iterations, so \texttt{-iter} is needed to follow best practices. 
+
+  To view the structure of the file:
+  \begin{cmdblock}
+openssl pkcs12 -in bundle.p12 -info -noout
+  \end{cmdblock}
+
+  \textit{Task.}
+  Bundle your key and the certificate into a PKCS\#12 file and inspect it.
+\end{task}
+
+\begin{task}{Certificate Revocation Lists}
+  OpenSSL inspects CRLs with the \href{https://docs.openssl.org/master/man1/openssl-crl/}{\texttt{crl}} tool.
+  \begin{itemize}
+    \item Print the CRL in human-readable form:
+    \begin{cmdblock}
+openssl crl -in issuer.crl -noout -text
+    \end{cmdblock}
+    \item Verify the CRL signature with the issuer's certificate:
+    \begin{cmdblock}
+openssl crl -in issuer.crl -noout -CAfile issuer.der
+    \end{cmdblock}
+  \end{itemize}
+\end{task}
+
+\begin{task}{Validating certificate chains}
+  OpenSSL validates certificate chains with the \href{https://docs.openssl.org/master/man1/openssl-verify/}{\texttt{verify}} tool.
+  It builds a chain from the leaf certificate up to a trust anchor and checks, among others, each signature, the validity periods, and the Basic Constraints and Key Usage extensions of the CA certificates.
+
+  The verifier needs to know which certificates to \emph{trust}, and which certificates may only be \emph{used} to build the chain:
+  \begin{itemize}
+    \item \texttt{-trusted} gives the trust anchors.
+    These are typically root certificates.
+    For non-root certificates, \texttt{-partial\_chain} must also be used.
+    \item \texttt{-untrusted} gives additional certificates that may be used to build the chain, but are not trusted on their own, e.g. intermediate certificates.
+  \end{itemize}
+  \texttt{-CAfile} is similar to \texttt{-trusted}, but in addition to the given certificates, OpenSSL also trusts its default trust store.
+
+  \textit{Task.}
+  Validate the certificate you received from the bot.
+  \begin{enumerate}
+    \item Verify your certificate on its own:
+    \begin{cmdblock}
+openssl verify cert.pem
+    \end{cmdblock}
+
+    \item Verify the chain and print it:
+    \begin{cmdblock}
+openssl verify -show_chain \
+  -trusted root.der -untrusted intermediate.der \
+  cert.pem
+    \end{cmdblock}
+
+    \item The above does not check revocation!
+    Download the CRLs from the CRL Distribution Points of your certificate and of the intermediate certificate, and run:
+    \begin{cmdblock}
+openssl verify -crl_check_all \
+  -CRLfile int.crl -CRLfile root.crl \
+  -trusted root.der -untrusted intermediate.der \
+  cert.pem
+    \end{cmdblock}
+    Alternatively, \texttt{-crl\_download} downloads the CRLs from the CRL Distribution Points.
+
+    \begin{tcolorbox}[title=NB!]
+      You should prefer \texttt{-crl\_check\_all} over \texttt{-crl\_check}.
+      The latter option only checks the revocation status of the leaf certificate, so it misses revoked intermediates, even if you provide CRLs that list them (??!).
+    \end{tcolorbox}
+
+    \item A valid chain does not yet mean that the certificate fits your use case.
+    Try the following options:
+    \begin{itemize}
+      \item \texttt{-purpose smimesign} and \texttt{-purpose sslserver}
+      \item \texttt{-auth\_level 4}
+      \item \texttt{-policy 2.23.140.1.5.3.2 -explicit\_policy}
+    \end{itemize}
+  \end{enumerate}
+
+  Note that by default, OpenSSL tolerates some certificates that do not comply with \href{https://datatracker.ietf.org/doc/html/rfc5280}{RFC 5280}.
+  It's good practice to disable these workarounds by using \texttt{-x509\_strict}, but I've omitted it in the example commands for brevity.
+\end{task}
+
+\begin{task}{OCSP}
+  OpenSSL's \href{https://docs.openssl.org/master/man1/openssl-ocsp/}{\texttt{ocsp}} tool can create requests, send them, and verify the responses.
+  To create the request, you need the certificate and the certificate of its issuer.
+  The request does not contain the certificate itself, only a \emph{CertID}: the hash of the issuer's name, the hash of the issuer's public key, and the serial number.
+
+  \textit{Task.}
+  Export one of the certificates from your Estonian ID card.
+
+  \begin{enumerate}
+    \item Find the OCSP responder URL from the certificate.
+
+    \item Send the OCSP request and verify the response:
+    \begin{cmdblock}
+openssl ocsp -issuer esteid2018.der.crt -cert cert.pem \
+  -url http://aia.sk.ee/esteid2018 \
+  -CAfile EE-GovCA2018.der.crt \
+  -reqout req.der -respout resp.der \
+  -resp_text
+    \end{cmdblock}
+    Use the URLs and certificates of your own certificate.
+
+    \item Inspect the saved request and response:
+    \begin{cmdblock}
+openssl ocsp -reqin req.der -req_text
+openssl ocsp -respin resp.der -resp_text -noverify
+    \end{cmdblock}
+    and verify the saved response again offline:
+    \begin{cmdblock}
+openssl ocsp -reqin req.der -respin resp.der \
+  -CAfile EE-GovCA2018.der.crt
+    \end{cmdblock}
+  \end{enumerate}
+
+  NB! Something important remains to be checked\dots.
+\end{task}
+
+\vspace*{1em}
+\begin{tcolorbox}[title=Good practice]
+  Chain validation and revocation checking complement each other.
+  They do not replace one another!
+  \begin{itemize}
+    \item A CRL or OCSP response only states that an issuer has not revoked a given serial number, not that this issuer issued the certificate you are checking (e.g. a fake certificate with a copied serial).
+    \item A valid chain only proves that the certificate was issued, not that it has not been revoked since.
+  \end{itemize}
+  First validate the chain up to a trust anchor obtained from a trusted source, then check the revocation status of every certificate in the chain.
+  \tcblower
+  The \texttt{CA Issuers} URL is chosen by whoever created the certificate, and is usually plain HTTP.
+  Use it only for intermediates, never for roots / trust anchors.
+\end{tcolorbox}
+\end{document}
