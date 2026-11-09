@@ -1,8 +1,5 @@
-\usetikzlibrary{positioning,calc}
-\graphicspath{ {../../images/} }
-
 \title{ICS0036 Cryptography}
-\subtitle{Commitments \& identification}
+\subtitle{Hardware security \& side channels}
 \date{\today}
 \author{Taaniel Kraavi}
 \institute%
@@ -16,407 +13,530 @@
   \titlepage
 \end{frame}
 
-\begin{frame}{Remote coin flip ver. 1}
-  How can Alice \& Bob remotely decide an outcome via a coin flip?
-  \begin{enumerate}[<+(1)->]
-    \item Alice \enquote{calls} the result
-    \item Bob flips the coin
-    \item Alice wins if she guessed correctly, else Bob wins
-  \end{enumerate}
-
-  \vspace*{1em}
-
-  \pause
-  How can Alice fix a value without immediately revealing it? 
+\begin{frame}{A need for physical security}
+  Access is the bane of security
   \begin{itemize}[<+(1)->]
-    \item If Alice cheats, Bob must be able to catch it
-    \item Bob must not learn the value before Alice reveals it
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Remote coin flip ver. 2}
-  How can Alice and Bob jointly flip a coin remotely?
-  \begin{itemize}[<+(1)->]
-    \item Alice flips her coin and sends her result to Bob
-    \item Bob flips his coin and sends his result to Alice
-    \item Alice \& Bob XOR their results to obtain the same value
+    \item Client-side tampering
+    \item Malicious access
+    \item Data exfiltration / leakage
+    \item \dots
   \end{itemize}
 
   \vspace*{1em}
 
   \pause
-  What additional challenges do you foresee?
+  Physical measures provide some tamper resistance.
   \begin{itemize}[<+(1)->]
-    \item Premature halting
-    \item MITM
+    \item Trusted components in a BYOD world
+    \item Trusted hardware $\neq$ trusted perimeter
+    \item Not invulnerable to attack
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Commitment schemes}
-  A \emph{commitment} fixes a value but allows it to be revealed later.
+\begin{frame}{Secure cryptoprocessors}
+  Processors for cryptographic operations with physical security measures.
   \begin{itemize}[<+(1)->]
-    \item A committer and a receiver
-    \item The committer \emph{commits} their value
-    \item The committer \emph{opens} (reveals/decommits) the value later (not always)
+    \item Hardware security modules (HSM)
+    \item Trusted platform modules (TPM)
+    \item Smart cards (e.g. bank card, EstEID)
+    \item Security tokens (e.g. Yubikey)
   \end{itemize}
 
   \vspace*{1em}
 
   \pause
-  Two essential properties of commitment schemes:
+  Varying degree of physical security.
   \begin{itemize}[<+(1)->]
-    \item \emph{Hiding}: the commitment alone does not reveal the committed value
-    \item \emph{Binding}: the committer cannot open the commitment to a different value
+    \item E.g. smartcards typically more vulnerable than HSMs
+    \item Uneven difficulty of reverse engineering/probing the chip
+    \item What attacks does the device protect against?
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Quantifying the properties (scandalously informal)}
-  Perfect security
-  \begin{itemize}
-    \item There is a zero chance that an unbounded adversary can break the property
-  \end{itemize}
-
+\begin{frame}{Trusted Platform Module (TPM)}
   \pause
-  Statistical security
-  \begin{itemize}
-    \item There is a negligible chance that an unbounded adversary can break the property
-  \end{itemize}
-
-  \pause
-  Computational security
-  \begin{itemize}
-    \item There is a negligible chance that a computationally bounded adversary can break the property
-  \end{itemize}
-
-  \pause
-  Commitments cannot be both statistically hiding and binding.
-\end{frame}
-
-\begin{frame}{Cryptosystems as commitment schemes}
-  Any functional IND-CPA public-key cryptosystem is computationally hiding and perfectly binding.
-  \begin{enumerate}[<+(1)->]
-    \item Compute $(\PK, \SK) \gets \GEN$, \enquote{delete} $\SK$, and publish $\PK$.
-    \item To commit $m$, sample $r \getsu \mathcal{R}$ and output
-    \[
-      \begin{cases}
-        c \gets \ENC_\PK(m; r),\\
-        d \gets (m, r).
-      \end{cases}
-    \]
-    \item $\bigl(c, d = (m, r)\bigr)$ is a valid decommitment if $c = \ENC_\PK(m; r)$.
-  \end{enumerate}
-\end{frame}
-
-\begin{frame}{ElGamal as a commitment scheme}
-  ElGamal encryption can be used as a commitment scheme.
+  The Trusted Platform Module (TPM) is a specification\dots
   \begin{itemize}[<+(1)->]
-    \item ElGamal commitments may refer to both classic and lifted ElGamal
-    \item We can create public ElGamal parameters without knowing the secret key
-    \item If the secret key is known, the scheme becomes \emph{extractable}
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Two additional properties}
-  Extractability
-  \begin{itemize}[<+(1)->]
-    \item Knowing a secret value, the message can be extracted from the commitment
-    \item Public parameters are indistinguishable in both settings
-  \end{itemize}
-
-  \pause
-  Equivocability
-  \begin{itemize}[<+(1)->]
-    \item \enquote{Fake} commitments are indistinguishable from real commitments
-    \item The fake commitments can be opened to arbitrary values
-  \end{itemize}
-
-  \vspace*{1em}
-
-  \pause
-  Some commitments therefore require a trusted setup.
-\end{frame}
-
-\begin{frame}{Pedersen commitments}
-  Let $q$ be prime and let $\GG = \langle g \rangle$ be a $q$-element DL-group.\\
-  Choose $h$ uniformly from $\GG\setminus\{1\}$ and set $\PK \gets (g, h)$.
-
-  \vfill
-
-  \pause
-  To commit $m \in \ZZ_q$, choose $r \getsu \ZZ_q$ and output
-  \[
-    \begin{cases}
-      c \gets g^m h^r\ ,\\
-      d \gets (m, r)\ .
-    \end{cases}
-  \]
-
-  \vfill
-
-  \pause
-  A tuple $(c, m, r)$ is a valid decommitment for $m$ if $c = g^m h^r$.
-\end{frame}
-
-\begin{frame}{Pedersen commitments}
-  Pedersen commitments are
-  \begin{itemize}[<+(1)->]
-    \item Perfectly hiding
+    \item Published by the Trusted Computing Group (TCG)
+    \item TPM 1.2 (2003), TPM 2.0 (2014, \enquote{library approach})
+    \par
     \begin{itemize}
-      \item e.g. in $\ZZ_{23}$: $2^2 3^7 \equiv 8$, $2^3 3^0 \equiv 8$, $2^4 3^4 \equiv 8$, \dots
+      \item Latest version available \href{https://trustedcomputinggroup.org/resource/tpm-library-specification/}{\textit{here}}
     \end{itemize}
-    \item Computationally binding
+    \item Also adopted as an international standard (ISO/IEC 11889)
+  \end{itemize}
+
+  \pause
+  \dots{}but chips implementing it are also commonly called TPMs.
+\end{frame}
+
+\begin{frame}{TPM types}
+  \begin{center}
+    \href{https://trustedcomputinggroup.org/wp-content/uploads/TPM-2.0-A-Brief-Introduction.pdf}{TCG's introduction to TPM 2.0}
+  \end{center}
+
+  \begin{itemize}[<+(1)->]
+    \item Discrete TPM
+    \par
     \begin{itemize}
-      \item Let $g^x \equiv h$ with $x$ unknown.
-      \item It is then hard to find distinct pairs $(m_1, r_1), (m_2, r_2)$ s.t. $g^{m_1} h^{r_1} \equiv g^{m_2} h^{r_2}$. 
+      \item Hardware-level TPM
+      \item Potential advanced tamper-resistance capabilities
     \end{itemize}
-    \item Equivocable
+    \item Integrated TPM (e.g. chipset)
+    \par
     \begin{itemize}
-      \item If $x$ is known, breaking the binding property is trivial.
-      \item Generate $s \getsu \ZZ_{q}$, set $\hat{c} \gets g^s$.
-      \item To open $\hat{c}$, compute $r \gets (s-m)\cdot x^{-1}$.
+      \item Separate, but not dedicated hardware
+      \item Chip provides more than just TPM functionality
+    \end{itemize}
+    \item Firmware TPM (e.g. CPU)
+    \begin{itemize}
+      \item Implemented in protected software
+      \item Software and virtual TPMs exist\textsuperscript{*}
     \end{itemize}
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Homomorphic properties}
-  Both Pedersen and ElGamal commitments are homomorphic.
-  \begin{itemize}[<+(1)->]
-    \item Only lifted ElGamal commitments are \enquote{interoperable} with Pedersen's.
-    \item Desirable property for their use in many protocols.
-    \item Not always desirable!
+\begin{frame}{TPM goal}
+  The TPM provides a \enquote{root of trust}:
+  \begin{itemize}
+    \item Key protection
+    \par
+    \begin{itemize}
+      \item the TPM uses keys without revealing them (e.g. to sign)
+      \item keys kept on disk are encrypted with a key that never leaves the TPM
+    \end{itemize}
+    \item Platform configuration registers (PCRs)
+    \begin{itemize}
+      \item e.g. hardware configuration, firmware versions, \dots
+      \item useful for sealing \& attestation
+    \end{itemize}
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  TPMs can be considered \enquote{passive}.
+  \begin{itemize}
+    \item Not suited for running arbitrary code
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Why do we need commitments?}
-  Commitments are an essential primitive in cryptography.
-  \begin{itemize}[<+(1)->]
-    \item Typically they are not used on their own (although they can).
-    \item It is possible to prove relations over committed values.
-    \item Commitments are essential to many zero-knowledge protocols.
-    \item More generally, many secure protocols rely on commitments.
-  \end{itemize}
+\begin{frame}{TPM use cases}
+  %Example functionality:
+  %\begin{itemize}[<+(1)->]
+  %  \item Cryptographic RNG
+  %  \item Cryptographic key generation, binding/wrapping, and sealing
+  %  \item Remote attestation \& other trusted computing (TC) functionality
+  %\end{itemize}
 
-  \vspace*{1em}
+  %\vspace*{1em}
 
-  \pause
-  How would you use commitments in the remote coin flipping protocol?
-\end{frame}
-
-\begin{frame}{Identification protocols}
-  \pause
-  Identification protocols are generally based on one or more of:
-  \begin{itemize}[<+(1)->]
-    \item What you are (biometrics)
-    \item What you have
-    \item What you know
-  \end{itemize}
-
-  \pause
-  Cryptography works with the latter two.
-  \begin{itemize}[<+(1)->]
-    \item What you know: some secret
-    \item What you have: cryptographic hardware device (last week's topics)
-  \end{itemize}
-
-  \vspace*{1em}
-
-  \pause
-  Identification requires \emph{freshness}, but does not require \emph{non-repudiation}.
-  \begin{itemize}[<+(1)->]
-    \item Security requirement: preventing \emph{impersonation} attacks
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Security assumptions}
-  \pause
-  The registration protocol must be trusted
-  \begin{itemize}[<+(1)->]
-    \item Digital identification is not possible without it
-    \item No legal identity without physical measures
-  \end{itemize}
-
-  \vspace*{1em}
-
-  \pause
-  We must prevent man-in-the-middle attacks
-  \begin{itemize}[<+(1)->]
-    \item e.g. chessmaster attack
-  \end{itemize}
-
-  \vspace*{1em}
-
-  \pause
-  We only consider cryptographic attacks
-  \begin{itemize}[<+(1)->]
-    \item Cryptography cannot defend against \enquote{non-math} attacks
-    \item Physical attacks against smart cards, credential exfiltration, \dots
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Challenge-response paradigm}
-  A prover must answer a verifier's challenge for identification.
-
-  \vspace*{1em}
-
-  \pause
-  Familiar approaches:
+  Example use cases:
   \begin{columns}[T,onlytextwidth]
     \begin{column}{0.5\textwidth}
       \begin{itemize}[<+(1)->]
-        \item Symmetric encryption
-        \begin{itemize}
-          \item e: KPA-SEC, v: IND-CPA2
-        \end{itemize}
-        \item Symmetric authentication (HMAC)
-        \begin{itemize}
-          \item e, v: ROM
-        \end{itemize}
+        \item Platform integrity \& secure boot
+        \item Disk encryption
+        \item Device-bound keys\\(e.g. Windows Hello)
       \end{itemize}
     \end{column}
     \begin{column}{0.5\textwidth}
       \begin{itemize}[<+(1)->]
-        \item Asymmetric encryption
-        \begin{itemize}
-          \item e: IND-CPA, v: IND-CCA2
-        \end{itemize}
-        \item Asymmetric authentication
-        \begin{itemize}
-          \item e: KMA-SEC, v: CMA-SEC
-        \end{itemize}
+        \item Remote device attestation
+        \item Anti-cheat (hardware bans)
+        \item Anti-hammering\\(brute force protection)
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{TPM sniffing attack}
+  A discrete TPM must communicate with the CPU.
+  \begin{itemize}[<+(1)->]
+    \item TPM is tamper resistant
+    \item TPM 2.0 can encrypt the bus traffic, but e.g. BitLocker does not
+    \item Steal secrets by sniffing the bus
+    \item Example: \href{https://pulsesecurity.co.nz/articles/TPM-sniffing}{BitLocker key recovery}
+    \item Mitigation: TPM + PIN
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  Much harder to perform on a firmware TPM, although other attacks may exist.
+\end{frame}
+
+\begin{frame}{Trusted Execution Environment (TEE)}
+  A Trusted Execution Environment is a secure area of a CPU.
+  \begin{itemize}[<+(1)->]
+    \item Virtual subsystem or powered by a coprocessor
+    \item Code and data are protected: confidentiality \& integrity
+    \item Isolated (sometimes encrypted) memory regions, called \emph{enclaves} in Intel SGX
+    \item Code runs within these regions
+    \item Computation result returned to the calling process
+    \item Remote verification can enable TEE in the cloud
+    \begin{itemize}
+      \item predefined hardware attestation 
+    \end{itemize}
+  \end{itemize}  
+\end{frame}
+
+\begin{frame}{Name dropping just in case}
+  TEE and related things:
+  \begin{itemize}[<+(1)->]
+    \item AMD
+    \par
+    \begin{itemize}
+      \item Platform Security Processor (PSP) -- secure co-processor
+      \item Secure Encrypted Virtualization (SEV-SNP) -- TEE (VM-level)
+    \end{itemize}
+    \item Intel
+    \par
+    \begin{itemize}
+      \item Management Engine (ME) -- separate microcontroller for system services
+      \item Software Guard Extensions (SGX) -- TEE (CPU enclaves), servers only
+      \item Trust Domain Extensions (TDX) -- TEE (VM-level)
+    \end{itemize}
+    \item Apple Secure Enclave Processor (SEP) -- secure co-processor
+    \item Microsoft Pluton -- secure co-processor in the CPU (can act as a TPM)
+    \item ARM TrustZone -- TEE (secure vs. regular \enquote{world})
+  \end{itemize}
+
+  \vspace*{-0.5em}
+
+  \pause
+  NB! These technologies are very different.
+\end{frame}
+
+\begin{frame}{Hardware Security Module (HSM)}
+  Hardware Security Modules (HSM)
+  \begin{itemize}[<+(1)->]
+    \item physical devices
+    \item attach to computers/servers
+    \item safeguard keys and perform cryptographic/confidential operations
+    \item may contain multiple cryptoprocessor chips
+    \begin{itemize}
+      \item e.g. specialised + general purpose
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{HSMs (cont.)}
+  \pause
+  Fancier features (e.g. banking, CAs):
+  \begin{itemize}[<+(1)->]
+    \item tamper resistance \& responsiveness (e.g. sleep or destruction)
+    \item high performance (e.g. live certificate signing)
+    \item high availability modes (e.g. failover mechanisms)
+    \item certified (e.g. Common Criteria, FIPS)
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Smart cards}
+  Smart cards are cards with an integrated circuit chip.
+  \begin{itemize}[<+(1)->]
+    \item Can be used for cryptographic operations (e.g. EstEID, SIM cards)
+    \item Complex cards may have additional components (e.g. display, buttons)
+    \item NFC for contactless: operation still performed by microchip
+    \item Java Card technology: \enquote{applets} written in Java
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{EMV}
+  Europay MasterCard Visa
+  \begin{itemize}[<+(1)->]
+    \item Smart payment cards \& terminals
+    \item Enables cryptographic validations
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  Challenge-response does not stop relay attacks
+  \begin{itemize}[<+(1)->]
+    \item Your card pays for someone else's purchase elsewhere
+    \item \href{https://www.cl.cam.ac.uk/research/security/banking/relay/}{\textit{Chip \& PIN (EMV) relay attacks}}
+    \item Countermeasure: distance bounding (strict response time limits)
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Common Criteria (CC)}
+  Hardware security is often closed source.
+  \begin{itemize}[<+(1)->]
+    \item Backdoors?
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  Common Criteria (CC) certification:
+  \begin{itemize}[<+(1)->]
+    \item Approved labs evaluate, national bodies certify (e.g. ANSSI, BSI)
+    \item Evaluated against the product's claimed security properties
+    \item Evaluation Assurance Level (EAL): 1--7 (+ augmentation)
+    \par
+    \begin{itemize}
+      \item How thoroughly the product was evaluated, not how secure it is
+    \end{itemize}
+    \item Certified $\neq$ secure: e.g. ROCA and EUCLEAK were in CC-certified chips
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{FIPS certification}
+  \begin{itemize}
+    \item \href{https://csrc.nist.gov/pubs/fips/140-3/final}{FIPS 140-3} --- Security requirements for cryptographic modules
+    \par
+    \begin{itemize}
+      \item 4 levels, with level 4 being the highest
+      \item \href{https://www.keyfactor.com/blog/a-guide-to-fips-140-3/}{\textit{A Guide to FIPS 140-3 (Keyfactor)}}
+      \item Replaces FIPS 140-2, whose validations became historical in September 2026
+    \end{itemize}
+    \item \href{https://csrc.nist.gov/projects/cryptographic-module-validation-program}{NIST CMVP} --- Cryptographic Module Validation Program
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{YubiKeys}
+  YubiKeys are hardware authentication devices.
+  \begin{itemize}[<+(1)->]
+    \item Not the only ones, but a popular choice
+    \item FIDO2, Personal Identity Verification (PIV) and OpenPGP
+    \item FIDO2 support: resident \& non-resident keys (e.g. SSH)
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  If you work in security, you should have at least two.
+  \begin{itemize}[<+(1)->]
+    \item Can be another reputable brand, e.g. Google Titan
+    \item Without a backup you cannot safely disable phishable 2FA
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Side channels}
+  Side-channel leaks are leaks of information through the non-primary communication channel, i.e. the \emph{side channel}.
+  \begin{itemize}[<+(1)->]
+    \item E.g. fat envelope for uni admittance, slim envelope for rejection
+    \item Unintentional leak of physical or logical information
+    \item Do not confuse with covert channels (intentional)
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Side channels (cont.)}
+  Side channels are the bane of implementation.
+  \begin{itemize}[<+(1)->]
+    \item \enquote{unknown unknowns}
+    \item Software \& hardware problem
+    \item Broken implementations of theoretically secure primitives
+    \item Can be considered during theoretical design
+    \begin{itemize}
+      \item Easier/harder to implement in a side-channel mitigating way
+      \item Point out which parts must be side-channel resistant
+      \item E.g. \href{https://ed25519.cr.yp.to/ed25519-20110926.pdf}{EdDSA}
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Side channel classes}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.5\textwidth}
+      \pause
+      Logical:
+      \begin{itemize}[<+(1)->]
+        \item Timing analysis
+        \item Behavioural patterns (e.g. size)
+      \end{itemize}
+
+      \pause
+      Hardware shenanigans:
+      \begin{itemize}[<+(1)->]
+        \item Power analysis
+        \item Cache-based (access, timing)
+        \item CPU frequency scaling (\href{https://www.hertzbleed.com}{Hertzbleed})
+      \end{itemize}
+      \end{column}
+    \begin{column}{0.4\textwidth}
+      \pause
+      Electromagnetic:
+      \begin{itemize}[<+(1)->]
+        \item Leakage from cables
+        \item RF radiation
+      \end{itemize}
+
+      \pause
+      Environmental:
+      \begin{itemize}[<+(1)->]
+        \item Acoustic, optical
+      \end{itemize}
+
+      \pause
+      Social side channels:
+      \begin{itemize}[<+(1)->]
+        \item Human bias
+        \item \enquote{The Pizza Meter}
       \end{itemize}
     \end{column}
   \end{columns}
 
-  \vspace*{1.5em}
+  \vspace*{0.5em}
 
   \pause
-  What about password-based authentication?
-  \begin{itemize}[<+(1)->]
-    \item Does not work over a cleartext channel.
-  \end{itemize}
+  The list is not exhaustive\dots
+
+  \pause
+  Related, but active: fault attacks (e.g. voltage glitching, Rowhammer).
 \end{frame}
 
-\begin{frame}{Zero-knowledge identification}
-  The asymmetric approaches presented previously can be quite \enquote{costly} in practice.
+\begin{frame}{Examples}
+  Some cool \& scary examples\dots
+  \begin{itemize}[<+(1)->]
+    \item {\small\url{http://people.csail.mit.edu/mrub/VisualMic/}} (and that was a while ago...)
+    \item {\small\url{https://youtu.be/BpNP9b3aIfY}}
+  \end{itemize}
 
   \vspace*{1em}
 
   \pause
-  How can we prevent cheating verifier attacks with an \enquote{efficient} scheme?
+  \dots{}and names you should know.
   \begin{itemize}[<+(1)->]
-    \item A cheating verifier must not get useful information from the prover.
-    \item The protocol must be \emph{zero-knowledge}.
-    \item The protocol must convince an honest verifier that an (honest) prover knows the secret.
+    \item Meltdown and Spectre: {\small\url{https://meltdownattack.com}}
+    \item Hertzbleed: {\small\url{https://hertzbleed.com}}
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Simulation}
-  Zero-knowledge is based on the principle of \emph{simulation}.
+\begin{frame}{Recent examples}
   \begin{itemize}[<+(1)->]
-    \item The simulator can efficiently simulate the prover's messages
+    \item \href{https://ninjalab.io/eucleak/}{EUCLEAK} (2024): EM side channel on YubiKey 5 (firmware $<$ 5.7) and other Infineon chips
+    \par
     \begin{itemize}
-      \item The prover is not involved in the simulation
-      \item The simulator does not know the prover's secret
+      \item Non-constant-time modular inversion, unnoticed through $\sim$80 CC evaluations
     \end{itemize}
-    \item These messages convince the verifier that the simulator knows the secret
+    \item \href{https://gofetch.fail}{GoFetch} (2024): Apple M-series prefetcher breaks constant-time code
+    \item \href{https://kyberslash.cr.yp.to}{KyberSlash} (2024): secret-dependent division timing in Kyber implementations
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{What can be done?}
+  Some approaches:
+  \begin{itemize}[<+(1)->]
+    \item General chip design with side-channels in mind
+    \item Dedicated hardware implementations (e.g. some cryptoprocessors)
+    \item Electromagnetic and/or acoustic shielding
+    \item Randomisation of operations (masking and noise)
+    \item Design algorithms with side-channels in mind
+    \item Constant time operations
   \end{itemize}
 
   \vspace*{1em}
 
   \pause
-  If one can generate an accepting \emph{transcript} without involving the prover, the protocol is zero-knowledge.
+  Side-channel protection can likely never be absolute.
   \begin{itemize}[<+(1)->]
-    \item Transcript: all protocol messages exchanged between the prover and verifier
+    \item Protect multiple levels: transistor, program, algorithm, and protocol level
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Schnorr's protocol}
-  Schnorr's protocol allows proving knowledge of a discrete logarithm without leaking it.
+\begin{frame}{Library mitigations}
+  What do general purpose libraries do?
+  \begin{itemize}[<+(1)->]
+    \item Libraries cannot usually rely on secure hardware
+    \item Attempt to mitigate timing and access issues in software
+    \item Some articles/examples:
+    \begin{itemize}
+    \item \href{https://botan.randombit.net/handbook/side_channels.html}{Botan's side channels handbook}
+    \item \href{https://www.bearssl.org/constanttime.html}{Why Constant-Time Crypto? (BearSSL)}
+    \item \href{https://cryspen.com/post/ml-kem-implementation/}{Verified ML-KEM (Kyber) in Rust (Cryspen)}
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Constant time cryptography}
+  \pause
+  Execution should not depend on secret data:
+  \begin{itemize}[<+(1)->]
+    \item No branching on secret data
+    \item No memory access based on secret data
+    \item No variable time instructions with secret data (e.g. DIV on x86)
+  \end{itemize}
+
+  \vspace*{1em}
+  
+  \pause
+  Cryptographer's will $\neq$ compiler's will.
+  \begin{itemize}[<+(1)->]
+    \item Compiler optimisations can foil constant-timeness
+    \item Constant time languages/compilers attempted
+    \item Speculative constant time? (Spectre)
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Issue of unknowns}
+  Constant time crypto is easier for fixed parameters.
+  \begin{itemize}[<+(1)->]
+    \item Constant-time optimised operations for known values (e.g. fixed finite fields)
+  \end{itemize}
+
+  \vspace*{1em}
 
   \pause
+  What if parameters are variable?
+  \begin{itemize}[<+(1)->]
+    \item New RSA modulus for each keypair
+    \item Constant time RSA is error prone
+    \item One of the reasons why RSA is not recommended
+    \item \emph{Blinding} is typically used with RSA as an additional measure
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Constant-timeness verification tools}
   \begin{center}
-    \begin{tikzpicture}
-      \node (alice) at (0,0) {\includegraphics[height=80px]{alice}};
-      \node (bob)   at (6,0) {\includegraphics[height=80px]{bob}};
-
-      \node(sk) at (alice.north) [yshift=10px] {$x \in \ZZ_q$};
-      \node(pk) at (bob.north)   [yshift=10px] {$h = g^x$};
-
-      \node (n1a) at (alice.east) [yshift=18px] {};
-      \node (n1b) at (bob.west)   [yshift=18px] {};
-      \node (n2a) at (alice.east) {};
-      \node (n2b) at (bob.west)   {};
-      \node (n3a) at (alice.east) [yshift=-18px] {};
-      \node (n3b) at (bob.west)   [yshift=-18px] {};
-
-      \node at (alice.west) [left,yshift=20px]  {$r \getsu \ZZ_q$};
-      \node at (bob.east)   [right,yshift=20px] {$c \getsu \ZZ_q$};
-
-      \draw[->,thick] (n1a) -- (n1b) node[above,midway] {$u = g^r$};
-      \draw[<-,thick] (n2a) -- (n2b) node[above,midway] {$c$};
-      \draw[->,thick] (n3a) -- (n3b) node[above,midway] {$z = r + cx$};
-
-      \node at (bob.south) [yshift=-10px] {$g^z = g^r g^{cx} \iseq u h^c$};
-    \end{tikzpicture}
+    \url{https://crocs-muni.github.io/ct-tools/}
   \end{center}
-
-  The group $\GG = \langle g\rangle$ must be a DL group with a prime cardinality $q$.
 \end{frame}
 
-\begin{frame}{Sigma protocols}
-  \pause
-  $\Sigma$-protocols are efficiently computable three-move protocols that must be (special) honest verifier zero-knowledge.
-
-  \pause
-  \begin{figure}
-    \centering
-    \begin{tikzpicture}
-      \node (alice) at (0,0) {\includegraphics[height=80px]{alice}};
-      \node (bob)   at (6,0) {\includegraphics[height=80px]{bob}};
-
-      %\node(rand) at (alice.north) [yshift=10px] {$r \getsu \RRR$};
-      \node(chal) at (bob.north)   [yshift=10px] {$c \getsu \CCC$};
-
-      \node (n1a) at (alice.east) [yshift=18px] {};
-      \node (n1b) at (bob.west)   [yshift=18px] {};
-      \node (n2a) at (alice.east) {};
-      \node (n2b) at (bob.west)   {};
-      \node (n3a) at (alice.east) [yshift=-18px] {};
-      \node (n3b) at (bob.west)   [yshift=-18px] {};
-
-      \draw[->,thick] (n1a) -- (n1b) node[above,midway] {$u$};
-      \draw[<-,thick] (n2a) -- (n2b) node[above,midway] {$c$};
-      \draw[->,thick] (n3a) -- (n3b) node[above,midway] {$z = z_\SK(u,c)$};
-
-      \node at (alice.south) [yshift=-10px] {$\SK$};
-      \node at (bob.south)   [yshift=-10px] {$\VVV_\PK(u, c, z)$};
-    \end{tikzpicture}
-  \end{figure}
-
-  \pause
-  In the \emph{transcript} $(u, c, v)$, $u$ is a commitment, $c$ is a (varying) challenge, and $z$ is a (consistent) response.
-\end{frame}
-
-\begin{frame}{Danger zone!}
-  Sigma protocols \& zero-knowledge schemes are advanced cryptography.
+\begin{frame}{Secrets in memory}
+  Keys linger after use:
   \begin{itemize}[<+(1)->]
-    \item You should know that they exist
-    \item You should not use them directly
-    \item The complexity snowballs
-    \item Not comparable to popular and standardised schemes
-    \begin{itemize}
-      \item encryption \& signature schemes, KEMs, MACs, hash functions
-    \end{itemize}
+    \item Copies on the stack, in reallocated buffers, swap, core dumps
+    \item DRAM keeps data for a while after power-off (cold boot attacks)
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  Wipe secrets after use (\emph{zeroization}), but:
+  \begin{itemize}[<+(1)->]
+    \item Compilers may optimise the wipe away
+    \item Garbage-collected languages copy secrets freely and may not let you wipe them
+    \item Better still: keep the key out of RAM entirely (TPM, HSM, smart card)
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Danger zone!}
-  These topics are a prime example of unknown unknowns.
+\begin{frame}{Key takeaways}
+  Do not roll your own cryptography!
   \begin{itemize}[<+(1)->]
-    \item Reading a few blog posts to get an intuition to start using them is not enough
-    \item Extensive amounts of study required for even the \enquote{entry level}
-    \item Not gatekeeping:
-    you are more than welcome to spiral down the rabbit hole
+    \item Knowing the mathematics is not enough
+    \item General purpose math and bignum libraries are not crypto-safe
+    \item Even professionals can mess up (e.g. ROCA)
+    \item Certification is not foolproof, but is better than nothing
+    \item Tools exist to help you validate others' work
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Additional reading}
+  \begin{itemize}
+    \item \url{https://github.com/veorq/cryptocoding}
+    \item \url{https://gotchas.salusa.dev}
+    \item \url{https://timing.attacks.cr.yp.to/programming.html}
+    \par
+    \begin{itemize}
+      \item Contains more links at the end
+    \end{itemize}
+    \item Intel's guidance:
+    \begin{itemize}
+      \item \href{https://www.intel.com/content/www/us/en/developer/articles/technical/software-security-guidance/secure-coding/security-best-practices-side-channel-resistance.html}{\textit{Security Best Practices for Side Channel Resistance}}
+      \item \href{https://www.intel.com/content/www/us/en/developer/articles/technical/software-security-guidance/secure-coding/mitigate-timing-side-channel-crypto-implementation.html}{\textit{Guidelines for Mitigating Timing Side Channels Against Cryptographic Implementations}}
+    \end{itemize}
   \end{itemize}
 \end{frame}
 
