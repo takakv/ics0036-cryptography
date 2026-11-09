@@ -1,7 +1,11 @@
 \documentclass{homework}
 
 \title{04}
-\date{\DTMdate{2024-12-06}}
+\date{\DTMdate{2025-12-06}}
+
+\usepackage{fancyvrb}
+\usepackage{hyperref}
+\fvset{listparameters=\setlength{\topsep}{0pt}\setlength{\partopsep}{0pt}}
 
 \begin{document}
 \maketitle
@@ -9,28 +13,36 @@
 \textbf{Reminders}
 
 \begin{itemize}
-  \item Include in your report approximately how long the homework took for you.
+  \item I will give you feedback on GitLab and Discord.
+  Check them after receiving your (preliminary) grade.
   \item Read through task descriptions carefully.
-  \item You may request deadline extensions until 03.12.24 23:59 EET.
-  \item Deadlines are strict: if you do not submit your assignment by the deadline, you fail it.
-  \item To pass the course you must pass all homework assignments.
-  \item Second chances:
+  \item You may request deadline extensions until 03.12.25 23:59 EET.
+  \item You can submit up to one week after the deadline with a 50\% point penalty.
+  0 afterwards.
+  \item Grace clause:
   \begin{itemize}
-    \item If I review your assignment before the deadline, I will \emph{always} give you a chance to fix it for the deadline (or with a slight extension).
-    Start early!
-    \item If I review your assignment after the deadline, I will give you an extension \emph{only} if you have explained what part of your code does not work, and what you did to attempt to fix it.
-    Ask questions when you are stuck to avoid risking it!
-    \item If I give you an extension, you must still fix your homework by the extended deadline to pass.
-    \item If your code does not work but you are not aware of it or have not explained your issues, you fail the homework (if I review it after the deadline).
+    \item If you submit your assignment by the deadline, you have the opportunity to fix (some) mistakes I point out to gain back up to half of the lost points.
+    \item You cannot get any points back for a task that is entirely missing or broken, e.g. code that does not run at all or does nothing.
+    If your code does not pass the assertions/test script (if available), include that info in your report.
+    Otherwise I will consider your code to be broken, i.e. no grace.
     Test your code!
-    \item If you fail your homework, you can appeal my decision within 3 days of receiving your grade (grade day + 3).
-    Write me an email or message me on Discord.
-    I will then organise an oral defence for you.
+    \item The grace clause does not apply if you requested an extension or missed the original deadline.
   \end{itemize}
   \item You may share hints with each-other, but no answers/code.
-  \item You may ask me questions (I prefer Discord to Moodle/email).
-  If your code does not work and you have not asked me any questions, you will have a hard time arguing that you actually tried solving it!
-  \item If I catch you plagiarising/copying, I will report you to the faculty and fail you for the course.
+  Ask questions in the server if they could be useful for everyone.
+  \item You may---and I encourage you to---ask me questions (preferably during practices).
+  \item You may use AI as help, but not to solve the tasks themselves.
+  \begin{itemize}
+    \item Acceptable: e.g. checking your understanding, asking how to loop in Python
+    \item Not acceptable: e.g. generating any code logic or cryptographic operations
+    \item If you use AI in any form, include in your report what you used it for
+    \item I recommend that you ask in the server/me instead of using AI
+  \end{itemize}
+  \item If I catch you plagiarising, copying, or using AI for theory answers or code logic, I will report you to the faculty and fail you for the course.
+  \begin{itemize}
+    \item If during the midterm/exam you completely fumble stuff that you got points for in homework tasks, you will have to orally explain why it is so.
+    \item If you do not convince me of homework authorship, I will report you for cheating and fail you.
+  \end{itemize}
 \end{itemize}
 
 \newpage
@@ -42,11 +54,18 @@
 \textbf{Additional instructions}
 
 \begin{itemize}
-  \item Submit as a PDF file called \texttt{studentid-04.pdf} where \enquote{studentid} is your 6 letter student ID/username (\enquote{takraa} for me).
-  \item \textbf{Do not copy paste answers.}
-  I am not expecting perfect answers, rather I want to see your reasoning, and how you have understood these concepts.
-  As long as your answers show reasoning, I will accept them, even if they are not correct.
-  This applies to all of the theory tasks.
+  \item The report file should preferably use the Markdown format, and make use of Markdown syntax for headings, code blocks, etc.
+  I shall accept no formats other than markdown and PDF.
+  \item Call the file \texttt{report.md} (or \texttt{report.pdf} if you must use PDF) and include it in the \texttt{hw4} folder root.
+  \item Your homework must contain the following information at the start:
+\begin{Verbatim}
+- Name: <your full name>
+- Discord username: <your discord username>
+- Feedback language: <EE or EN>
+- Homework took me:
+  - Theory: <time taken for the theory>
+  - Practical: <time taken for the practical tasks>
+\end{Verbatim}
 \end{itemize}
 
 \begin{task}{Proof systems \& zero-knowledge}
@@ -67,8 +86,10 @@
 
   Then, describe a use case where a zero-knowledge proof would be useful in practice, which is not one of the examples discussed in class (age range, citizenship of member states, online voting).
 
-  If you used online materials to help you answer these questions, please include references in your answers.
+  If you used online materials to help you answer these questions, references in your answers.
 \end{task}
+
+\newpage
 
 \begin{task}{TLS}
   For this task, answer the following questions:
@@ -90,6 +111,20 @@
   \end{itemize}
 
   If you used online materials to help you answer these questions, please include references in your answers.
+\end{task}
+
+\begin{task}{eMRTD}
+  For this task, answer the following questions based on \textit{\href{https://blog.trailofbits.com/2025/10/31/the-cryptography-behind-electronic-passports/}{this blog post on electronic passports}}.
+  You need not (but I recommend that you) read through the entire article.
+  \begin{itemize}
+    \item What types of biometric data are included in your passport?
+    \item Is this data protected?
+    If so, how and by whom can it be extracted?
+    \item How is the authenticity of passports verified?
+    \item Why should you not leave your passport unattended?
+  \end{itemize}
+
+  There may be a question of similar style about passports/the EE ID card in the exam.
 \end{task}
 
 \begin{task}{A taste of the exam}
@@ -162,16 +197,12 @@
   Practical tasks
 \end{center}
 
-\begin{task}{Git}
-  For this task, you will need either a GitHub or a TalTech GitLab account\footnote{\url{http://gitlab.cs.taltech.ee}}.
-  Once you have set up an account, create a repository called \texttt{ics0026}, and make sure that it is publicly visible (GitHub) or internally visible (TalTech GitLab).
-  If you want to make it privately visible, you must add me to your repository (\texttt{@takakv} on GitHub, \texttt{@takraa} on TalTech GitLab).
-
-  Then, you must set up a commit signing key.
+\begin{task}{Signing your commits}
+  You must set up a commit signing key on TalTech's GitLab.
   I recommend that you use an SSH key for signing commits, but you can also use GPG or S/MIME.
-  I will not include a reference here: you should be able to find one yourself (GitHub and GitLab both have their own articles for this).
+  I will not include a reference here: you should be able to find one yourself (GitLab and GitHub both have articles for this).
 
-  For the task, you must push a signed commit into your \texttt{ics0026} repository.
+  For the task, you must push a signed commit into your homework repository.
   This commit should include the public key of the key you use for signing: call it simply \texttt{key}.
   The key should not be a binary blob: it should open in a text editor (e.g. PEM).
   Your task is considered complete if the GUI shows that your commit is verified.
@@ -182,13 +213,7 @@
     \caption{Verified commit on GitLab.}
   \end{figure}
 
-  \begin{figure}[h!]
-    \center
-    \includegraphics[width=\textwidth]{../images/github_verified.png}
-    \caption{Verified commit on GitHub.}
-  \end{figure}
-
-  Include the repository URL in your report.
+  Include the full commit link in your report.
 \end{task}
 
 \begin{task}{SSH \& SCP}
@@ -197,7 +222,7 @@
   If you have not yet set up an SSH key, you will need to get it onto the server, e.g. with \texttt{ssh-copy-id}\footnote{\url{https://www.ssh.com/academy/ssh/copy-id\#copy-the-key-to-a-server}}.
   The connection will ask you for your account password on your connection: this is your UniID password.
 
-  Once you can SSH into Enos using an SSH key, take a screenshot of the log in flow.
+  Once you can SSH into Enos using an SSH key, take a screenshot of the log-in flow.
   If your SSH connection does not prompt you for a password, explain in writing how you have protected your key (e.g. password in SSH agent, SSH key on Yubikey).
   For example, my SSH key is a non-resident key on my Yubikey, and the SSH key password is automatically loaded by my SSH agent.
 
@@ -206,14 +231,14 @@
     \includegraphics[width=\textwidth]{../images/enos_ssh.png}
   \end{figure}
 
-  Once in the server, create an empty directory called \texttt{ics0026} in your \texttt{public\_html} folder.
+  Once in the server, create an empty directory called \texttt{ics0036} in your \texttt{public\_html} folder.
   Then, close the connection with \texttt{exit}.
 
-  Upload the screenshot that you took fo the log in flow into the \texttt{\textasciitilde/public\_html/ics0026} folder on the server using SCP (secure copy)\footnotemark{}.
+  Upload the screenshot that you took of the log-in flow into the \texttt{\textasciitilde/public\_html/ics0036} folder on the server using SCP (secure copy)\footnotemark{}.
   Take a screenshot of this process as well, and add it also to the folder on the server.
   \footnotetext{\url{https://linuxize.com/post/how-to-use-scp-command-to-securely-transfer-files/}}
 
   Finally, include \emph{both} screenshots also in your report.
-  To verify whether your screenshots are correctly on the server, visit \url{https://enos.itcollege.ee/~takraa/} but with your own student username instead of \texttt{takraa}.
+  To verify whether your screenshots are correctly on the server, visit \url{https://enos.itcollege.ee/~takraa/ics0036} but with your own student username instead of \texttt{takraa}.
 \end{task}
 \end{document}
