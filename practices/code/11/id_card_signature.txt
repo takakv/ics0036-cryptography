@@ -1,0 +1,20 @@
+pkcs11-tool -L
+
+echo "Message" > message.txt
+pkcs11-tool --sign -m ECDSA-SHA384 --slot 0 \
+  --input-file message.txt --output-file message.sig
+
+pkcs11-tool --slot 0 -r --type cert \
+  --label Isikutuvastus > cert.der
+openssl x509 -in cert.der -noout -subject
+
+openssl x509 -in cert.der -pubkey -noout > pub.pem
+
+python3 wrap_ecdsa.py message.sig wrapped.sig
+
+openssl pkeyutl -verify -digest sha384 \
+  -in message.txt -pubin -inkey pub.pem -sigfile wrapped.sig
+
+#   pkcs11-tool --sign -m ECDSA-SHA384 --slot 0 \
+#     --signature-format openssl \
+#     --input-file message.txt --output-file message.sig

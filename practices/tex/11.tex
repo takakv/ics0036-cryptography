@@ -1,0 +1,153 @@
+\documentclass{practice}
+
+\title{11}
+\date{11.11.26}
+
+\usepackage{crysymb}
+
+\begin{document}
+\maketitle
+
+\begin{task}{PKCS\#11}
+  PKCS\#11 (or \emph{Cryptoki}) defines an interface for manipulating cryptographic tokens and is often used by HSMs and smart cards.
+  The tokens are typically X.509 certificates or public/private keys, but can also be symmetric keys.
+  Depending on the device's capabilities, the Cryptoki interface can be used to use, extract, create, delete, and modify those objects.
+
+  Likely the most common PKCS\#11 module is the one provided by \href{https://github.com/opensc/opensc}{\emph{OpenSC}}.
+  Many vendors will have their own (e.g. Yubico's YKCS11) which allows for easier manipulation/discovery of objects on the vendor's device.
+
+  The OpenSC project also provides the \texttt{pkcs11-tool} utility, which can be used to interact with cryptographic tokens.
+  For this task, install the utility (or the full OpenSC toolset, which also contains it).
+\end{task}
+
+\begin{task}{ID card's PKCS\#11}
+  Most of you have (or should have) and Estonian ID card or residence permit card.
+  If you have neither, but the ID card from your country has a chip, it will likely also have a PKCS\#11 interface.
+
+  For this task, we will use \texttt{pkcs11-tool} to play around with the ID card.
+
+  To list token slots identified by the tool:
+  \begin{cmdblock}
+pkcs11-tool -L
+  \end{cmdblock}
+  \begin{figure}[h]
+    \includegraphics[width=\textwidth]{../../images/pkcs11-id-list}
+  \end{figure}
+  Notice that the tokens in the slots have \enquote{readonly} set, meaning that we cannot edit those tokens.
+  This is good, since otherwise people could accidentally overwrite their eID keypair.
+  \enquote{login required} means that the PIN must be provided in order to interact with private objects.
+
+  \newpage
+
+  To list cryptographic mechanisms supported by the card:
+  \begin{cmdblock}
+pkcs11-tool -M
+  \end{cmdblock}
+  \begin{figure}[h]
+    \includegraphics[width=\textwidth]{../../images/pkcs11-id-mechanisms}
+  \end{figure}
+  We can see that my ID card does not support RSA.
+
+  Let us try to see what tokens are actually on the card:
+  \begin{cmdblock}
+pkcs11-tool -O
+  \end{cmdblock}
+  \begin{figure}[h]
+    \includegraphics[width=\textwidth]{../../images/pkcs11-id-objects}
+  \end{figure}
+  Some objects seem to be missing: we know that there should be a private key somewhere, and right now only the authentication objects are displayed.
+
+  To display also the private key object, we must \enquote{log in} to the card.
+  \begin{cmdblock}
+pkcs11-tool -O --login
+  \end{cmdblock}
+  \begin{figure}[h]
+    \includegraphics[width=\textwidth]{../../images/pkcs11-id-objects-login}
+  \end{figure}
+  We can now see the private key object, but still not the objects tied to the signing certificate.
+
+  Notice that \enquote{sensitive} and \enquote{always sensitive} have been set, which means that the key has always been protected, i.e. it cannot be viewed or exported as plaintext.
+  This typically also means that it was generated on the device.
+
+  A sensitive key might still be exportable if it is wrapped; i.e. the encrypted private key can be exported, for example, to re-import it into a different HSM or smart card.
+  Since \enquote{never extractable} is set, the token cannot, under any circumstance, be exported from the device.
+
+  To see the signing certificate objects, we must specify the slot since by default the tool selects the first slot (in this case slot 0).
+  \begin{cmdblock}
+pkcs11-tool -O --login --slot 1
+  \end{cmdblock}
+
+  Let us fetch the signing certificate.
+  \begin{cmdblock}
+pkcs11-tool --slot 1 -r --type cert \
+  --label Allkirjastamine > cert.der
+  \end{cmdblock}
+  You can verify that it worked by using
+  \begin{cmdblock}
+openssl x509 -in cert.der -noout -subject
+  \end{cmdblock}
+  \begin{figure}[h]
+    \includegraphics[width=\textwidth]{../../images/pkcs11-id-sigcert}
+  \end{figure}
+
+  Finally, let us sign some data with the ID card.
+  For fun, let us use the Authentication key, since DigiDoc only allows you to sign data using the Signature key.
+  \begin{cmdblock}
+echo "Message" > message.txt
+
+pkcs11-tool --sign -m ECDSA-SHA384 --slot 0 \
+  --input-file message.txt --output-file message.sig
+  \end{cmdblock}
+  ECDSA-SHA384 means that the device's own functionality will be used to hash the data with SHA-384, and that hash is then signed with ECDSA.
+
+  We can also use the device to verify the signature:
+  \begin{cmdblock}
+pkcs11-tool --verify -m ECDSA-SHA384 --slot 0 \
+  --input-file message.txt --signature-file message.sig
+  \end{cmdblock}
+  \begin{figure}[h]
+    \includegraphics[width=\textwidth]{../../images/pkcs11-id-signature}
+  \end{figure}
+
+  Let us try to verify the signature with OpenSSL.
+  \begin{cmdblock}
+pkcs11-tool --slot 0 -r --type cert \
+  --label Isikutuvastus > cert.der
+
+openssl x509 -in cert.der -pubkey -noout > pub.pem
+
+openssl pkeyutl -verify -digest sha384 \
+  -in message.txt -pubin -inkey pub.pem -sigfile message.sig
+  \end{cmdblock}
+  which results in \texttt{Signature Verification Failure}.
+
+  The issue is that the device exports the ECDSA signature as a raw concatenation of the r and s values, whereas OpenSSL expects the signature to be ASN.1-encoded according to \href{https://datatracker.ietf.org/doc/html/rfc3279#section-2.2.3}{RFC 3279}.
+  \begin{Verbatim}
+Ecdsa-Sig-Value  ::=  SEQUENCE  {
+           r     INTEGER,
+           s     INTEGER  }
+  \end{Verbatim}
+
+  You can do the conversion using the helper script \texttt{wrap\_ecdsa.py} (which requires the \texttt{pyasn1} Python package) on the course GitHub.
+  \begin{cmdblock}
+python3 wrap_ecdsa.py message.sig wrapped.sig
+
+openssl pkeyutl -verify -digest sha384 \
+  -in message.txt -pubin -inkey pub.pem -sigfile wrapped.sig
+  \end{cmdblock}
+  which should result in \texttt{Signature Verified Successfully}.
+\end{task}
+
+\begin{task}{EstEID}
+  The Estonian eID application on your card is documented in one of the following:
+  \begin{itemize}
+    \item \href{https://www.id.ee/wp-content/uploads/2026/03/id1developerguide2025.pdf}{\textit{IDEMIA EstEID developer guide}} for cards issued until 14.11.2025
+    \item \href{https://www.id.ee/wp-content/uploads/2025/11/ged24035_015_tdc_est_eid_developer_guide.pdf}{\textit{Thales EstEID developer guide}} for cards issued starting from 17.11.2025
+  \end{itemize}
+
+  See \S 9.2.1 (IDEMIA) or \S 5.3.11.1 (Thales) of the documentation to see what personal information is stored on your card's eID application.
+  This information is e.g. what is (partly) read by terminals when you use your ID card as a loyalty card.
+
+  Use the script \texttt{esteid\_info.py} (which requires the \texttt{pyscard} Python package) to view the personal information stored on your ID card.
+\end{task}
+\end{document}
