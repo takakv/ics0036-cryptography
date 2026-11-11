@@ -1,0 +1,24 @@
+# Start a shell with the SoftHSM tokens:   docker compose run --rm softhsm
+# Start over with new tokens and keys:     docker compose down -v
+
+# Also set
+# AUTH="TUDENG,TEST,... (PIN1)"
+# SIGN="TUDENG,TEST,... (PIN2)"
+# for commands, e.g.
+# pkcs11-tool --token-label "$SIGN" -r --type cert \
+#   --label Allkirjastamine > cert.der
+name: ics0036-softhsm
+
+services:
+  softhsm:
+    build: .
+    image: ics0036-softhsm
+    stdin_open: true
+    tty: true
+    volumes:
+      - ..:/work
+      - tokens:/var/lib/softhsm/tokens
+
+volumes:
+  tokens:
+    name: ics0036-tokens

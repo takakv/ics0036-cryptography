@@ -1,0 +1,6 @@
+#!/bin/sh
+# Use SoftHSM unless another module is given with --module.
+case " $* " in
+    *" --module"*) exec /usr/bin/pkcs11-tool "$@" ;;
+esac
+exec /usr/bin/pkcs11-tool --module /usr/lib/softhsm/libsofthsm2.so "$@"
