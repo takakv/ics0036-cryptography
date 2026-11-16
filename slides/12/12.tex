@@ -1,7 +1,9 @@
+\usepackage{tikz}
+\usetikzlibrary{positioning,calc,external}
 \graphicspath{ {../../images/} }
 
 \title{ICS0036 Cryptography}
-\subtitle{Proof systems \& zero-knowledge}
+\subtitle{Commitment schemes and zero-knowledge proofs}
 \date{\today}
 \author{Taaniel Kraavi}
 \institute%
@@ -15,16 +17,189 @@
   \titlepage
 \end{frame}
 
+\begin{frame}{Remote coin flip ver. 1}
+  How can Alice \& Bob remotely decide an outcome via a coin flip?
+  \begin{enumerate}[<+(1)->]
+    \item Alice \enquote{calls} the result
+    \item Bob flips the coin
+    \item Alice wins if she guessed correctly, else Bob wins
+  \end{enumerate}
+
+  \vspace*{1em}
+
+  \pause
+  How can Alice fix a value without immediately revealing it? 
+  \begin{itemize}[<+(1)->]
+    \item If Alice cheats, Bob must be able to catch it
+    \item Bob must not learn the value before Alice reveals it
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Remote coin flip ver. 2}
+  How can Alice and Bob jointly flip a coin remotely?
+  \begin{enumerate}[<+(1)->]
+    \item Alice flips her coin and sends her result to Bob
+    \item Bob flips his coin and sends his result to Alice
+    \item Alice \& Bob XOR their results to obtain the same value
+  \end{enumerate}
+
+  \vspace*{1em}
+
+  \pause
+  Problems with this approach:
+  \begin{itemize}[<+(1)->]
+    \item Bob sees Alice's bit before choosing his own
+    \item Premature halting
+    \item MITM
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Commitment schemes}
+  A \emph{commitment} fixes a value but allows it to be revealed later.
+  \begin{itemize}[<+(1)->]
+    \item A committer and a receiver
+    \item The committer \emph{commits} their value
+    \item The committer \emph{opens} (reveals/decommits) the value later (not always)
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  Two essential properties of commitment schemes:
+  \begin{itemize}[<+(1)->]
+    \item \emph{Hiding}: the commitment alone does not reveal the committed value
+    \item \emph{Binding}: the committer cannot open the commitment to a different value
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Quantifying the properties (scandalously informal)}
+  Perfect security
+  \begin{itemize}
+    \item There is a zero chance that an unbounded adversary can break the property
+  \end{itemize}
+
+  \pause
+  Statistical security
+  \begin{itemize}
+    \item There is a negligible chance that an unbounded adversary can break the property
+  \end{itemize}
+
+  \pause
+  Computational security
+  \begin{itemize}
+    \item There is a negligible chance that a computationally bounded adversary can break the property
+  \end{itemize}
+
+  \pause
+  Commitments cannot be statistically both hiding and binding.
+\end{frame}
+
+\begin{frame}{Cryptosystems as commitment schemes}
+  Any functional IND-CPA public-key cryptosystem is computationally hiding and perfectly binding.
+  \begin{enumerate}[<+(1)->]
+    \item Compute $(\PK, \SK) \gets \GEN()$, \enquote{delete} $\SK$, and publish $\PK$.
+    \item To commit $m$, sample $r \getsu \mathcal{R}$ and output
+    \[
+      \begin{cases}
+        c \gets \ENC_\PK(m; r),\\
+        d \gets (m, r).
+      \end{cases}
+    \]
+    \item $\bigl(c, d = (m, r)\bigr)$ is a valid decommitment if $c = \ENC_\PK(m; r)$.
+  \end{enumerate}
+
+  \pause
+  If the secret key is known, the scheme becomes \emph{extractable}
+\end{frame}
+
+\begin{frame}{Two additional properties}
+  Extractability
+  \begin{itemize}[<+(1)->]
+    \item Knowing a secret value, the message can be extracted from the commitment
+    \item Public parameters are indistinguishable in both settings
+  \end{itemize}
+
+  \pause
+  Equivocability
+  \begin{itemize}[<+(1)->]
+    \item \enquote{Fake} commitments are indistinguishable from real commitments
+    \item The fake commitments can be opened to arbitrary values
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  Some commitments therefore require a trusted setup.
+\end{frame}
+
+\begin{frame}{Pedersen commitments}
+  Let $q$ be prime and let $\GG = \langle g \rangle$ be a $q$-element DL-group.\\
+  Choose $h$ uniformly from $\GG\setminus\{1\}$ and set $\PK \gets (g, h)$.
+
+  \vfill
+
+  \pause
+  To commit $m \in \ZZ_q$, choose $r \getsu \ZZ_q$ and output
+  \[
+    \begin{cases}
+      c \gets g^m h^r\ ,\\
+      d \gets (m, r)\ .
+    \end{cases}
+  \]
+
+  \vfill
+
+  \pause
+  A tuple $(c, m, r)$ is a valid decommitment for $m$ if $c = g^m h^r$.
+\end{frame}
+
+\begin{frame}{Pedersen commitments}
+  Pedersen commitments are
+  \begin{itemize}[<+(1)->]
+    \item Perfectly hiding
+    \begin{itemize}
+      \item e.g. in $\ZZ_{23}$: $2^2 3^7 \equiv 8$, $2^3 3^0 \equiv 8$, $2^4 3^4 \equiv 8$, \dots
+    \end{itemize}
+    \item Computationally binding
+    \begin{itemize}
+      \item Let $g^x \equiv h$ with $x$ unknown.
+      \item It is then hard to find distinct pairs $(m_1, r_1), (m_2, r_2)$ s.t. $g^{m_1} h^{r_1} \equiv g^{m_2} h^{r_2}$. 
+    \end{itemize}
+    \item Equivocable
+    \begin{itemize}
+      \item If $x$ is known, breaking the binding property is trivial.
+      \item Generate $s \getsu \ZZ_{q}$, set $\hat{c} \gets g^s$.
+      \item To open $\hat{c}$, compute $r \gets (s-m)\cdot x^{-1}$.
+    \end{itemize}
+    \item Homomorphic, which is desirable for many protocols
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Why do we need commitments?}
+  Commitments are an essential primitive in cryptography.
+  \begin{itemize}[<+(1)->]
+    \item Typically they are not used on their own (although they can).
+    \item It is possible to prove relations over committed values.
+    \item Commitments are essential to many zero-knowledge protocols.
+    \item More generally, many secure protocols rely on commitments.
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  How would you use commitments in the remote coin flipping protocol?
+\end{frame}
+
 \begin{frame}{Disclaimer}
   \pause
-  This lecture introduces some informal notions.
+  The following contains mostly informal notions.
 
   \pause
   The goal is to
   \begin{itemize}[<+(1)->]
     \item Introduce the concept of zero-knowledge
     \item Develop some cryptographic intuition
-    \item Intuitively reason about about protocols
+    \item Intuitively reason about protocols
   \end{itemize}
 
   \vfill
@@ -33,41 +208,37 @@
   We will not cover any of these topics formally in this course.
 \end{frame}
 
-\begin{frame}{Proving things}
-  What is a proof?
+\begin{frame}{What is a proof?}
+  \pause
+  Proofs in the mathematical sense (i.e. deterministic)
   \begin{itemize}[<+(1)->]
-    \item Proofs in the mathematical sense (i.e. deterministic)
-    \begin{itemize}
-      \item Deductive argument for some statement
-      \item Combination of axioms, rules of inference, and proven statements
-    \end{itemize}
-    \item Probabilistic \enquote{proofs}: a more relaxed notion
-    \begin{itemize}
-      \item Approaches of the type \enquote{Alice convinces Bob}
-      \item Proof systems in computational complexity theory
-    \end{itemize}
+    \item Deductive argument for some statement
+    \item Combination of axioms, rules of inference, and proven statements
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  Probabilistic \enquote{proofs}: a more relaxed notion
+  \begin{itemize}[<+(1)->]
+    \item Approaches of the type \enquote{Alice convinces Bob}
+    \item Proof systems in computational complexity theory
   \end{itemize}
 \end{frame}
 
 \begin{frame}{(Interactive) proof systems}
-  An (interactive) proof system is comprised of two algorithms:
+  An (interactive) proof system consists of two algorithms:
   \begin{itemize}[<+(1)->]
-    \item An unbounded prover $\PPP$
-    \begin{itemize}
-      \item Potentially malicious
-    \end{itemize}
-    \item A PPT verifier $\VVV$
-    \begin{itemize}
-      \item Assumed to be honest
-    \end{itemize}
+    \item An unbounded prover $\PPP$ who is potentially malicious
+    \item A PPT verifier $\VVV$ who is honest
   \end{itemize}
 
   \vspace*{1em}
   
   \pause
-  If the prover is also PPT, we use the term \emph{argument} instead of \enquote{proof}.
+  The terms \emph{argument} and \enquote{proof} are often used interchangeably.
   \begin{itemize}[<+(1)->]
-    \item Often the two terms are used interchangeably (determine from context)
+    \item Strictly, an argument is only sound against PPT provers
   \end{itemize}
 
   \vspace*{1em}
@@ -86,27 +257,6 @@
   \begin{itemize}[<+(1)->]
     \item W.l.o.g. we only consider proving the truth
     \item The easiest way to prove something is to provide a \emph{witness} for the claim
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Statements and witnesses}
-  A bit more formally:
-  \begin{itemize}[<+(1)->]
-    \item Let $\Rel$ be a decidable binary relation
-    \item We call $w$ a witness for a statement $u$ if $(u, w) \in \Rel$
-    \item The language
-    \[
-      \LLL = \{u \mid \exists w : (u, w) \in \Rel\}
-    \]
-    is the set of statements $u$ that have a witness $w$ in the relation $\Rel$.
-  \end{itemize}
-
-  \vfill
-
-  \pause
-  To prove the truth of a statement $u$, the prover must show that it belongs to $\LLL$.
-  \begin{itemize}[<+(1)->]
-    \item The trivial approach is to reveal $w$, but this may not always be possible
   \end{itemize}
 \end{frame}
 
@@ -133,7 +283,7 @@
   \vspace*{1em}
 
   \pause
-  Classical introductory examples:
+  Classic introductory examples:
   \begin{itemize}[<+(1)->]
     \item Ali Baba's cave
     \begin{itemize}
@@ -155,43 +305,14 @@
     \item Sound
     \item \emph{Zero-knowledge}
     \begin{itemize}
-      \item No verifier must learn anything\textsuperscript{*} other than the truth of what is being proven
-      \item The verifier needs not be honest
+      \item No verifier should learn anything\textsuperscript{*} other than the truth of what is being proven
+      \item The verifier need not be honest
       \item The non-honesty is an important subtlety
     \end{itemize}
   \end{itemize}
 
   \pause
   Completeness and soundness follow from the requirements of a proof system.
-\end{frame}
-
-\begin{frame}{ZK proof of knowledge}
-  A ZKP does not require a prover to know a witness for the statement.
-  \begin{itemize}[<+(1)->]
-    \item In practice, we mostly require and prove knowledge of the witness
-    \item A ZKP is then called a zero-knowledge \emph{proof of knowledge} (ZKPoK)
-  \end{itemize}
-
-  \vspace*{1em}
-
-  \pause
-  How to model that a prover must know a witness to create an accepting proof?
-\end{frame}
-
-\begin{frame}{Knowledge-soundness}
-  The notion of \emph{knowledge-soundness} implies that a prover must know a witness.
-  \begin{itemize}[<+(1)->]
-    \item We show the existence of an efficient extractor that can recover the witness, except with some small probability.
-  \end{itemize}
-
-  \vspace*{1em}
-
-  \pause
-  Knowledge-soundness can be shown via \emph{special soundness}.
-  \begin{itemize}[<+(1)->]
-    \item Often used for $\Sigma$-protocols
-    \item We show that a witness can be extracted from two accepting transcripts with identical initial commitments, but differing challenges.
-  \end{itemize}
 \end{frame}
 
 \begin{frame}{Schnorr's protocol}
@@ -230,6 +351,95 @@
   The analysis is done in class.
 \end{frame}
 
+\begin{frame}{ZK proof of knowledge}
+  A ZKP does not require a prover to know a witness for the statement.
+  \begin{itemize}[<+(1)->]
+    \item In practice, we mostly require and prove knowledge of the witness
+    \item A ZKP is then called a zero-knowledge \emph{proof of knowledge} (ZKPoK)
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  How to model that a prover must know a witness to create an accepting proof?
+\end{frame}
+
+\begin{frame}{Knowledge-soundness}
+  The notion of \emph{knowledge-soundness} implies that a prover must know a witness.
+  \begin{itemize}[<+(1)->]
+    \item We show the existence of an efficient extractor that can recover the witness, except with some small probability.
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  Knowledge-soundness can be shown via \emph{special soundness}.
+  \begin{itemize}[<+(1)->]
+    \item Often used for $\Sigma$-protocols
+    \item We show that a witness can be extracted from two accepting transcripts with identical initial commitments, but differing challenges.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Simulation}
+  Zero-knowledge is based on the principle of \emph{simulation}.
+  \begin{itemize}[<+(1)->]
+    \item The simulator can efficiently simulate the prover's messages
+    \begin{itemize}
+      \item The prover is not involved in the simulation
+      \item The simulator does not know the prover's secret
+    \end{itemize}
+    \item The simulated transcript is indistinguishable from a real one
+  \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  Intuition: the verifier learns nothing, since it could have produced the transcript on its own.
+\end{frame}
+
+\begin{frame}{Sigma protocols}
+  $\Sigma$-protocols are efficiently computable three-move protocols that must be special sound and (special) honest verifier zero-knowledge.
+
+  \vfill
+
+  \begin{columns}[c]
+    \begin{column}{0.58\textwidth}
+      \centering
+      \begin{tikzpicture}
+        \node (alice) at (0,0) {\includegraphics[height=80px]{alice}};
+        \node (bob)   at (5.2,0) {\includegraphics[height=80px]{bob}};
+
+        %\node(rand) at (alice.north) [yshift=10px] {$r \getsu \RRR$};
+        \node(chal) at (bob.north)   [yshift=10px] {$c \getsu \CCC$};
+
+        \node (n1a) at (alice.east) [yshift=18px] {};
+        \node (n1b) at (bob.west)   [yshift=18px] {};
+        \node (n2a) at (alice.east) {};
+        \node (n2b) at (bob.west)   {};
+        \node (n3a) at (alice.east) [yshift=-18px] {};
+        \node (n3b) at (bob.west)   [yshift=-18px] {};
+
+        \draw[->,thick] (n1a) -- (n1b) node[above,midway] {$u$};
+        \draw[<-,thick] (n2a) -- (n2b) node[above,midway] {$c$};
+        \draw[->,thick] (n3a) -- (n3b) node[above,midway] {$z = z_\SK(u,c)$};
+
+        \node at (alice.south) [yshift=-10px] {$\SK$};
+        \node at (bob.south)   [yshift=-10px] {$\VVV_\PK(u, c, z)$};
+      \end{tikzpicture}
+    \end{column}
+    \begin{column}{0.4\textwidth}
+      The \emph{transcript} is $(u, c, z)$:
+      \begin{itemize}
+        \item $u$ is a commitment
+        \item $c$ is a (varying) challenge
+        \item $z$ is a (consistent) response
+      \end{itemize}
+    \end{column}
+  \end{columns}
+
+  \vfill
+\end{frame}
+
 \begin{frame}{Transferability}
   Interactive ZKPoKs are not \emph{transferable}.
   \begin{itemize}[<+(1)->]
@@ -247,16 +457,14 @@
 \begin{frame}{Fiat-Shamir heuristic}
   The Fiat-Shamir transform can be used to transform an interactive public coin protocol into a non-interactive one.
   \begin{itemize}[<+(1)->]
-    \item The protocol is then provably secure only in the ROM
+    \item The protocol is then provably secure only in the Random Oracle Model (ROM)
     \item Compute the challenge as a random hash function on all previous messages and the statement
     \item FS can be tricky to use: plenty of vulnerabilities have stemmed from not including the statement as an input to the hash function
   \end{itemize}
 
   \pause
   In practice, the random hash function is instantiated with a strong cryptographic hash function.
-  \begin{itemize}[<+(1)->]
-    \item Security becomes heuristic
-  \end{itemize}
+  Security becomes heuristic.
 \end{frame}
 
 \begin{frame}{Weak Fiat-Shamir}
@@ -277,6 +485,30 @@
   Many practical ZKP security flaws are related to the weak FS transform.
   \begin{itemize}
     \item Rule of thumb: include the statement also in the hash (strong FS).
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{NB!}
+  Sigma protocols \& zero-knowledge schemes are advanced cryptography.
+  \begin{itemize}[<+(1)->]
+    \item You should know that they exist
+    \item You should not use them directly
+    \item The complexity snowballs
+    \item Not comparable to popular and standardised schemes
+    \par
+    \begin{itemize}
+      \item encryption \& signature schemes, KEMs, MACs, hash functions
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{NB!}
+  These topics are a prime example of unknown unknowns.
+  \begin{itemize}[<+(1)->]
+    \item Reading a few blog posts to get an intuition to start using them is not enough
+    \item Extensive amounts of study required for even the \enquote{entry level}
+    \item Not gatekeeping:
+    you are more than welcome to spiral down the rabbit hole
   \end{itemize}
 \end{frame}
 
