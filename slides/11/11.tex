@@ -1,3 +1,31 @@
+% Syntax highlighting for code examples
+\usepackage{listings}
+% GitHub light colours
+\definecolor{ghtext}{HTML}{24292F}
+\definecolor{ghkeyword}{HTML}{CF222E}
+\definecolor{ghfunc}{HTML}{8250DF}
+\definecolor{ghconst}{HTML}{0550AE}
+\lstdefinestyle{py}{
+  language=Python,
+  basicstyle=\scriptsize\ttfamily\color{ghtext},
+  deletekeywords={True,False},
+  keywordstyle=\color{ghkeyword},
+  morekeywords=[2]{True,False},
+  keywordstyle=[2]\color{ghconst},
+  morekeywords=[3]{eq,ct_eq},
+  keywordstyle=[3]\color{ghfunc},
+  literate=
+    {0}{{\textcolor{ghconst}{0}}}1
+    {!=}{{\textcolor{ghkeyword}{!=}}}2
+    {==}{{\textcolor{ghkeyword}{==}}}2
+    {|=}{{\textcolor{ghkeyword}{|=}}}2
+    {=}{{\textcolor{ghkeyword}{=}}}1
+    {^}{{\textcolor{ghkeyword}{\textasciicircum}}}1,
+  showstringspaces=false,
+  columns=fullflexible,
+  keepspaces=true,
+}
+
 \title{ICS0036 Cryptography}
 \subtitle{Hardware security \& side channels}
 \date{\today}
@@ -39,7 +67,7 @@
     \item Hardware security modules (HSM)
     \item Trusted platform modules (TPM)
     \item Smart cards (e.g. bank card, EstEID)
-    \item Security tokens (e.g. Yubikey)
+    \item Security tokens (e.g. YubiKey)
   \end{itemize}
 
   \vspace*{1em}
@@ -47,7 +75,7 @@
   \pause
   Varying degree of physical security.
   \begin{itemize}[<+(1)->]
-    \item E.g. smartcards typically more vulnerable than HSMs
+    \item E.g. smart cards typically more vulnerable than HSMs
     \item Uneven difficulty of reverse engineering/probing the chip
     \item What attacks does the device protect against?
   \end{itemize}
@@ -163,7 +191,7 @@
   \vspace*{1em}
 
   \pause
-  Much harder to perform on a firmware TPM, although other attacks may exist.
+  Much harder to perform on integrated and firmware TPMs, although other attacks may exist.
 \end{frame}
 
 \begin{frame}{Trusted Execution Environment (TEE)}
@@ -174,35 +202,30 @@
     \item Isolated (sometimes encrypted) memory regions, called \emph{enclaves} in Intel SGX
     \item Code runs within these regions
     \item Computation result returned to the calling process
-    \item Remote verification can enable TEE in the cloud
-    \begin{itemize}
-      \item predefined hardware attestation 
-    \end{itemize}
+    \item Remote attestation: proves to a remote party (e.g. a cloud customer) what code runs inside
   \end{itemize}  
 \end{frame}
 
 \begin{frame}{Name dropping just in case}
   TEE and related things:
   \begin{itemize}[<+(1)->]
-    \item AMD
+    \item Secure co-processors
     \par
     \begin{itemize}
-      \item Platform Security Processor (PSP) -- secure co-processor
-      \item Secure Encrypted Virtualization (SEV-SNP) -- TEE (VM-level)
+      \item AMD Platform Security Processor (PSP)
+      \item Apple Secure Enclave Processor (SEP)
+      \item Intel Management Engine (ME) -- also runs system services
+      \item Microsoft Pluton -- in the CPU (can act as a TPM)
     \end{itemize}
-    \item Intel
+    \item Confidential computing TEEs
     \par
     \begin{itemize}
-      \item Management Engine (ME) -- separate microcontroller for system services
-      \item Software Guard Extensions (SGX) -- TEE (CPU enclaves), servers only
-      \item Trust Domain Extensions (TDX) -- TEE (VM-level)
+      \item Intel Software Guard Extensions (SGX) -- CPU enclaves, servers only
+      \item Intel Trust Domain Extensions (TDX) -- VM-level
+      \item AMD Secure Encrypted Virtualization (SEV-SNP) -- VM-level
     \end{itemize}
-    \item Apple Secure Enclave Processor (SEP) -- secure co-processor
-    \item Microsoft Pluton -- secure co-processor in the CPU (can act as a TPM)
     \item ARM TrustZone -- TEE (secure vs. regular \enquote{world})
   \end{itemize}
-
-  \vspace*{-0.5em}
 
   \pause
   NB! These technologies are very different.
@@ -243,16 +266,17 @@
 \end{frame}
 
 \begin{frame}{EMV}
-  Europay MasterCard Visa
+  Europay Mastercard Visa
   \begin{itemize}[<+(1)->]
     \item Smart payment cards \& terminals
-    \item Enables cryptographic validations
+    \item The card authenticates each transaction to the bank (challenge-response)
+    \item Unlike magnetic stripes, the chip cannot be cloned
   \end{itemize}
 
   \vspace*{1em}
 
   \pause
-  Challenge-response does not stop relay attacks
+  Challenge-response does not stop relay attacks:
   \begin{itemize}[<+(1)->]
     \item Your card pays for someone else's purchase elsewhere
     \item \href{https://www.cl.cam.ac.uk/research/security/banking/relay/}{\textit{Chip \& PIN (EMV) relay attacks}}
@@ -283,16 +307,16 @@
 \end{frame}
 
 \begin{frame}{FIPS certification}
+  \href{https://csrc.nist.gov/pubs/fips/140-3/final}{FIPS 140-3} -- Security requirements for cryptographic modules
   \begin{itemize}
-    \item \href{https://csrc.nist.gov/pubs/fips/140-3/final}{FIPS 140-3} --- Security requirements for cryptographic modules
-    \par
-    \begin{itemize}
-      \item 4 levels, with level 4 being the highest
-      \item \href{https://www.keyfactor.com/blog/a-guide-to-fips-140-3/}{\textit{A Guide to FIPS 140-3 (Keyfactor)}}
-      \item Replaces FIPS 140-2, whose validations became historical in September 2026
-    \end{itemize}
-    \item \href{https://csrc.nist.gov/projects/cryptographic-module-validation-program}{NIST CMVP} --- Cryptographic Module Validation Program
+    \item 4 levels, with level 4 being the highest
+    \item \href{https://www.keyfactor.com/blog/a-guide-to-fips-140-3/}{\textit{A Guide to FIPS 140-3 (Keyfactor)}}
+    \item Replaces FIPS 140-2, whose certificates expired in September 2026
   \end{itemize}
+
+  \vspace*{1em}
+
+  \href{https://csrc.nist.gov/projects/cryptographic-module-validation-program}{NIST CMVP} -- Cryptographic Module Validation Program
 \end{frame}
 
 \begin{frame}{YubiKeys}
@@ -300,7 +324,7 @@
   \begin{itemize}[<+(1)->]
     \item Not the only ones, but a popular choice
     \item FIDO2, Personal Identity Verification (PIV) and OpenPGP
-    \item FIDO2 support: resident \& non-resident keys (e.g. SSH)
+    \item FIDO2: discoverable (resident) \& non-discoverable keys (e.g. passkeys)
   \end{itemize}
 
   \vspace*{1em}
@@ -405,11 +429,19 @@
 \end{frame}
 
 \begin{frame}{Recent examples}
+  Some bigger recent-ish examples include:
   \begin{itemize}[<+(1)->]
-    \item \href{https://ninjalab.io/eucleak/}{EUCLEAK} (2024): EM side channel on YubiKey 5 (firmware $<$ 5.7) and other Infineon chips
+    \item \href{https://tee.fail}{TEE.fail} (2025): DDR5 bus interposer breaks Intel SGX/TDX and AMD SEV-SNP
     \par
     \begin{itemize}
-      \item Non-constant-time modular inversion, unnoticed through $\sim$80 CC evaluations
+      \item Pedantically not a side channel: leakage from deterministic memory encryption
+      \item Recovery of ECDSA attestation keys
+    \end{itemize}
+    \item \href{https://ninjalab.io/eucleak/}{EUCLEAK} (2024): EM side channel on some YubiKeys and other Infineon chips
+    \par
+    \begin{itemize}
+      \item Non-constant-time modular inversion
+      \item Went unnoticed through $\sim$80 CC evaluations
     \end{itemize}
     \item \href{https://gofetch.fail}{GoFetch} (2024): Apple M-series prefetcher breaks constant-time code
     \item \href{https://kyberslash.cr.yp.to}{KyberSlash} (2024): secret-dependent division timing in Kyber implementations
@@ -419,11 +451,11 @@
 \begin{frame}{What can be done?}
   Some approaches:
   \begin{itemize}[<+(1)->]
-    \item General chip design with side-channels in mind
+    \item General chip design with side channels in mind
     \item Dedicated hardware implementations (e.g. some cryptoprocessors)
     \item Electromagnetic and/or acoustic shielding
     \item Randomisation of operations (masking and noise)
-    \item Design algorithms with side-channels in mind
+    \item Design algorithms with side channels in mind
     \item Constant time operations
   \end{itemize}
 
@@ -470,6 +502,44 @@
   \end{itemize}
 \end{frame}
 
+\begin{frame}[fragile]{Constant-time comparison (python)}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.48\textwidth}
+      Early exit leaks the first wrong byte:
+      \begin{lstlisting}[style=py]
+def eq(a, b):
+    if len(a) != len(b):
+        return False
+    for x, y in zip(a, b):
+        if x != y:
+            return False
+    return True
+      \end{lstlisting}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \pause
+      Always reads every byte:
+      \begin{lstlisting}[style=py]
+def ct_eq(a, b):
+    if len(a) != len(b):
+        return False
+    d = 0
+    for x, y in zip(a, b):
+        d |= x ^ y
+    return d == 0
+      \end{lstlisting}
+    \end{column}
+  \end{columns}
+
+  \vspace*{1em}
+
+  \pause
+  In practice, use the library: \texttt{hmac.compare\_digest}
+  \begin{itemize}[<+(1)->]
+    \item \texttt{ct\_eq} is not guaranteed to be constant-time in Python
+  \end{itemize}
+\end{frame}
+
 \begin{frame}{Issue of unknowns}
   Constant time crypto is easier for fixed parameters.
   \begin{itemize}[<+(1)->]
@@ -507,8 +577,8 @@
   Wipe secrets after use (\emph{zeroization}), but:
   \begin{itemize}[<+(1)->]
     \item Compilers may optimise the wipe away
-    \item Garbage-collected languages copy secrets freely and may not let you wipe them
-    \item Better still: keep the key out of RAM entirely (TPM, HSM, smart card)
+    \item Garbage-collected languages may copy secrets and prevent wiping
+    \item Better still: keep the key out of RAM entirely (HSM, smart card, or TPM)
   \end{itemize}
 \end{frame}
 
@@ -521,21 +591,33 @@
     \item Certification is not foolproof, but is better than nothing
     \item Tools exist to help you validate others' work
   \end{itemize}
+
+  \vspace*{1em}
+
+  \pause
+  Keep keys in hardware when you can.
 \end{frame}
 
 \begin{frame}{Additional reading}
   \begin{itemize}
-    \item \url{https://github.com/veorq/cryptocoding}
-    \item \url{https://gotchas.salusa.dev}
-    \item \url{https://timing.attacks.cr.yp.to/programming.html}
-    \par
-    \begin{itemize}
-      \item Contains more links at the end
-    \end{itemize}
     \item Intel's guidance:
     \begin{itemize}
       \item \href{https://www.intel.com/content/www/us/en/developer/articles/technical/software-security-guidance/secure-coding/security-best-practices-side-channel-resistance.html}{\textit{Security Best Practices for Side Channel Resistance}}
       \item \href{https://www.intel.com/content/www/us/en/developer/articles/technical/software-security-guidance/secure-coding/mitigate-timing-side-channel-crypto-implementation.html}{\textit{Guidelines for Mitigating Timing Side Channels Against Cryptographic Implementations}}
+    \end{itemize}
+  \end{itemize}
+  
+  \vspace*{0.5em}
+
+  \begin{itemize}
+    \item \href{https://soatok.blog/2020/08/27/soatoks-guide-to-side-channel-attacks/}{\textit{Soatok's Guide to Side-Channel Attacks}}
+    \item \href{https://00f.net/2026/10/06/zeroization-1/}{\textit{Frank Denis on zeroization pitfalls}}
+    \item \href{https://github.com/veorq/cryptocoding}{\textit{Cryptocoding}}
+    \item \href{https://gotchas.salusa.dev}{\textit{CryptoGotchas}}
+    \item \href{https://timing.attacks.cr.yp.to/programming.html}{\textit{Bernstein on timing attacks}}
+    \par
+    \begin{itemize}
+      \item Contains more links at the end
     \end{itemize}
   \end{itemize}
 \end{frame}
