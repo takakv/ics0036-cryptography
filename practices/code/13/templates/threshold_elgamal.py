@@ -51,7 +51,10 @@ class Party:
         :param j: The index of the receiving party
         :return: the share for party j
         """
-        ...
+        s = 0
+        for a in reversed(self._coeffs):
+            s = (s * j + a) % q
+        return s
 
     def receive(self, s: int):
         """Add a share received from another party to the secret key share.
